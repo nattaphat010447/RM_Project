@@ -12,7 +12,7 @@ const SignIn = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     
-    const API_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000';
+    const API_URL = import.meta.env.VITE_API_BASE_URL;
     
     try {
       const response = await fetch(`${API_URL}/api/token/`, {

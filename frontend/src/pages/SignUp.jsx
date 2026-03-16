@@ -25,8 +25,8 @@ const SignUp = () => {
       alert("Passwords do not match!");
       return;
     }
-    
-    const API_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000';
+
+    const API_URL = import.meta.env.VITE_API_BASE_URL;
     
     const payload = {
       username: formData.username,

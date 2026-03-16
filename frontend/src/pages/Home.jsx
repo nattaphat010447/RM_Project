@@ -31,7 +31,7 @@ const Home = () => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const API_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000';
+    const API_URL = import.meta.env.VITE_API_BASE_URL;
     fetch(`${API_URL}/api/mangas/`)
       .then(response => response.json())
       .then(data => {
