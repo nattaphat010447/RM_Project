@@ -1,6 +1,6 @@
 from rest_framework import serializers
 from django.contrib.auth import get_user_model
-from .models import Manga, MangaCopy, Cart
+from .models import Manga, MangaCopy, Cart, CartItem, RentalOrder, RentalOrderItem
 
 User = get_user_model()
 
@@ -37,3 +37,29 @@ class MangaSerializer(serializers.ModelSerializer):
     class Meta:
         model = Manga
         fields = '__all__'
+
+class CartItemSerializer(serializers.ModelSerializer):
+    manga_title = serializers.ReadOnlyField(source='manga_copy.manga.title')
+    manga_cover = serializers.ReadOnlyField(source='manga_copy.manga.cover_image_url')
+    rental_price_per_day = serializers.ReadOnlyField(source='manga_copy.manga.rental_price_per_day')
+    serial_no = serializers.ReadOnlyField(source='manga_copy.serial_no')
+
+    class Meta:
+        model = CartItem
+        fields = ['id', 'manga_title', 'manga_cover', 'rental_price_per_day', 'serial_no', 'rent_days', 'added_at']
+
+class RentalOrderItemSerializer(serializers.ModelSerializer):
+    manga_title = serializers.ReadOnlyField(source='manga_copy.manga.title')
+    serial_no = serializers.ReadOnlyField(source='manga_copy.serial_no')
+
+    class Meta:
+        model = RentalOrderItem
+        fields = ['id', 'manga_title', 'serial_no', 'rent_price_per_day', 'rent_days', 'item_status']
+
+class RentalOrderSerializer(serializers.ModelSerializer):
+    items = RentalOrderItemSerializer(many=True, read_only=True)
+    requested_at_formatted = serializers.DateTimeField(source='requested_at', format="%d-%m-%Y %H:%M", read_only=True)
+
+    class Meta:
+        model = RentalOrder
+        fields = ['id', 'status', 'total_rent_fee', 'total_fine', 'requested_at_formatted', 'items']

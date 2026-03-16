@@ -9,11 +9,13 @@ const ComicDetail = () => {
   const [loading, setLoading] = useState(true);
   
   const [isAdded, setIsAdded] = useState(false);
-  const [copyId, setCopyId] = useState(''); // จะเก็บเป็น ID ของเล่มแทน
+  const [copyId, setCopyId] = useState('');
   const [rentalDays, setRentalDays] = useState(7);
 
+  const API_URL = import.meta.env.VITE_API_BASE_URL;
+
   useEffect(() => {
-    fetch(`http://localhost:8000/api/mangas/${id}/`)
+    fetch(`${API_URL}/api/mangas/${id}/`)
       .then(response => {
         if (!response.ok) throw new Error('Network response was not ok');
         return response.json();
@@ -22,10 +24,8 @@ const ComicDetail = () => {
         setComic(data);
         setLoading(false);
         
-        // กรองหาเฉพาะเล่มที่สถานะ AVAILABLE (ว่างให้เช่า)
         const availableCopies = data.copies?.filter(c => c.status === 'AVAILABLE') || [];
         
-        // ถ้ามีเล่มว่าง ให้ตั้งค่าเริ่มต้นที่เล่มแรก
         if (availableCopies.length > 0) {
           setCopyId(availableCopies[0].id);
         }
@@ -34,16 +34,42 @@ const ComicDetail = () => {
         console.error("Error fetching comic detail: ", error);
         setLoading(false);
       });
-  }, [id]);
+  }, [id, API_URL]);
 
-  const handleAddToCart = () => {
-    // หา serial_no มาแสดงผลใน Alert แจ้งเตือน
-    const selectedCopy = comic.copies.find(c => c.id.toString() === copyId.toString());
+  const handleAddToCart = async () => {
+    const token = localStorage.getItem('access_token');
     
-    setIsAdded(true);
-    console.log(`[Log] Added to Cart -> Comic ID: ${comic.id}, Copy ID DB: ${copyId}, Serial: ${selectedCopy?.serial_no}, Days: ${rentalDays}`);
-    
-    setTimeout(() => setIsAdded(false), 3000);
+    if (!token) {
+      alert("Please Sign In to add items to your cart.");
+      navigate('/signin');
+      return;
+    }
+
+    try {
+      const response = await fetch(`${API_URL}/api/cart/add/${id}/`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({ 
+          rent_days: rentalDays,
+          copy_id: copyId
+        })
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        setIsAdded(true);
+        setTimeout(() => setIsAdded(false), 3000);
+      } else {
+        alert(data.error || "Failed to add to cart");
+      }
+    } catch (error) {
+      console.error("Error adding to cart:", error);
+      alert("System error. Please try again.");
+    }
   };
 
   if (loading) {
@@ -54,7 +80,6 @@ const ComicDetail = () => {
     return <div className="min-h-screen bg-[#2d116c] flex items-center justify-center text-white text-2xl font-bold">Comic not found!</div>;
   }
 
-  // ตัวแปรเช็คว่ามีเล่มว่างไหม
   const availableCopies = comic.copies?.filter(c => c.status === 'AVAILABLE') || [];
   const isOutOfStock = availableCopies.length === 0;
 
@@ -64,7 +89,7 @@ const ComicDetail = () => {
         
         {isAdded && (
           <div className="bg-[#d1e7dd] text-[#0f5132] px-6 py-4 rounded-md mb-6 font-bold shadow-md transition-all">
-            Added copy {comic.copies.find(c => c.id.toString() === copyId.toString())?.serial_no} to the cart successfully.
+            Added "{comic.title}" (Copy: {comic.copies.find(c => c.id.toString() === copyId.toString())?.serial_no}) to the cart for {rentalDays} days successfully.
           </div>
         )}
 
@@ -101,7 +126,6 @@ const ComicDetail = () => {
 
             <div className="space-y-5 mb-8 flex-grow">
               
-              {/* --- Dropdown เลือกเล่มที่ดึงจาก Database จริง --- */}
               <div>
                 <label className="block text-gray-700 font-semibold mb-2">Select copy to rent</label>
                 <div className="relative">

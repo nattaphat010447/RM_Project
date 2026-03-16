@@ -35,9 +35,10 @@ class Manga(models.Model):
 class MangaCopy(models.Model):
     class Status(models.TextChoices):
         AVAILABLE = 'AVAILABLE', 'Available'
+        RESERVED = 'RESERVED', 'Reserved'
         RENTED = 'RENTED', 'Rented'
         LOST = 'LOST', 'Lost'
-        DAMAGED = 'DAMAGED', 'Damaged'
+        MAINTENANCE = 'MAINTENANCE', 'Maintenance'
 
     manga = models.ForeignKey(Manga, on_delete=models.CASCADE, related_name='copies')
     serial_no = models.CharField(max_length=100, unique=True)

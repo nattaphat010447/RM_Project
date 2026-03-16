@@ -9,6 +9,9 @@ import SignUp from './pages/SignUp';
 import ComicDetail from './pages/ComicDetail';
 import Cart from './pages/Cart';
 import Orders from './pages/Orders';
+import Popular from './pages/Popular';
+import ForYou from './pages/ForYou';
+import Search from './pages/Search';
 
 function App() {
   return (
@@ -22,6 +25,9 @@ function App() {
         <Route path="/comic/:id" element={<ComicDetail />} />
         <Route path="/cart" element={<Cart />} />
         <Route path="/orders" element={<Orders />} />
+        <Route path="/popular" element={<Popular />} />
+        <Route path="/foryou" element={<ForYou />} />
+        <Route path="/search" element={<Search />} />
       </Routes>
     </Router>
   );

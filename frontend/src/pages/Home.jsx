@@ -53,7 +53,7 @@ const Home = () => {
             COMIC BOOK RENTAL STORE
           </h1>
           <div className="w-40 h-40 bg-yellow-300 rounded-full border-4 border-yellow-500 flex items-center justify-center overflow-hidden shadow-2xl">
-             <span className="font-bold text-yellow-800">Zenitsu Image</span>
+             <span className="font-bold text-yellow-800">Logo Image</span>
           </div>
         </div>
       </div>
