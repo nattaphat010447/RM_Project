@@ -1,16 +1,44 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 
 const SignIn = () => {
+  const navigate = useNavigate();
   const [formData, setFormData] = useState({ username: '', password: '' });
 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    console.log('Sign In Data:', formData);
-    // TODO: เรียกใช้ API POST /users/login ที่นี่
+    
+    const API_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000';
+    
+    try {
+      const response = await fetch(`${API_URL}/api/token/`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(formData),
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        
+        localStorage.setItem('access_token', data.access);
+        localStorage.setItem('refresh_token', data.refresh);
+        
+        navigate('/');
+        window.location.reload(); 
+        
+      } else {
+        alert("Invalid username or password. Please try again.");
+      }
+    } catch (error) {
+      console.error("Error signing in:", error);
+      alert("System error. Please try again later.");
+    }
   };
 
   return (

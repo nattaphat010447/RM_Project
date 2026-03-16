@@ -10,25 +10,43 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/5.2/ref/settings/
 """
 
+import os
 from pathlib import Path
+from dotenv import load_dotenv
+import pymysql
+
+pymysql.install_as_MySQLdb()
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
+# Load .env file
+dotenv_path = BASE_DIR / '.env' 
 
-# Quick-start development settings - unsuitable for production
-# See https://docs.djangoproject.com/en/5.2/howto/deployment/checklist/
+if dotenv_path.exists():
+    load_dotenv(str(dotenv_path))
+else:
+    dotenv_path = BASE_DIR.parent / '.env'
+    load_dotenv(str(dotenv_path))
 
-# SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-28am!+=9q-#6ksf^2(b=x$c#!u$$^qr$qvl32-(qieq&*7*y&p'
+# ==========================================
+# SECURITY & ENVIRONMENT VARIABLES
+# ==========================================
 
-# SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+# SECRET_KEY from .env
+SECRET_KEY = os.environ.get('SECRET_KEY')
 
-ALLOWED_HOSTS = []
+# DEBUG from .env
+DEBUG = os.environ.get('DEBUG', 'False') == 'True'
+
+# ALLOWED_HOSTS from .env
+allowed_hosts_env = os.environ.get('ALLOWED_HOSTS')
+ALLOWED_HOSTS = allowed_hosts_env.split(',') if allowed_hosts_env else ['*']
 
 
-# Application definition
+# ==========================================
+# APPLICATION DEFINITION
+# ==========================================
 
 INSTALLED_APPS = [
     'django.contrib.admin',
@@ -37,11 +55,15 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    # Third-party
+    'corsheaders',
     'rest_framework',
+    # Local
     'rentals',
 ]
 
 MIDDLEWARE = [
+    'corsheaders.middleware.CorsMiddleware', # ต้องอยู่บนสุด
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
@@ -71,19 +93,25 @@ TEMPLATES = [
 WSGI_APPLICATION = 'core.wsgi.application'
 
 
-# Database
-# https://docs.djangoproject.com/en/5.2/ref/settings/#databases
+# ==========================================
+# DATABASE SETTINGS
+# ==========================================
 
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
+        'ENGINE': 'django.db.backends.mysql',
+        'NAME': os.environ.get('MYSQL_DATABASE'),
+        'USER': os.environ.get('MYSQL_USER'),
+        'PASSWORD': os.environ.get('MYSQL_PASSWORD'),
+        'HOST': os.environ.get('MYSQL_HOST'),
+        'PORT': os.environ.get('MYSQL_PORT'),
     }
 }
 
 
-# Password validation
-# https://docs.djangoproject.com/en/5.2/ref/settings/#auth-password-validators
+# ==========================================
+# AUTHENTICATION & PASSWORDS
+# ==========================================
 
 AUTH_PASSWORD_VALIDATORS = [
     {
@@ -100,28 +128,41 @@ AUTH_PASSWORD_VALIDATORS = [
     },
 ]
 
+REST_FRAMEWORK = {
+    'DEFAULT_AUTHENTICATION_CLASSES': (
+        'rest_framework_simplejwt.authentication.JWTAuthentication',
+    )
+}
 
-# Internationalization
-# https://docs.djangoproject.com/en/5.2/topics/i18n/
+AUTH_USER_MODEL = 'rentals.User'
+
+
+# ==========================================
+# INTERNATIONALIZATION
+# ==========================================
 
 LANGUAGE_CODE = 'en-us'
-
 TIME_ZONE = 'UTC'
-
 USE_I18N = True
-
 USE_TZ = True
 
 
-# Static files (CSS, JavaScript, Images)
-# https://docs.djangoproject.com/en/5.2/howto/static-files/
+# ==========================================
+# STATIC FILES
+# ==========================================
 
 STATIC_URL = 'static/'
 
-# Default primary key field type
-# https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
+
+# ==========================================
+# DEFAULT AUTO FIELD
+# ==========================================
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
-# Custom User Model
-AUTH_USER_MODEL = 'rentals.User'
+
+# ==========================================
+# CORS SETTINGS
+# ==========================================
+
+CORS_ALLOW_ALL_ORIGINS = True

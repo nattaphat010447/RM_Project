@@ -1,97 +1,119 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 
 const SignUp = () => {
+  const navigate = useNavigate();
   const [formData, setFormData] = useState({
     username: '',
     email: '',
     password: '',
-    confirmPassword: ''
+    confirmPassword: '',
+    first_name: '',
+    last_name: '',
+    phone: '',
+    address: '',
+    dob: ''
   });
 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     if (formData.password !== formData.confirmPassword) {
       alert("Passwords do not match!");
       return;
     }
-    console.log('Sign Up Data:', formData);
-    // TODO: เรียกใช้ API POST /users/register ที่นี่
+    
+    const API_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000';
+    
+    const payload = {
+      username: formData.username,
+      email: formData.email,
+      password: formData.password,
+      first_name: formData.first_name,
+      last_name: formData.last_name,
+      phone: formData.phone,
+      address: formData.address,
+    };
+    if (formData.dob) {
+      payload.dob = formData.dob;
+    }
+
+    try {
+      const response = await fetch(`${API_URL}/api/register/`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+
+      if (response.ok) {
+        alert("Registration successful!");
+        navigate('/signin');
+      } else {
+        const errorData = await response.json();
+        alert("Error: " + JSON.stringify(errorData));
+      }
+    } catch (error) {
+      console.error("Fetch Error: ", error);
+      alert("System error. Please try again.");
+    }
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 py-10">
-      <div className="bg-white p-8 rounded-2xl shadow-lg w-full max-w-md">
+    <div className="min-h-screen bg-gray-100 py-12 px-4 flex justify-center items-center">
+      <div className="bg-white p-8 rounded-3xl shadow-xl w-full max-w-2xl">
+        <h2 className="text-3xl font-black text-center text-indigo-900 mb-8 uppercase tracking-tighter">Create Account</h2>
         
-        <div className="flex justify-center mb-4">
-          <div className="bg-gray-100 p-4 rounded-full">
-            <svg xmlns="http://www.w3.org/2000/svg" className="h-10 w-10 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-            </svg>
-          </div>
-        </div>
-
-        <h2 className="text-3xl font-bold text-center text-gray-800 mb-8">Sign Up</h2>
-
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div>
-            <input
-              type="text"
-              name="username"
-              placeholder="username"
-              value={formData.username}
-              onChange={handleChange}
-              className="w-full bg-gray-100 text-gray-800 px-4 py-3 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500"
-              required
-            />
-          </div>
-          <div>
-            <input
-              type="email"
-              name="email"
-              placeholder="email"
-              value={formData.email}
-              onChange={handleChange}
-              className="w-full bg-gray-100 text-gray-800 px-4 py-3 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500"
-              required
-            />
-          </div>
-          <div>
-            <input
-              type="password"
-              name="password"
-              placeholder="password"
-              value={formData.password}
-              onChange={handleChange}
-              className="w-full bg-gray-100 text-gray-800 px-4 py-3 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500"
-              required
-            />
-          </div>
-          <div>
-            <input
-              type="password"
-              name="confirmPassword"
-              placeholder="confirm password"
-              value={formData.confirmPassword}
-              onChange={handleChange}
-              className="w-full bg-gray-100 text-gray-800 px-4 py-3 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500"
-              required
-            />
+        <form onSubmit={handleSubmit} className="space-y-6">
+          {/* Section 1: Account Information */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="md:col-span-2 text-sm font-bold text-gray-400 uppercase tracking-widest border-b pb-1">Account Info</div>
+            <input type="text" name="username" placeholder="Username" onChange={handleChange} required className="input-style" />
+            <input type="email" name="email" placeholder="Email Address" onChange={handleChange} required className="input-style" />
+            <input type="password" name="password" placeholder="Password" onChange={handleChange} required className="input-style" />
+            <input type="password" name="confirmPassword" placeholder="Confirm Password" onChange={handleChange} required className="input-style" />
           </div>
 
-          <div className="flex justify-end pt-4">
-            <button
-              type="submit"
-              className="bg-indigo-900 hover:bg-indigo-800 text-white font-semibold py-2 px-8 rounded-xl transition duration-200 shadow-md"
-            >
-              Sign Up
-            </button>
+          {/* Section 2: Personal Information */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="md:col-span-2 text-sm font-bold text-gray-400 uppercase tracking-widest border-b pb-1 mt-4">Personal Info</div>
+            <input type="text" name="first_name" placeholder="First Name" onChange={handleChange} className="input-style" />
+            <input type="text" name="last_name" placeholder="Last Name" onChange={handleChange} className="input-style" />
+            <input type="tel" name="phone" placeholder="Phone Number (e.g. 0812345678)" onChange={handleChange} className="input-style" />
+            <div className="flex flex-col">
+              <label className="text-xs text-gray-500 ml-2 mb-1">Date of Birth</label>
+              <input type="date" name="dob" onChange={handleChange} className="input-style" />
+            </div>
+            <div className="md:col-span-2">
+              <textarea name="address" placeholder="Shipping Address" rows="2" onChange={handleChange} className="input-style py-3"></textarea>
+            </div>
           </div>
+
+          <button type="submit" className="w-full bg-indigo-900 hover:bg-indigo-800 text-white font-bold py-4 rounded-2xl transition duration-300 shadow-lg mt-6">
+            SIGN UP NOW
+          </button>
         </form>
       </div>
+
+      <style dangerouslySetInnerHTML={{ __html: `
+        .input-style {
+          width: 100%;
+          background-color: #f3f4f6;
+          color: #1f2937;
+          padding: 0.75rem 1rem;
+          border-radius: 1rem;
+          border: 2px solid transparent;
+          transition: all 0.2s;
+        }
+        .input-style:focus {
+          outline: none;
+          border-color: #4f46e5;
+          background-color: #ffffff;
+          box-shadow: 0 0 0 4px rgba(79, 70, 229, 0.1);
+        }
+      `}} />
     </div>
   );
 };

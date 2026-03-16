@@ -1,6 +1,8 @@
 Django>=4.2
 djangorestframework
 djangorestframework-simplejwt
-mysqlclient
+pymysql
 pymongo
 django-cors-headers
+dotenv
+cryptography

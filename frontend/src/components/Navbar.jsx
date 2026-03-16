@@ -1,9 +1,26 @@
-import React, { useState } from 'react';
-import { Link, useLocation } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 
 const Navbar = () => {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const location = useLocation();
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    const token = localStorage.getItem('access_token');
+    if (token) {
+      setIsLoggedIn(true);
+    } else {
+      setIsLoggedIn(false);
+    }
+  }, [location]);
+
+  const handleLogout = () => {
+    localStorage.removeItem('access_token');
+    localStorage.removeItem('refresh_token');
+    setIsLoggedIn(false);
+    navigate('/');
+  };
 
   const isActive = (path) => {
     return location.pathname === path 
@@ -26,13 +43,22 @@ const Navbar = () => {
       </div>
       
       {isLoggedIn ? (
-        <div className="flex items-center space-x-3 cursor-pointer">
-          <div className="w-10 h-10 bg-gray-200 rounded-full flex items-center justify-center overflow-hidden border-2 border-purple-200">
-            <svg className="w-6 h-6 text-gray-400" fill="currentColor" viewBox="0 0 20 20">
-              <path fillRule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clipRule="evenodd" />
-            </svg>
+        <div className="flex items-center space-x-6">
+          <div className="flex items-center space-x-3 cursor-pointer">
+            <div className="w-10 h-10 bg-gray-200 rounded-full flex items-center justify-center overflow-hidden border-2 border-purple-200">
+              <svg className="w-6 h-6 text-gray-400" fill="currentColor" viewBox="0 0 20 20">
+                <path fillRule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clipRule="evenodd" />
+              </svg>
+            </div>
+            <span className="font-semibold text-gray-700 hidden sm:block">My Account</span>
           </div>
-          <span className="font-semibold text-gray-700 hidden sm:block">karntima</span>
+          
+          <button 
+            onClick={handleLogout}
+            className="text-red-500 hover:text-red-700 font-semibold transition duration-200"
+          >
+            Logout
+          </button>
         </div>
       ) : (
         <div className="flex items-center space-x-4">
