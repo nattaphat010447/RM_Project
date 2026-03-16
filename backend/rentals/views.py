@@ -12,6 +12,8 @@ from django.db.models import Count, Q
 from .models import Manga, MangaCopy, Cart, CartItem, RentalOrder, RentalOrderItem
 from .serializers import MangaSerializer, UserRegistrationSerializer, CartItemSerializer, RentalOrderSerializer
 
+from .permissions import IsAdminRole
+
 User = get_user_model()
 
 class MangaListAPIView(generics.ListAPIView):
@@ -145,3 +147,42 @@ def popular_mangas(request):
     
     serializer = MangaSerializer(popular, many=True)
     return Response(serializer.data)
+
+
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def get_user_profile(request):
+    user = request.user
+    return Response({
+        'username': user.username,
+        'email': user.email,
+        'role': user.role,
+        'first_name': user.first_name,
+        'last_name': user.last_name
+    })
+
+@api_view(['GET'])
+@permission_classes([IsAdminRole])
+def admin_orders(request):
+    orders = RentalOrder.objects.all().order_by('-requested_at')
+    serializer = RentalOrderSerializer(orders, many=True)
+    return Response(serializer.data)
+
+@api_view(['POST'])
+@permission_classes([IsAdminRole])
+def approve_order(request, order_id):
+    order = get_object_or_404(RentalOrder, id=order_id)
+    if order.status != RentalOrder.Status.REQUESTED:
+        return Response({"error": "Order is not in requested status."}, status=400)
+    
+    with transaction.atomic():
+        order.status = RentalOrder.Status.APPROVED
+        order.approved_at = timezone.now()
+        order.save()
+        
+        for item in order.items.all():
+            item.item_status = RentalOrderItem.ItemStatus.APPROVED
+            item.save()
+            
+    return Response({"message": "Order approved successfully!"})

@@ -1,5 +1,5 @@
 from django.urls import path
-from .views import MangaDetailAPIView, MangaListAPIView, UserRegistrationAPIView, add_to_cart, view_cart, remove_from_cart, checkout_cart, my_orders, cancel_order, popular_mangas
+from .views import MangaDetailAPIView, MangaListAPIView, UserRegistrationAPIView, add_to_cart, get_user_profile, view_cart, remove_from_cart, checkout_cart, my_orders, cancel_order, popular_mangas
 
 urlpatterns = [
     path('mangas/', MangaListAPIView.as_view(), name='manga-list'),
@@ -12,4 +12,6 @@ urlpatterns = [
     path('orders/', my_orders, name='my-orders'),
     path('orders/<int:order_id>/cancel/', cancel_order, name='cancel-order'),
     path('mangas/popular/', popular_mangas, name='popular-mangas'),
+
+    path('me/', get_user_profile, name='user-profile'),
 ]

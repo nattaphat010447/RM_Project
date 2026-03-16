@@ -40,7 +40,6 @@ const ComicDetail = () => {
     const token = localStorage.getItem('access_token');
     
     if (!token) {
-      alert("Please Sign In to add items to your cart.");
       navigate('/signin');
       return;
     }

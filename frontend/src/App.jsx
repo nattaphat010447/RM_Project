@@ -13,6 +13,9 @@ import Popular from './pages/Popular';
 import ForYou from './pages/ForYou';
 import Search from './pages/Search';
 
+import AdminRoute from './components/AdminRoute';
+import AdminDashboard from './pages/AdminDashboard';
+
 function App() {
   return (
     <Router>
@@ -28,6 +31,14 @@ function App() {
         <Route path="/popular" element={<Popular />} />
         <Route path="/foryou" element={<ForYou />} />
         <Route path="/search" element={<Search />} />
+        <Route 
+          path="/admin/dashboard" 
+          element={
+            <AdminRoute>
+              <AdminDashboard />
+            </AdminRoute>
+          } 
+        />
       </Routes>
     </Router>
   );

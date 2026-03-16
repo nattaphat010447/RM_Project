@@ -11,33 +11,38 @@ const SignIn = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
     const API_URL = import.meta.env.VITE_API_BASE_URL;
     
     try {
       const response = await fetch(`${API_URL}/api/token/`, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(formData),
       });
 
       if (response.ok) {
         const data = await response.json();
-        
         localStorage.setItem('access_token', data.access);
         localStorage.setItem('refresh_token', data.refresh);
+
+        const profileRes = await fetch(`${API_URL}/api/me/`, {
+          headers: { 'Authorization': `Bearer ${data.access}` }
+        });
+        const profile = await profileRes.json();
         
-        navigate('/');
+        localStorage.setItem('user_role', profile.role);
+
+        if (profile.role === 'ADMIN') {
+          navigate('/admin/dashboard');
+        } else {
+          navigate('/');
+        }
         window.location.reload(); 
-        
       } else {
-        alert("Invalid username or password. Please try again.");
+        alert("Invalid credentials");
       }
     } catch (error) {
-      console.error("Error signing in:", error);
-      alert("System error. Please try again later.");
+      alert("Login failed");
     }
   };
 

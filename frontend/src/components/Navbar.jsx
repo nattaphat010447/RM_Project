@@ -3,6 +3,7 @@ import { Link, useLocation, useNavigate } from 'react-router-dom';
 
 const Navbar = () => {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [userRole, setUserRole] = useState(null); // เพิ่มการเก็บสถานะ Role
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const dropdownRef = useRef(null);
   const location = useLocation();
@@ -10,7 +11,10 @@ const Navbar = () => {
 
   useEffect(() => {
     const token = localStorage.getItem('access_token');
+    const role = localStorage.getItem('user_role'); // ดึง Role มาจาก Storage
+    
     setIsLoggedIn(!!token);
+    setUserRole(role);
 
     const handleClickOutside = (event) => {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
@@ -24,7 +28,9 @@ const Navbar = () => {
   const handleLogout = () => {
     localStorage.removeItem('access_token');
     localStorage.removeItem('refresh_token');
+    localStorage.removeItem('user_role'); // เคลียร์ Role ออกตอน Logout
     setIsLoggedIn(false);
+    setUserRole(null);
     setIsDropdownOpen(false);
     alert("Logged out successfully!");
     navigate('/');
@@ -61,9 +67,23 @@ const Navbar = () => {
           </div>
           
           {isDropdownOpen && (
-            <div className="absolute right-0 mt-3 w-48 bg-white rounded-xl shadow-xl py-2 z-50 border border-gray-100 transform origin-top-right transition-all">
+            <div className="absolute right-0 mt-3 w-56 bg-white rounded-xl shadow-xl py-2 z-50 border border-gray-100 transform origin-top-right transition-all">
               <Link to="/cart" className="block px-5 py-3 text-sm text-gray-700 hover:bg-indigo-50 hover:text-indigo-700 font-semibold" onClick={() => setIsDropdownOpen(false)}>My Cart</Link>
               <Link to="/orders" className="block px-5 py-3 text-sm text-gray-700 hover:bg-indigo-50 hover:text-indigo-700 font-semibold" onClick={() => setIsDropdownOpen(false)}>My Orders</Link>
+              
+              {userRole === 'ADMIN' && (
+                <>
+                  <div className="border-t border-gray-100 my-1"></div>
+                  <Link 
+                    to="/admin/dashboard" 
+                    className="block px-5 py-3 text-sm text-purple-700 hover:bg-purple-100 font-semibold" 
+                    onClick={() => setIsDropdownOpen(false)}
+                  >
+                    Admin Dashboard
+                  </Link>
+                </>
+              )}
+
               <div className="border-t border-gray-100 my-1"></div>
               <button onClick={handleLogout} className="block w-full text-left px-5 py-3 text-sm text-red-500 hover:bg-red-50 hover:text-red-700 font-semibold">Logout</button>
             </div>
