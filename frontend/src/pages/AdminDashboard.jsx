@@ -6,7 +6,7 @@ const AdminDashboard = () => {
 
   const menuItems = [
     { title: 'รายการเช่าหนังสือ', path: '/admin/orders' },
-    { title: 'การจัดการสมาชิก', path: '/admin/users' },
+    { title: 'การจัดการสมาชิก', path: '/admin/members' },
     { title: 'การจัดการหนังสือและเช่าหนังสือให้ลูกค้า', path: '/admin/mangas' },
     { title: 'ประวัติการเช่า', path: '/admin/history' },
     { title: 'รายการสูญหายประจำเดือน', path: '/admin/lost-items' },

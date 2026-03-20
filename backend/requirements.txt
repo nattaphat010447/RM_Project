@@ -6,3 +6,4 @@ pymongo
 django-cors-headers
 dotenv
 cryptography
+Pillow

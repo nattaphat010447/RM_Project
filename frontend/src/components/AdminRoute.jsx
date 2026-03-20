@@ -55,7 +55,10 @@ const AdminRoute = ({ children }) => {
   }
 
   if (!isAdmin) {
-    alert("Access Denied");
+    // alert("Access Denied");
+    localStorage.removeItem('access_token');
+    localStorage.removeItem('refresh_token');
+    localStorage.removeItem('user_role');
     return <Navigate to="/" replace />;
   }
 

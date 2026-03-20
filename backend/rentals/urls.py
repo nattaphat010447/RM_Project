@@ -1,5 +1,14 @@
 from django.urls import path
-from .views import MangaDetailAPIView, MangaListAPIView, UserRegistrationAPIView, add_to_cart, checkout_order, get_user_profile, reject_order, view_cart, remove_from_cart, checkout_cart, my_orders, cancel_order, popular_mangas, admin_orders, approve_order, reject_order
+from .views import (
+    MangaDetailAPIView, MangaListAPIView, UserRegistrationAPIView, 
+    add_to_cart, checkout_order, get_user_profile, view_cart, 
+    remove_from_cart, checkout_cart, my_orders, cancel_order, 
+    popular_mangas, admin_orders, approve_order, reject_order, 
+    return_item, fine_item, admin_users, admin_user_detail,
+    admin_add_manga, admin_manage_manga, search_customers, manual_checkout
+)
+from django.conf import settings
+from django.conf.urls.static import static
 
 urlpatterns = [
     path('mangas/', MangaListAPIView.as_view(), name='manga-list'),
@@ -12,11 +21,22 @@ urlpatterns = [
     path('orders/', my_orders, name='my-orders'),
     path('orders/<int:order_id>/cancel/', cancel_order, name='cancel-order'),
     path('mangas/popular/', popular_mangas, name='popular-mangas'),
-
     path('me/', get_user_profile, name='user-profile'),
 
     path('admin/orders/', admin_orders, name='admin-orders'),
     path('admin/orders/<int:order_id>/approve/', approve_order, name='approve-order'),
     path('admin/orders/<int:order_id>/reject/', reject_order, name='reject-order'),
     path('admin/orders/<int:order_id>/checkout/', checkout_order, name='checkout-order'),
+    path('admin/orders/<int:order_id>/items/<int:item_id>/return/', return_item, name='return-item'),
+    path('admin/orders/<int:order_id>/items/<int:item_id>/fine/', fine_item, name='fine-item'),
+    path('admin/users/', admin_users, name='admin-users'),
+    path('admin/users/<int:user_id>/', admin_user_detail, name='admin-user-detail'),
+    
+    path('admin/mangas/', admin_add_manga, name='admin-add-manga'),
+    path('admin/mangas/<int:manga_id>/', admin_manage_manga, name='admin-manage-manga'),
+    path('admin/customers/search/', search_customers, name='search-customers'),
+    path('admin/manual-checkout/', manual_checkout, name='manual-checkout'),
 ]
+
+if settings.DEBUG:
+    urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

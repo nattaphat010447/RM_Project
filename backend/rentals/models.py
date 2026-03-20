@@ -18,7 +18,7 @@ class Manga(models.Model):
     title = models.CharField(max_length=300)
     author = models.CharField(max_length=200, blank=True, null=True)
     genre = models.CharField(max_length=100, blank=True, null=True)
-    cover_image_url = models.URLField(max_length=255, blank=True, null=True)
+    cover_image_url = models.ImageField(upload_to='covers/', max_length=255, blank=True, null=True)
     rental_price_per_day = models.DecimalField(max_digits=10, decimal_places=2)
     
     isbn = models.CharField(max_length=20, blank=True, null=True)
@@ -105,3 +105,13 @@ class RentalOrderItem(models.Model):
 
     def __str__(self):
         return f"Order {self.order.id} | Copy {self.manga_copy.serial_no}"
+    
+class FineLog(models.Model):
+    order_item = models.ForeignKey(RentalOrderItem, on_delete=models.CASCADE, related_name='fine_logs')
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    fine_type = models.CharField(max_length=50)
+    amount = models.DecimalField(max_digits=8, decimal_places=2)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"Fine: {self.user.username} - {self.fine_type} ({self.amount} THB)"

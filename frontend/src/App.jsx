@@ -16,6 +16,11 @@ import Search from './pages/Search';
 import AdminRoute from './components/AdminRoute';
 import AdminDashboard from './pages/AdminDashboard';
 import AdminOrders from './pages/AdminOrders';
+import AdminMembers from './pages/AdminMembers';
+import AdminMemberForm from './pages/AdminMemberForm';
+import AdminMangas from './pages/AdminMangas';
+import AdminMangaDetail from './pages/AdminMangaDetail';
+import AdminMangaForm from './pages/AdminMangaForm';
 
 function App() {
   return (
@@ -32,6 +37,7 @@ function App() {
         <Route path="/popular" element={<Popular />} />
         <Route path="/foryou" element={<ForYou />} />
         <Route path="/search" element={<Search />} />
+        
         <Route 
           path="/admin/dashboard" 
           element={
@@ -45,6 +51,62 @@ function App() {
           element={
             <AdminRoute>
               <AdminOrders />
+            </AdminRoute>
+          } 
+        />
+        <Route 
+          path="/admin/members" 
+          element={
+            <AdminRoute>
+              <AdminMembers />
+            </AdminRoute>
+          } 
+        />
+        <Route 
+          path="/admin/members/new" 
+          element={
+            <AdminRoute>
+              <AdminMemberForm />
+            </AdminRoute>
+          } 
+        />
+        <Route 
+          path="/admin/members/edit/:id" 
+          element={
+            <AdminRoute>
+              <AdminMemberForm />
+            </AdminRoute>
+          } 
+        />
+        <Route 
+          path="/admin/mangas" 
+          element={
+            <AdminRoute>
+              <AdminMangas />
+            </AdminRoute>
+          } 
+        />
+        <Route 
+          path="/admin/mangas/new" 
+          element={
+            <AdminRoute>
+              <AdminMangaForm />
+            </AdminRoute>
+          } 
+        />
+        <Route 
+          path="/admin/mangas/edit/:id" 
+          element={
+            <AdminRoute>
+              <AdminMangaForm />
+            </AdminRoute>
+          } 
+        />
+        <Route 
+          path="/admin/mangas/:id" 
+          element={
+            <AdminRoute>
+              <AdminMangaDetail />
             </AdminRoute>
           } 
         />

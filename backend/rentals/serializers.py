@@ -32,11 +32,23 @@ class MangaCopySerializer(serializers.ModelSerializer):
         fields = ['id', 'serial_no', 'status']
 
 class MangaSerializer(serializers.ModelSerializer):
+    cover_image_url = serializers.SerializerMethodField()
     copies = MangaCopySerializer(many=True, read_only=True) 
 
     class Meta:
         model = Manga
         fields = '__all__'
+
+    def get_cover_image_url(self, obj):
+        if not obj.cover_image_url:
+            return None
+        
+        raw_path = obj.cover_image_url.name
+        
+        if raw_path.startswith('/'):
+            return raw_path
+        
+        return f"/media/{raw_path}"
 
 class CartItemSerializer(serializers.ModelSerializer):
     manga_title = serializers.ReadOnlyField(source='manga_copy.manga.title')
@@ -58,14 +70,6 @@ class RentalOrderItemSerializer(serializers.ModelSerializer):
 
 class RentalOrderSerializer(serializers.ModelSerializer):
     items = RentalOrderItemSerializer(many=True, read_only=True)
-    requested_at_formatted = serializers.DateTimeField(source='requested_at', format="%d-%m-%Y %H:%M", read_only=True)
-
-    class Meta:
-        model = RentalOrder
-        fields = ['id', 'status', 'total_rent_fee', 'total_fine', 'requested_at_formatted', 'items']
-
-class RentalOrderSerializer(serializers.ModelSerializer):
-    items = RentalOrderItemSerializer(many=True, read_only=True)
     requested_at_formatted = serializers.DateTimeField(source='requested_at', format="%d/%m/%Y %H:%M", read_only=True)
     customer_name = serializers.SerializerMethodField()
 
@@ -76,3 +80,14 @@ class RentalOrderSerializer(serializers.ModelSerializer):
     def get_customer_name(self, obj):
         full_name = f"{obj.user.first_name} {obj.user.last_name}".strip()
         return full_name if full_name else obj.user.username
+
+class AdminUserSerializer(serializers.ModelSerializer):
+    full_name = serializers.SerializerMethodField()
+
+    class Meta:
+        model = User
+        fields = ['id', 'username', 'email', 'first_name', 'last_name', 'phone', 'full_name', 'is_active']
+
+    def get_full_name(self, obj):
+        name = f"{obj.first_name} {obj.last_name}".strip()
+        return name if name else obj.username
