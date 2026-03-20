@@ -80,6 +80,8 @@ const Orders = () => {
                     <span className={`font-bold px-3 py-1 rounded-full text-xs tracking-wider ${
                       order.status === 'REQUESTED' ? 'bg-yellow-400 text-gray-900' : 
                       order.status === 'CANCELLED' ? 'bg-red-500 text-white' : 
+                      order.status === 'REJECTED' ? 'bg-orange-500 text-white' : 
+                      order.status === 'CHECKED_OUT' ? 'bg-blue-400 text-white' :
                       'bg-green-400 text-green-900'
                     }`}>
                       {order.status}

@@ -186,3 +186,70 @@ def approve_order(request, order_id):
             item.save()
             
     return Response({"message": "Order approved successfully!"})
+
+@api_view(['GET'])
+@permission_classes([IsAdminRole])
+def admin_orders(request):
+    orders = RentalOrder.objects.all().order_by('-requested_at')
+    serializer = RentalOrderSerializer(orders, many=True)
+    return Response(serializer.data)
+
+@api_view(['POST'])
+@permission_classes([IsAdminRole])
+def approve_order(request, order_id):
+    order = get_object_or_404(RentalOrder, id=order_id)
+    if order.status != RentalOrder.Status.REQUESTED:
+        return Response({"error": "Order is not requested."}, status=400)
+    
+    order.status = RentalOrder.Status.APPROVED
+    order.approved_at = timezone.now()
+    order.save()
+    
+    for item in order.items.all():
+        item.item_status = RentalOrderItem.ItemStatus.APPROVED
+        item.save()
+        
+    return Response({"message": "อนุมัติคำขอสำเร็จ!"})
+
+@api_view(['POST'])
+@permission_classes([IsAdminRole])
+def reject_order(request, order_id):
+    order = get_object_or_404(RentalOrder, id=order_id)
+    if order.status != RentalOrder.Status.REQUESTED:
+        return Response({"error": "Order is not requested."}, status=400)
+    
+    with transaction.atomic():
+        order.status = RentalOrder.Status.REJECTED
+        order.save()
+        
+        for item in order.items.all():
+            item.item_status = RentalOrderItem.ItemStatus.CANCELLED
+            item.save()
+            item.manga_copy.status = MangaCopy.Status.AVAILABLE
+            item.manga_copy.save()
+            
+    return Response({"message": "ปฏิเสธคำขอสำเร็จ"})
+
+@api_view(['POST'])
+@permission_classes([IsAdminRole])
+def checkout_order(request, order_id):
+    order = get_object_or_404(RentalOrder, id=order_id)
+    if order.status != RentalOrder.Status.APPROVED:
+        return Response({"error": "Order must be approved first."}, status=400)
+    
+    with transaction.atomic():
+        order.status = RentalOrder.Status.CHECKED_OUT
+        order.checked_out_at = timezone.now()
+        
+        for item in order.items.all():
+            item.item_status = RentalOrderItem.ItemStatus.CHECKED_OUT
+            item.rental_date = timezone.now()
+            item.due_at = timezone.now() + timedelta(days=item.rent_days)
+            item.save()
+            
+            item.manga_copy.status = MangaCopy.Status.RENTED
+            item.manga_copy.save()
+            
+        order.save()
+            
+    return Response({"message": "ทำรายการรับหนังสือสำเร็จ!"})

@@ -63,3 +63,16 @@ class RentalOrderSerializer(serializers.ModelSerializer):
     class Meta:
         model = RentalOrder
         fields = ['id', 'status', 'total_rent_fee', 'total_fine', 'requested_at_formatted', 'items']
+
+class RentalOrderSerializer(serializers.ModelSerializer):
+    items = RentalOrderItemSerializer(many=True, read_only=True)
+    requested_at_formatted = serializers.DateTimeField(source='requested_at', format="%d/%m/%Y %H:%M", read_only=True)
+    customer_name = serializers.SerializerMethodField()
+
+    class Meta:
+        model = RentalOrder
+        fields = ['id', 'status', 'total_rent_fee', 'total_fine', 'requested_at_formatted', 'items', 'customer_name']
+
+    def get_customer_name(self, obj):
+        full_name = f"{obj.user.first_name} {obj.user.last_name}".strip()
+        return full_name if full_name else obj.user.username
