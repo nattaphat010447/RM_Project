@@ -5,8 +5,22 @@ const Cart = () => {
   const [cartItems, setCartItems] = useState([]);
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
-
+  
   const API_URL = import.meta.env.VITE_API_BASE_URL;
+
+  const getImageUrl = (url) => {
+    if (!url) return 'https://via.placeholder.com/150x220?text=No+Cover';
+    if (url.startsWith('http')) return url;
+    
+    if (url.startsWith('/images/')) {
+    }
+    if (url.startsWith('/media/')) {
+      const cleanBaseUrl = API_URL.replace(/\/$/, '');
+      return `${cleanBaseUrl}${url}`;
+    }
+
+    return url;
+  };
 
   const fetchCart = async () => {
     const token = localStorage.getItem('access_token');
@@ -23,6 +37,8 @@ const Cart = () => {
       if (response.ok) {
         const data = await response.json();
         setCartItems(data);
+      } else if (response.status === 500) {
+        console.error("Backend Error: Check if Serializer is returning String for images.");
       }
     } catch (error) {
       console.error("Error fetching cart:", error);
@@ -52,7 +68,9 @@ const Cart = () => {
 
   const calculateTotal = () => {
     return cartItems.reduce((total, item) => {
-      return total + (parseFloat(item.rental_price_per_day) * item.rent_days);
+      const price = parseFloat(item.rental_price_per_day) || 0;
+      const days = parseInt(item.rent_days) || 0;
+      return total + (price * days);
     }, 0).toFixed(2);
   };
 
@@ -70,7 +88,7 @@ const Cart = () => {
         alert(data.message);
         navigate('/orders');
       } else {
-        alert(data.error);
+        alert(data.error || "Checkout failed");
       }
     } catch (error) {
       console.error("Checkout error:", error);
@@ -78,7 +96,7 @@ const Cart = () => {
     }
   };
 
-  if (loading) return <div className="min-h-screen bg-[#2d116c] flex justify-center items-center text-white text-2xl">Loading...</div>;
+  if (loading) return <div className="min-h-screen bg-[#2d116c] flex justify-center items-center text-white text-2xl font-bold">Loading Cart...</div>;
 
   return (
     <div className="min-h-screen bg-gray-50 py-10 px-4 md:px-10">
@@ -100,7 +118,11 @@ const Cart = () => {
             <div className="w-full lg:w-2/3 space-y-4">
               {cartItems.map((item) => (
                 <div key={item.id} className="bg-white rounded-2xl shadow-sm p-4 flex flex-col sm:flex-row items-center gap-6 relative">
-                  <img src={item.manga_cover} alt={item.manga_title} className="w-24 h-32 object-cover rounded-lg shadow-sm" />
+                  <img 
+                    src={getImageUrl(item.manga_cover)} 
+                    alt={item.manga_title} 
+                    className="w-24 h-32 object-cover rounded-lg shadow-sm" 
+                  />
                   <div className="flex-1 text-center sm:text-left">
                     <h3 className="text-xl font-bold text-gray-800">{item.manga_title}</h3>
                     <p className="text-sm text-gray-500 mt-1">Copy ID: {item.serial_no}</p>
@@ -135,10 +157,10 @@ const Cart = () => {
                   <span>{calculateTotal()} ฿</span>
                 </div>
                 <button 
-                  className="w-full bg-yellow-400 hover:bg-yellow-500 text-gray-900 font-black text-lg py-4 rounded-xl mt-8 transition duration-200 shadow-md"
+                  className="w-full bg-yellow-400 hover:bg-yellow-500 text-gray-900 font-black text-lg py-4 rounded-xl mt-8 transition duration-200 shadow-md uppercase tracking-tighter"
                   onClick={handleCheckout}
                 >
-                  CONFIRM ORDER
+                  Confirm Order
                 </button>
               </div>
             </div>

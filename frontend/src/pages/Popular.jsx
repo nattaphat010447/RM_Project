@@ -1,12 +1,23 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 
+const API_URL = import.meta.env.VITE_API_BASE_URL;
+
 const Popular = () => {
   const [mangas, setMangas] = useState([]);
   const [loading, setLoading] = useState(true);
 
+  const getImageUrl = (url) => {
+    if (!url) return 'https://via.placeholder.com/150x220?text=No+Cover';
+    if (url.startsWith('http')) return url;
+    if (url.startsWith('/media/')) {
+      const baseUrl = API_URL || ''; 
+      return `${baseUrl.replace(/\/$/, '')}${url}`;
+    }
+    return url;
+  };
+
   useEffect(() => {
-    const API_URL = import.meta.env.VITE_API_BASE_URL;
     
     fetch(`${API_URL}/api/mangas/popular/`)
       .then(res => res.json())
@@ -39,7 +50,11 @@ const Popular = () => {
                 #{index + 1}
               </div>
               <Link to={`/comic/${manga.id}`}>
-                <img src={manga.cover_image_url} alt={manga.title} className="w-full h-72 object-cover" />
+                <img
+                  src={getImageUrl(manga.cover_image_url)}
+                  alt={manga.title}
+                  className="w-full h-72 object-cover"
+                />
                 <div className="p-4">
                   <h3 className="text-xl font-bold text-gray-800 truncate">{manga.title}</h3>
                   <p className="text-sm text-gray-500 mt-1">{manga.genre}</p>

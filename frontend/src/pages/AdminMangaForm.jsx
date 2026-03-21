@@ -62,10 +62,35 @@ const AdminMangaForm = () => {
     } catch (err) { alert("ระบบขัดข้อง"); }
   };
 
+  const handleDelete = async () => {
+    if (!window.confirm("คุณแน่ใจหรือไม่ที่จะลบหนังสือเรื่องนี้?")) return;
+    
+    const token = localStorage.getItem('access_token');
+    try {
+      const response = await fetch(`${API_URL}/api/admin/mangas/${id}/`, {
+        method: 'DELETE',
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+
+      if (response.ok) {
+        navigate('/admin/mangas');
+      } else {
+        alert("เกิดข้อผิดพลาดในการลบ");
+      }
+    } catch (err) { alert("ระบบขัดข้อง"); }
+  };
+
   const getImageUrl = (url) => {
-    if (!url) return '';
-    if (url.startsWith('http') || url.startsWith('/')) return url;
-    return `${API_URL}${url}`;
+    if (!url) return 'https://via.placeholder.com/150x220?text=No+Cover';
+    
+    if (url.startsWith('http')) return url;
+    
+    if (url.startsWith('/media/')) {
+      const baseUrl = API_URL; 
+      return `${baseUrl}${url}`;
+    }
+    
+    return url;
   };
 
   return (
@@ -115,7 +140,16 @@ const AdminMangaForm = () => {
 
           <div className="flex justify-between mt-8 pt-4 border-t">
             <button type="button" onClick={() => navigate(-1)} className="border px-6 py-2 rounded font-bold hover:bg-gray-50">← กลับ</button>
-            <button type="submit" className="bg-gray-800 text-white px-6 py-2 rounded font-bold hover:bg-black">บันทึกการแก้ไข</button>
+            <div className="flex gap-4">
+              {isEditMode && (
+                <button type="button" onClick={handleDelete} className="bg-red-500 text-white px-6 py-2 rounded font-bold hover:bg-red-600 transition">
+                  ลบหนังสือ
+                </button>
+              )}
+              <button type="submit" className="bg-gray-800 text-white px-6 py-2 rounded font-bold hover:bg-black transition">
+                {isEditMode ? 'บันทึกการแก้ไข' : 'สร้างหนังสือใหม่'}
+              </button>
+            </div>
           </div>
         </form>
       </div>

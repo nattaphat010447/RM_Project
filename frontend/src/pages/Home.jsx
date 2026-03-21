@@ -1,10 +1,25 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 
+const API_URL = import.meta.env.VITE_API_BASE_URL;
+
+const getImageUrl = (url) => {
+  // console.log("Current API_URL is:", import.meta.env.VITE_API_BASE_URL);
+  if (!url) return 'https://via.placeholder.com/150x220?text=No+Cover';
+  if (url.startsWith('http')) return url;
+  
+  if (url.startsWith('/media/')) {
+    const baseUrl = API_URL; 
+    return `${baseUrl}${url}`;
+  }
+  
+  return url;
+};
+
 const ComicCard = ({ comic }) => {
   return (
     <div className="bg-white rounded-2xl shadow-md p-4 flex flex-col hover:shadow-xl transition-shadow duration-300">
-      <img src={comic.cover_image_url} alt={comic.title} className="w-full h-64 object-cover rounded-xl mb-4" />
+      <img src={getImageUrl(comic.cover_image_url)} alt={comic.title} className="w-full h-64 object-cover rounded-xl mb-4" />
       
       <h3 className="font-bold text-lg text-gray-800 line-clamp-1">{comic.title}</h3>
       <div className="flex items-center justify-between mt-2 mb-4">
@@ -31,7 +46,6 @@ const Home = () => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const API_URL = import.meta.env.VITE_API_BASE_URL;
     fetch(`${API_URL}/api/mangas/`)
       .then(response => response.json())
       .then(data => {

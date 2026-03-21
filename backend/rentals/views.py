@@ -18,11 +18,11 @@ from .permissions import IsAdminRole
 User = get_user_model()
 
 class MangaListAPIView(generics.ListAPIView):
-    queryset = Manga.objects.all()
+    queryset = Manga.objects.filter(is_active=True).order_by('-created_at')
     serializer_class = MangaSerializer
 
 class MangaDetailAPIView(generics.RetrieveAPIView):
-    queryset = Manga.objects.all()
+    queryset = Manga.objects.filter(is_active=True)
     serializer_class = MangaSerializer
 
 class UserRegistrationAPIView(generics.CreateAPIView):
@@ -310,20 +310,28 @@ def admin_users(request):
     elif request.method == 'POST':
         data = request.data
         try:
-            username = data.get('email', '').split('@')[0]
+            username = data.get('username') or data.get('email', '').split('@')[0]
+            
             user = User.objects.create(
                 username=username,
                 email=data.get('email'),
                 first_name=data.get('first_name', ''),
                 last_name=data.get('last_name', ''),
-                phone_number=data.get('phone', ''),
-                role='CUSTOMER'
+                phone=data.get('phone', ''), 
+                role='CUSTOMER',
+                address=data.get('address', ''),
+                dob=data.get('dob') or None 
             )
             user.set_password(data.get('password'))
             user.save()
+            
+            Cart.objects.get_or_create(user=user)
+
             return Response({"message": "สร้างสมาชิกสำเร็จ", "id": user.id}, status=201)
+            
         except Exception as e:
-            return Response({"error": "ไม่สามารถสร้างสมาชิกได้ อาจมีอีเมลนี้อยู่แล้ว"}, status=400)
+            return Response({"error": f"ไม่สามารถสร้างสมาชิกได้: {str(e)}"}, status=400)
+
 
 @api_view(['GET', 'PUT', 'DELETE'])
 @permission_classes([IsAdminRole])
@@ -336,10 +344,16 @@ def admin_user_detail(request, user_id):
 
     elif request.method == 'PUT':
         data = request.data
+        
+        user.username = data.get('username', user.username)
         user.first_name = data.get('first_name', user.first_name)
         user.last_name = data.get('last_name', user.last_name)
         user.email = data.get('email', user.email)
         user.phone = data.get('phone', user.phone)
+        user.address = data.get('address', user.address)
+        
+        dob = data.get('dob')
+        if dob: user.dob = dob
         
         password = data.get('password')
         if password and password.strip() != "":
@@ -352,15 +366,17 @@ def admin_user_detail(request, user_id):
         user.is_active = False
         user.save()
         return Response({"message": "ลบสมาชิกออกจากระบบสำเร็จ (Soft Delete)"})
-    
-from django.db.models import Q
 
 @api_view(['POST'])
 @permission_classes([IsAdminRole])
 def admin_add_manga(request):
     serializer = MangaSerializer(data=request.data)
     if serializer.is_valid():
-        manga = serializer.save()
+        manga = serializer.save(is_active=True)
+        
+        if 'cover_image_url' in request.FILES:
+            manga.cover_image_url = request.FILES['cover_image_url']
+            manga.save()
         
         serial_numbers = request.data.get('serial_numbers', '')
         if serial_numbers:
@@ -379,13 +395,22 @@ def admin_manage_manga(request, manga_id):
     if request.method == 'PUT':
         serializer = MangaSerializer(manga, data=request.data, partial=True)
         if serializer.is_valid():
-            serializer.save()
+            manga = serializer.save()
+            
+            if 'cover_image_url' in request.FILES:
+                manga.cover_image_url = request.FILES['cover_image_url']
+                manga.save()
+                
             return Response(serializer.data)
         return Response(serializer.errors, status=400)
         
     elif request.method == 'DELETE':
-        manga.delete()
-        return Response({"message": "ลบหนังสือสำเร็จ"})
+        manga.copies.all().delete()
+        
+        manga.is_active = False
+        manga.save()
+        
+        return Response({"message": "ลบหนังสือและสำเนาทั้งหมดสำเร็จ"})
 
 @api_view(['GET'])
 @permission_classes([IsAdminRole])
@@ -407,35 +432,40 @@ def search_customers(request):
 @api_view(['POST'])
 @permission_classes([IsAdminRole])
 def manual_checkout(request):
-    user_id = request.data.get('user_id')
-    copy_id = request.data.get('copy_id')
-    rent_days = int(request.data.get('rent_days', 7))
+    data = request.data
+    user_id = data.get('user_id')
+    copy_id = data.get('copy_id')
+    rent_days = int(data.get('rent_days', 7))
 
     user = get_object_or_404(User, id=user_id)
     copy = get_object_or_404(MangaCopy, id=copy_id, status=MangaCopy.Status.AVAILABLE)
 
     total_fee = copy.manga.rental_price_per_day * rent_days
 
-    with transaction.atomic():
-        order = RentalOrder.objects.create(
-            user=user,
-            total_rent_fee=total_fee,
-            status=RentalOrder.Status.CHECKED_OUT,
-            approved_at=timezone.now(),
-            checked_out_at=timezone.now()
-        )
+    try:
+        with transaction.atomic():
+            order = RentalOrder.objects.create(
+                user=user,
+                total_rent_fee=total_fee,
+                total_fine=0,
+                status=RentalOrder.Status.CHECKED_OUT,
+                approved_at=timezone.now(),
+                checked_out_at=timezone.now()
+            )
 
-        RentalOrderItem.objects.create(
-            order=order,
-            manga_copy=copy,
-            rent_price_per_day=copy.manga.rental_price_per_day,
-            rent_days=rent_days,
-            item_status=RentalOrderItem.ItemStatus.CHECKED_OUT,
-            rental_date=timezone.now(),
-            due_at=timezone.now() + timedelta(days=rent_days)
-        )
+            RentalOrderItem.objects.create(
+                order=order,
+                manga_copy=copy,
+                rent_price_per_day=...,
+                rent_days=rent_days,
+                item_status='CHECKED_OUT',
+                rental_date=timezone.now(),
+                due_at = timezone.now() + timedelta(days=int(rent_days)) 
+            )
 
-        copy.status = MangaCopy.Status.RENTED
-        copy.save()
+            copy.status = MangaCopy.Status.RENTED
+            copy.save()
 
-    return Response({"message": "ทำรายการเช่าหน้าร้านสำเร็จ!"})
+        return Response({"message": "ทำรายการเช่าหน้าร้านสำเร็จ!"}, status=201)
+    except Exception as e:
+        return Response({"error": f"DB Error: {str(e)}"}, status=400)

@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 
+const API_URL = import.meta.env.VITE_API_BASE_URL;
+
 const Search = () => {
   const [mangas, setMangas] = useState([]);
   const [filteredMangas, setFilteredMangas] = useState([]);
@@ -11,8 +13,18 @@ const Search = () => {
   const [allGenres, setAllGenres] = useState([]);
   const [selectedGenres, setSelectedGenres] = useState([]);
   const [genreSearch, setGenreSearch] = useState('');
+
+  const getImageUrl = (url) => {
+    if (!url) return 'https://via.placeholder.com/150x220?text=No+Cover';
+    if (url.startsWith('http')) return url;
+    if (url.startsWith('/media/')) {
+      const baseUrl = API_URL || ''; 
+      return `${baseUrl.replace(/\/$/, '')}${url}`;
+    }
+    return url;
+  };
+
   useEffect(() => {
-    const API_URL = import.meta.env.VITE_API_BASE_URL;
     
     fetch(`${API_URL}/api/mangas/`)
       .then(res => res.json())
@@ -154,7 +166,11 @@ const Search = () => {
               <div key={manga.id} className="bg-white rounded-xl shadow-md overflow-hidden transform hover:-translate-y-1 hover:shadow-xl transition duration-300 flex flex-col">
                 <Link to={`/comic/${manga.id}`} className="flex-1">
                   <div className="relative pb-[140%]">
-                    <img src={manga.cover_image_url} alt={manga.title} className="absolute top-0 left-0 w-full h-full object-cover" />
+                    <img
+                      src={getImageUrl(manga.cover_image_url)} 
+                      alt={manga.title}
+                      className="absolute top-0 left-0 w-full h-full object-cover"
+                    />
                   </div>
                   <div className="p-3">
                     <h3 className="text-sm font-bold text-gray-800 line-clamp-2 leading-snug" title={manga.title}>{manga.title}</h3>

@@ -32,7 +32,7 @@ const Navbar = () => {
     setIsLoggedIn(false);
     setUserRole(null);
     setIsDropdownOpen(false);
-    alert("Logged out successfully!");
+    // alert("Logged out successfully!");
     navigate('/');
   };
 

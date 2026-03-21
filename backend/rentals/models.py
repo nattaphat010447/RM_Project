@@ -20,11 +20,10 @@ class Manga(models.Model):
     genre = models.CharField(max_length=100, blank=True, null=True)
     cover_image_url = models.ImageField(upload_to='covers/', max_length=255, blank=True, null=True)
     rental_price_per_day = models.DecimalField(max_digits=10, decimal_places=2)
-    
-    isbn = models.CharField(max_length=20, blank=True, null=True)
-    publisher = models.CharField(max_length=200, blank=True, null=True)
-    publish_year = models.IntegerField(blank=True, null=True)
+
     avg_rating = models.DecimalField(max_digits=3, decimal_places=2, default=0.00)
+
+    is_active = models.BooleanField(default=True)
 
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
@@ -76,7 +75,6 @@ class RentalOrder(models.Model):
     requested_at = models.DateTimeField(auto_now_add=True)
     approved_at = models.DateTimeField(blank=True, null=True)
     checked_out_at = models.DateTimeField(blank=True, null=True)
-    due_at = models.DateTimeField(blank=True, null=True)
     returned_at = models.DateTimeField(blank=True, null=True)
 
     def __str__(self):

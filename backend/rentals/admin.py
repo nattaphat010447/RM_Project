@@ -4,7 +4,7 @@ from .models import User, Manga, MangaCopy, Cart, CartItem, RentalOrder, RentalO
 @admin.register(Manga)
 class MangaAdmin(admin.ModelAdmin):
     list_display = ('title', 'author', 'rental_price_per_day', 'avg_rating')
-    search_fields = ('title', 'author', 'isbn')
+    search_fields = ('title', 'author')
 
 @admin.register(MangaCopy)
 class MangaCopyAdmin(admin.ModelAdmin):

@@ -52,7 +52,7 @@ class MangaSerializer(serializers.ModelSerializer):
 
 class CartItemSerializer(serializers.ModelSerializer):
     manga_title = serializers.ReadOnlyField(source='manga_copy.manga.title')
-    manga_cover = serializers.ReadOnlyField(source='manga_copy.manga.cover_image_url')
+    manga_cover = serializers.SerializerMethodField()
     rental_price_per_day = serializers.ReadOnlyField(source='manga_copy.manga.rental_price_per_day')
     serial_no = serializers.ReadOnlyField(source='manga_copy.serial_no')
 
@@ -60,13 +60,18 @@ class CartItemSerializer(serializers.ModelSerializer):
         model = CartItem
         fields = ['id', 'manga_title', 'manga_cover', 'rental_price_per_day', 'serial_no', 'rent_days', 'added_at']
 
+    def get_manga_cover(self, obj):
+        if obj.manga_copy.manga.cover_image_url:
+            return obj.manga_copy.manga.cover_image_url.name
+        return None
+
 class RentalOrderItemSerializer(serializers.ModelSerializer):
     manga_title = serializers.ReadOnlyField(source='manga_copy.manga.title')
     serial_no = serializers.ReadOnlyField(source='manga_copy.serial_no')
 
     class Meta:
         model = RentalOrderItem
-        fields = ['id', 'manga_title', 'serial_no', 'rent_price_per_day', 'rent_days', 'item_status']
+        fields = ['id', 'manga_title', 'serial_no', 'rent_price_per_day', 'rent_days', 'item_status', 'due_at']
 
 class RentalOrderSerializer(serializers.ModelSerializer):
     items = RentalOrderItemSerializer(many=True, read_only=True)

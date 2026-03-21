@@ -7,8 +7,6 @@ from .views import (
     return_item, fine_item, admin_users, admin_user_detail,
     admin_add_manga, admin_manage_manga, search_customers, manual_checkout
 )
-from django.conf import settings
-from django.conf.urls.static import static
 
 urlpatterns = [
     path('mangas/', MangaListAPIView.as_view(), name='manga-list'),
@@ -37,6 +35,3 @@ urlpatterns = [
     path('admin/customers/search/', search_customers, name='search-customers'),
     path('admin/manual-checkout/', manual_checkout, name='manual-checkout'),
 ]
-
-if settings.DEBUG:
-    urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

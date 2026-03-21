@@ -1,16 +1,26 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 
+const API_URL = import.meta.env.VITE_API_BASE_URL;
+
 const ForYou = () => {
   const [mangas, setMangas] = useState([]);
   const [loading, setLoading] = useState(true);
+
+  const getImageUrl = (url) => {
+    if (!url) return 'https://via.placeholder.com/150x220?text=No+Cover';
+    if (url.startsWith('http')) return url;
+    if (url.startsWith('/media/')) {
+      const baseUrl = API_URL || ''; 
+      return `${baseUrl.replace(/\/$/, '')}${url}`;
+    }
+    return url;
+  };
   
   // TODO: ในอนาคตจะเปลี่ยนเป็นการเรียก API ที่ให้คำแนะนำจากโมเดล MBCGCN จริงๆ แทนการ hardcode ID แบบนี้
   const recommendedIds = [1, 2, 3]; 
 
   useEffect(() => {
-    const API_URL = import.meta.env.VITE_API_BASE_URL;
-    
     fetch(`${API_URL}/api/mangas/`)
       .then(res => res.json())
       .then(data => {
@@ -35,7 +45,11 @@ const ForYou = () => {
         {mangas.map(manga => (
           <div key={manga.id} className="bg-white rounded-2xl shadow-lg overflow-hidden transform hover:-translate-y-2 transition duration-300">
             <Link to={`/comic/${manga.id}`}>
-              <img src={manga.cover_image_url} alt={manga.title} className="w-full h-72 object-cover" />
+              <img
+                src={getImageUrl(manga.cover_image_url)}
+                alt={manga.title}
+                className="w-full h-72 object-cover"
+              />
               <div className="p-4">
                 <h3 className="text-xl font-bold text-gray-800 truncate">{manga.title}</h3>
                 <p className="text-sm text-gray-500 mt-1">{manga.genre}</p>

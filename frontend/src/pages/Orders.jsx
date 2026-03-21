@@ -7,6 +7,17 @@ const Orders = () => {
   const navigate = useNavigate();
   const API_URL = import.meta.env.VITE_API_BASE_URL;
 
+  const calculateRemainingDays = (dueDateStr) => {
+    if (!dueDateStr) return null;
+    const dueDate = new Date(dueDateStr);
+    const today = new Date();
+    
+    const diffTime = dueDate - today;
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    
+    return diffDays;
+  };
+
   useEffect(() => {
     const token = localStorage.getItem('access_token');
     if (!token) {
@@ -98,24 +109,38 @@ const Orders = () => {
                   <div className="pt-2">
                     <p className="font-bold text-gray-800 mb-2">รายการมังงะ:</p>
                     <div className="space-y-4">
-                      {order.items.map((item) => (
-                        <div key={item.id} className="flex flex-col">
-                          <div className="bg-[#edf2f7] text-gray-800 font-bold px-4 py-3 rounded-t-md">
-                            {item.manga_title}
-                          </div>
-                          <div className="flex justify-between items-center border-x border-b border-gray-200 px-4 py-4 rounded-b-md">
-                            <span className="font-semibold text-gray-700">Copy: {item.serial_no}</span>
-                            <div className="flex flex-col items-end space-y-1">
-                              <span className="bg-gray-500 text-white text-xs font-bold px-3 py-1 rounded-full">
-                                {item.rent_days} วัน
-                              </span>
-                              <span className="text-gray-500 text-sm">
-                                {item.rent_price_per_day} บาท/วัน
-                              </span>
+                      {order.items.map((item) => {
+                        const remainingDays = calculateRemainingDays(item.due_at);
+
+                        return (
+                          <div key={item.id} className="flex flex-col border border-gray-100 rounded-md overflow-hidden">
+                            <div className="bg-[#edf2f7] text-gray-800 font-bold px-4 py-3">
+                              {item.manga_title}
                             </div>
+                            <div className="flex justify-between items-center px-4 py-4 bg-white border-t border-gray-100">
+                              <span className="font-semibold text-gray-700">Copy: {item.serial_no}</span>
+                              <div className="flex flex-col items-end space-y-1">
+                                <span className="bg-gray-500 text-white text-xs font-bold px-3 py-1 rounded-full">
+                                  {item.rent_days} วัน
+                                </span>
+                                <span className="text-gray-500 text-sm">
+                                  {item.rent_price_per_day} บาท/วัน
+                                </span>
+                              </div>
+                            </div>
+                            
+                            {order.status === 'CHECKED_OUT' && item.due_at && (
+                              <div className={`px-4 py-2 text-sm font-bold border-t ${
+                                remainingDays <= 1 ? 'bg-red-50 text-red-600' : 'bg-green-50 text-green-700'
+                              }`}>
+                                {remainingDays > 0 
+                                  ? `เหลือเวลาคืนอีก: ${remainingDays} วัน` 
+                                  : remainingDays === 0 ? "ต้องคืนวันนี้!" : `เกินกำหนดคืน: ${Math.abs(remainingDays)} วัน`}
+                              </div>
+                            )}
                           </div>
-                        </div>
-                      ))}
+                        );
+                      })}
                     </div>
                   </div>
 

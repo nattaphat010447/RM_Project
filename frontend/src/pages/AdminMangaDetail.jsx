@@ -1,14 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams, Link } from 'react-router-dom';
 
+const API_URL = import.meta.env.VITE_API_BASE_URL;
+
 const AdminMangaDetail = () => {
   const { id } = useParams();
   const navigate = useNavigate();
-  const API_URL = import.meta.env.VITE_API_BASE_URL;
 
   const [manga, setManga] = useState(null);
   
-  // State สำหรับฟอร์มเช่าหน้าร้าน
   const [searchUserQuery, setSearchUserQuery] = useState('');
   const [userResults, setUserResults] = useState([]);
   const [selectedUser, setSelectedUser] = useState(null);
@@ -26,9 +26,23 @@ const AdminMangaDetail = () => {
         if (availableCopies.length > 0) setSelectedCopy(availableCopies[0].id);
       })
       .catch(err => console.error(err));
-}, [id, API_URL]);
+  }, [id, API_URL]);
 
-  // ฟังก์ชันค้นหาลูกค้า
+  const getImageUrl = (url) => {
+    //console.log("Current API_URL is:", import.meta.env.VITE_API_BASE_URL);
+    
+    if (!url) return 'https://via.placeholder.com/150x220?text=No+Cover';
+    
+    if (url.startsWith('http')) return url;
+    
+    if (url.startsWith('/media/')) {
+      const baseUrl = API_URL; 
+      return `${baseUrl}${url}`;
+    }
+    
+    return url;
+  };
+
   const handleSearchUser = async () => {
     if (searchUserQuery.length < 2) {
       alert("กรุณาพิมพ์อย่างน้อย 2 ตัวอักษร"); return;
@@ -44,7 +58,6 @@ const AdminMangaDetail = () => {
     } catch (err) { console.error(err); }
   };
 
-  // ฟังก์ชันยืนยันการเช่า
   const handleCheckout = async () => {
     if (!selectedUser) { alert("กรุณาเลือกลูกค้าก่อน"); return; }
     if (!selectedCopy) { alert("กรุณาเลือกสำเนาหนังสือที่ว่าง"); return; }
@@ -59,18 +72,22 @@ const AdminMangaDetail = () => {
         },
         body: JSON.stringify({
           user_id: selectedUser.id,
-          copy_id: selectedCopy,
-          rent_days: rentDays
+          copy_id: parseInt(selectedCopy),
+          rent_days: parseInt(rentDays)
         })
       });
 
+      const data = await response.json();
+
       if (response.ok) {
         alert("ทำรายการเช่าหน้าร้านสำเร็จ!");
-        navigate('/admin/orders'); // เด้งไปหน้าบิล
+        navigate('/admin/orders');
       } else {
-        alert("เกิดข้อผิดพลาด");
+        alert("ไม่สามารถบันทึกลงฐานข้อมูลได้: " + (data.error || "ข้อมูลไม่ถูกต้อง"));
       }
-    } catch (err) { alert("ระบบขัดข้อง"); }
+    } catch (err) { 
+      alert("ระบบขัดข้อง: " + err.message); 
+    }
   };
 
   if (!manga) return <div className="min-h-screen bg-gray-200 flex justify-center items-center">Loading...</div>;
@@ -86,11 +103,13 @@ const AdminMangaDetail = () => {
             <button onClick={() => navigate('/admin/mangas')} className="text-black hover:text-gray-600 mt-2">
               <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path></svg>
             </button>
+            
             <img 
-              src={manga.cover_image_url?.startsWith('http') || manga.cover_image_url?.startsWith('/') ? manga.cover_image_url : `${API_URL}${manga.cover_image_url}`} 
+              src={getImageUrl(manga.cover_image_url)} 
               alt={manga.title} 
               className="w-48 h-auto object-cover rounded-lg shadow-md border border-gray-200"
             />
+            
             <div className="pt-2">
               <h2 className="text-xl text-gray-500 mb-1">รายละเอียดหนังสือ (Admin)</h2>
               <h1 className="text-3xl font-normal text-gray-800 mb-4">{manga.title}</h1>
@@ -104,7 +123,6 @@ const AdminMangaDetail = () => {
           </Link>
         </div>
 
-        {/* ส่วนของการเช่าหน้าร้าน */}
         <div>
           <h2 className="text-2xl font-normal text-gray-800 mb-2">เช่าหนังสือให้ลูกค้า</h2>
           <p className="text-sm text-gray-500 mb-4">ค้นหาลูกค้า (ชื่อ, อีเมล)</p>
@@ -120,7 +138,6 @@ const AdminMangaDetail = () => {
             <button onClick={handleSearchUser} className="border border-gray-300 text-gray-600 px-6 py-2 rounded-lg hover:bg-gray-50">ค้นหา</button>
           </div>
 
-          {/* แสดงผลลัพธ์ลูกค้า */}
           {userResults.length > 0 && !selectedUser && (
             <div className="bg-gray-50 border border-gray-200 rounded-lg p-4 mb-4">
               <p className="text-xs font-bold text-gray-500 mb-2">เลือกลูกค้า:</p>
@@ -133,7 +150,6 @@ const AdminMangaDetail = () => {
             </div>
           )}
 
-          {/* เมื่อเลือกลูกค้าแล้ว แสดงฟอร์มเช่า */}
           {selectedUser && (
             <div className="bg-indigo-50 border border-indigo-100 rounded-lg p-6 animate-fade-in mt-4">
               <div className="flex justify-between items-center mb-4">

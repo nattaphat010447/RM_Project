@@ -15,8 +15,15 @@ const AdminMangas = () => {
 
   const getImageUrl = (url) => {
     if (!url) return 'https://via.placeholder.com/150x220?text=No+Cover';
-    if (url.startsWith('http') || url.startsWith('/')) return url;
-    return `${API_URL}${url}`;
+    
+    if (url.startsWith('http')) return url;
+    
+    if (url.startsWith('/media/')) {
+      const baseUrl = API_URL; 
+      return `${baseUrl}${url}`;
+    }
+    
+    return url;
   };
 
   const filteredMangas = mangas.filter(m => 

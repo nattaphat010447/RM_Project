@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 
+const API_URL = import.meta.env.VITE_API_BASE_URL;
+
 const ComicDetail = () => {
   const navigate = useNavigate();
   const { id } = useParams();
@@ -12,7 +14,15 @@ const ComicDetail = () => {
   const [copyId, setCopyId] = useState('');
   const [rentalDays, setRentalDays] = useState(7);
 
-  const API_URL = import.meta.env.VITE_API_BASE_URL;
+  const getImageUrl = (url) => {
+    if (!url) return 'https://via.placeholder.com/150x220?text=No+Cover';
+    if (url.startsWith('http')) return url;
+    if (url.startsWith('/media/')) {
+      const baseUrl = API_URL || ''; 
+      return `${baseUrl.replace(/\/$/, '')}${url}`;
+    }
+    return url;
+  };
 
   useEffect(() => {
     fetch(`${API_URL}/api/mangas/${id}/`)
@@ -105,8 +115,8 @@ const ComicDetail = () => {
 
           <div className="w-full md:w-2/5 mt-14 md:mt-0 flex justify-center items-start">
             <img 
-              src={comic.cover_image_url} 
-              alt={comic.title} 
+              src={getImageUrl(comic.cover_image_url)} 
+              alt={comic.title}  
               className="w-full max-w-sm h-auto object-cover rounded-xl shadow-md border border-gray-100"
             />
           </div>
