@@ -38,14 +38,14 @@ const Navbar = () => {
 
   const isActive = (path) => {
     return location.pathname === path 
-      ? "text-blue-600 border-b-2 border-blue-600 pb-1 font-bold" 
-      : "text-slate-600 hover:text-blue-600 transition font-medium";
+      ? "text-brand-secondary border-b-2 border-brand-secondary pb-1 font-bold" 
+      : "text-brand-primary hover:text-brand-secondary transition font-medium";
   };
 
   return (
-    <nav className="bg-white border-b border-slate-200 px-8 py-4 flex justify-between items-center sticky top-0 z-50">
-      <div className="text-2xl font-bold text-slate-900 tracking-wide">
-        <Link to="/">Rec & Rent Manga </Link>
+    <nav className="bg-brand-light border-b border-brand-secondary px-8 py-4 flex justify-between items-center sticky top-0 z-50">
+      <div className="text-2xl font-bold text-brand-primary tracking-wide">
+        <Link to="/">MyManga</Link>
       </div>
       
       <div className="hidden md:flex space-x-8">
@@ -61,23 +61,23 @@ const Navbar = () => {
             className="flex items-center space-x-3 cursor-pointer select-none"
             onClick={() => setIsDropdownOpen(!isDropdownOpen)}
           >
-            <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center border-2 border-blue-200 hover:border-blue-400 transition">
-              <span className="text-blue-900 font-bold">Me</span>
+            <div className="w-10 h-10 bg-brand-light rounded-full flex items-center justify-center border-2 border-brand-secondary hover:border-brand-accent transition">
+              <span className="text-brand-primary font-bold">Me</span>
             </div>
           </div>
           
           {isDropdownOpen && (
-            <div className="absolute right-0 mt-3 w-56 bg-white rounded-xl shadow-lg py-2 z-50 border border-slate-200">
-              <Link to="/profile" className="block px-5 py-3 text-sm text-slate-700 hover:bg-blue-50 hover:text-blue-700 font-medium transition" onClick={() => setIsDropdownOpen(false)}>My Profile</Link>
-              <Link to="/cart" className="block px-5 py-3 text-sm text-slate-700 hover:bg-blue-50 hover:text-blue-700 font-medium transition" onClick={() => setIsDropdownOpen(false)}>My Cart</Link>
-              <Link to="/orders" className="block px-5 py-3 text-sm text-slate-700 hover:bg-blue-50 hover:text-blue-700 font-medium transition" onClick={() => setIsDropdownOpen(false)}>My Orders</Link>
+            <div className="absolute right-0 mt-3 w-56 bg-brand-light rounded-xl shadow-lg py-2 z-50 border border-brand-secondary">
+              <Link to="/profile" className="block px-5 py-3 text-sm text-brand-primary hover:bg-brand-light hover:text-brand-secondary font-medium transition" onClick={() => setIsDropdownOpen(false)}>My Profile</Link>
+              <Link to="/cart" className="block px-5 py-3 text-sm text-brand-primary hover:bg-brand-light hover:text-brand-secondary font-medium transition" onClick={() => setIsDropdownOpen(false)}>My Cart</Link>
+              <Link to="/orders" className="block px-5 py-3 text-sm text-brand-primary hover:bg-brand-light hover:text-brand-secondary font-medium transition" onClick={() => setIsDropdownOpen(false)}>My Orders</Link>
               
               {userRole === 'ADMIN' && (
                 <>
-                  <div className="border-t border-slate-200 my-1"></div>
+                  <div className="border-t border-brand-secondary my-1"></div>
                   <Link 
                     to="/admin/dashboard" 
-                    className="block px-5 py-3 text-sm text-blue-600 hover:bg-blue-50 font-medium transition" 
+                    className="block px-5 py-3 text-sm text-brand-secondary hover:bg-brand-light font-medium transition" 
                     onClick={() => setIsDropdownOpen(false)}
                   >
                     Admin Dashboard
@@ -85,15 +85,15 @@ const Navbar = () => {
                 </>
               )}
 
-              <div className="border-t border-slate-200 my-1"></div>
-              <button onClick={handleLogout} className="block w-full text-left px-5 py-3 text-sm text-red-600 hover:bg-red-50 font-medium transition">Logout</button>
+              <div className="border-t border-brand-secondary my-1"></div>
+              <button onClick={handleLogout} className="block w-full text-left px-5 py-3 text-sm text-brand-secondary hover:bg-brand-light font-medium transition">Logout</button>
             </div>
           )}
         </div>
       ) : (
         <div className="flex items-center space-x-4">
-          <Link to="/signin" className="text-slate-600 font-medium hover:text-blue-600 transition">Sign In</Link>
-          <Link to="/signup" className="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-6 rounded-lg transition shadow-sm">Sign Up</Link>
+          <Link to="/signin" className="text-brand-primary font-medium hover:text-brand-secondary transition">Sign In</Link>
+          <Link to="/signup" className="bg-brand-secondary hover:bg-brand-primary text-brand-light font-semibold py-2 px-6 rounded-lg transition shadow-sm">Sign Up</Link>
         </div>
       )}
     </nav>

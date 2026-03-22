@@ -100,8 +100,8 @@ const AdminMangaForm = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-200 p-4 flex justify-center items-center">
-      <div className="w-full max-w-3xl bg-white rounded-3xl shadow-xl p-8">
+    <div className="min-h-screen bg-brand-light p-4 flex justify-center items-center">
+      <div className="w-full max-w-3xl bg-brand-light rounded-3xl shadow-xl p-8">
         <h1 className="text-2xl font-bold mb-6">{isEditMode ? 'Edit Manga' : 'Add New Manga'}</h1>
         
         <form onSubmit={handleSubmit} className="space-y-4">
@@ -127,7 +127,7 @@ const AdminMangaForm = () => {
           
           {isEditMode && currentImage && !coverFile && (
             <div className="my-2">
-              <p className="text-sm text-gray-500 mb-1">Current cover:</p>
+              <p className="text-sm text-brand-primary mb-1">Current cover:</p>
               <img src={getImageUrl(currentImage)} alt="Current Cover" className="w-24 h-36 object-cover rounded border" />
             </div>
           )}
@@ -145,14 +145,14 @@ const AdminMangaForm = () => {
           )}
 
           <div className="flex justify-between mt-8 pt-4 border-t">
-            <button type="button" onClick={() => navigate(-1)} className="border px-6 py-2 rounded font-bold hover:bg-gray-50">← Back</button>
+            <button type="button" onClick={() => navigate(-1)} className="border px-6 py-2 rounded font-bold hover:bg-brand-light">← Back</button>
             <div className="flex gap-4">
               {isEditMode && (
-                <button type="button" onClick={handleDelete} className="bg-red-500 text-white px-6 py-2 rounded font-bold hover:bg-red-600 transition">
+                <button type="button" onClick={handleDelete} className="bg-brand-accent text-brand-light px-6 py-2 rounded font-bold hover:bg-brand-primary transition">
                   Delete Manga
                 </button>
               )}
-              <button type="submit" className="bg-gray-800 text-white px-6 py-2 rounded font-bold hover:bg-black transition">
+              <button type="submit" className="bg-brand-primary text-brand-light px-6 py-2 rounded font-bold hover:bg-brand-primary transition">
                 {isEditMode ? 'Save Changes' : 'Create Manga'}
               </button>
             </div>

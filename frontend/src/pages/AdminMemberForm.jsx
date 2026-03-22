@@ -93,89 +93,89 @@ const AdminMemberForm = () => {
     }
   };
 
-  if (loading) return <div className="min-h-screen bg-gray-200 flex items-center justify-center">Loading...</div>;
+  if (loading) return <div className="min-h-screen bg-brand-light flex items-center justify-center">Loading...</div>;
 
   return (
-    <div className="min-h-screen bg-gray-200 p-4 flex items-center justify-center">
-      <div className="w-full max-w-3xl bg-white rounded-3xl shadow-xl p-8 md:p-12">
-        <h1 className="text-2xl font-bold text-gray-800 mb-8 border-b pb-4">
+    <div className="min-h-screen bg-brand-light p-4 flex items-center justify-center">
+      <div className="w-full max-w-3xl bg-brand-light rounded-3xl shadow-xl p-8 md:p-12">
+        <h1 className="text-2xl font-bold text-brand-primary mb-8 border-b pb-4">
           {isEditMode ? 'Edit Member' : 'Add New Member'}
         </h1>
 
         <form onSubmit={handleSubmit} className="space-y-6">
           
           <div>
-            <label className="block text-sm font-bold text-gray-700 mb-2">Username *</label>
+            <label className="block text-sm font-bold text-brand-primary mb-2">Username *</label>
             <input 
               type="text" required
               value={formData.username}
               onChange={(e) => setFormData({...formData, username: e.target.value})}
-              className="w-full border border-gray-300 rounded-lg px-4 py-2 text-gray-700 focus:outline-none focus:border-indigo-500 bg-gray-50"
+              className="w-full border border-brand-secondary rounded-lg px-4 py-2 text-brand-primary focus:outline-none focus:border-brand-accent bg-brand-light"
               placeholder="Enter a unique username"
             />
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-bold text-gray-700 mb-2">Full Name *</label>
+              <label className="block text-sm font-bold text-brand-primary mb-2">Full Name *</label>
               <input 
                 type="text" required
                 value={formData.fullName}
                 onChange={(e) => setFormData({...formData, fullName: e.target.value})}
-                className="w-full border border-gray-300 rounded-lg px-4 py-2 text-gray-700 focus:outline-none focus:border-indigo-500"
+                className="w-full border border-brand-secondary rounded-lg px-4 py-2 text-brand-primary focus:outline-none focus:border-brand-accent"
                 placeholder="Enter first and last name"
               />
             </div>
 
             <div>
-              <label className="block text-sm font-bold text-gray-700 mb-2">Date of Birth *</label>
+              <label className="block text-sm font-bold text-brand-primary mb-2">Date of Birth *</label>
               <input 
                 type="date" required
                 value={formData.dob}
                 onChange={(e) => setFormData({...formData, dob: e.target.value})}
-                className="w-full border border-gray-300 rounded-lg px-4 py-2 text-gray-700 focus:outline-none focus:border-indigo-500"
+                className="w-full border border-brand-secondary rounded-lg px-4 py-2 text-brand-primary focus:outline-none focus:border-brand-accent"
               />
             </div>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-bold text-gray-700 mb-2">Email *</label>
+              <label className="block text-sm font-bold text-brand-primary mb-2">Email *</label>
               <input 
                 type="email" required
                 value={formData.email}
                 onChange={(e) => setFormData({...formData, email: e.target.value})}
-                className="w-full border border-gray-300 rounded-lg px-4 py-2 text-gray-700 focus:outline-none focus:border-indigo-500"
+                className="w-full border border-brand-secondary rounded-lg px-4 py-2 text-brand-primary focus:outline-none focus:border-brand-accent"
                 placeholder="Enter member email"
               />
             </div>
 
             <div>
-              <label className="block text-sm font-bold text-gray-700 mb-2">Phone *</label>
+              <label className="block text-sm font-bold text-brand-primary mb-2">Phone *</label>
               <input 
                 type="text" required
                 value={formData.phone}
                 onChange={(e) => setFormData({...formData, phone: e.target.value})}
-                className="w-full border border-gray-300 rounded-lg px-4 py-2 text-gray-700 focus:outline-none focus:border-indigo-500"
+                className="w-full border border-brand-secondary rounded-lg px-4 py-2 text-brand-primary focus:outline-none focus:border-brand-accent"
                 placeholder="Enter phone number"
               />
             </div>
           </div>
 
           <div>
-            <label className="block text-sm font-bold text-gray-700 mb-2">Address *</label>
+            <label className="block text-sm font-bold text-brand-primary mb-2">Address *</label>
             <textarea 
               required
               rows="3"
               value={formData.address}
               onChange={(e) => setFormData({...formData, address: e.target.value})}
-              className="w-full border border-gray-300 rounded-lg px-4 py-2 text-gray-700 focus:outline-none focus:border-indigo-500 resize-none"
+              className="w-full border border-brand-secondary rounded-lg px-4 py-2 text-brand-primary focus:outline-none focus:border-brand-accent resize-none"
               placeholder="Enter member address"
             ></textarea>
           </div>
 
-          <div className="bg-[#FEF9E7] border border-[#FDEBD0] rounded-lg p-5 mt-8">
-            <label className="block text-sm font-bold text-gray-700 mb-2">
+          <div className="bg-brand-light border border-brand-secondary rounded-lg p-5 mt-8">
+            <label className="block text-sm font-bold text-brand-primary mb-2">
               Password {isEditMode ? '(enter only if you want to change it)' : '*'}
             </label>
             <input 
@@ -184,15 +184,15 @@ const AdminMemberForm = () => {
               value={formData.password}
               onChange={(e) => setFormData({...formData, password: e.target.value})}
               placeholder={isEditMode ? "Leave empty to keep current password" : "Set a password..."}
-              className="w-full border border-gray-300 rounded-lg px-4 py-2 text-gray-700 focus:outline-none focus:border-yellow-400"
+              className="w-full border border-brand-secondary rounded-lg px-4 py-2 text-brand-primary focus:outline-none focus:border-brand-accent"
             />
           </div>
 
           <div className="flex justify-between items-center mt-10 pt-6 border-t">
-            <button type="button" onClick={() => navigate('/admin/members')} className="border border-gray-300 hover:bg-gray-50 text-gray-700 font-bold py-2 px-6 rounded-lg transition">
+            <button type="button" onClick={() => navigate('/admin/members')} className="border border-brand-secondary hover:bg-brand-light text-brand-primary font-bold py-2 px-6 rounded-lg transition">
               ← Back
             </button>
-            <button type="submit" className="bg-[#2C3E50] hover:bg-gray-800 text-white font-bold py-2 px-6 rounded-lg transition shadow-md">
+            <button type="submit" className="bg-brand-primary hover:bg-brand-primary text-brand-light font-bold py-2 px-6 rounded-lg transition shadow-md">
               {isEditMode ? 'Save Changes' : 'Create Member'}
             </button>
           </div>

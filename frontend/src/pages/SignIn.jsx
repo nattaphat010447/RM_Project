@@ -47,18 +47,18 @@ const SignIn = () => {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-slate-50">
-      <div className="bg-white p-8 rounded-xl shadow-lg border border-slate-200 w-full max-w-md">
+    <div className="min-h-screen flex items-center justify-center bg-brand-light">
+      <div className="bg-brand-light p-8 rounded-xl shadow-lg border border-brand-secondary w-full max-w-md">
         
         <div className="flex justify-center mb-4">
-          <div className="bg-blue-100 p-4 rounded-full">
-            <svg xmlns="http://www.w3.org/2000/svg" className="h-10 w-10 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <div className="bg-brand-light p-4 rounded-full">
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-10 w-10 text-brand-secondary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
             </svg>
           </div>
         </div>
 
-        <h2 className="text-3xl font-bold text-center text-slate-900 mb-8">Sign In</h2>
+        <h2 className="text-3xl font-bold text-center text-brand-primary mb-8">Sign In</h2>
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
@@ -84,7 +84,7 @@ const SignIn = () => {
             />
           </div>
 
-          <div className="flex justify-end pt-4">
+          <div className="flex justify-center pt-4">
             <button
               type="submit"
               className="btn-primary-modern px-8 py-2 rounded-lg font-semibold"

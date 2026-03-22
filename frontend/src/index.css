@@ -4,33 +4,55 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Brand color CSS variables */
+:root {
+  --color-brand-primary: #1A3263;
+  --color-brand-secondary: #FAB95B;
+  --color-brand-accent: #FAB95B;
+  --color-brand-light: #FFFFFF;
+}
+
 /* Modern base styles */
 @layer base {
   body {
-    @apply bg-slate-50 text-slate-900;
+    background-color: var(--color-brand-light);
+    color: var(--color-brand-primary);
   }
   
   h1 {
-    @apply text-slate-900 font-bold;
+    color: var(--color-brand-primary);
+    font-weight: 700;
   }
   
   h2, h3, h4, h5, h6 {
-    @apply text-slate-800 font-semibold;
+    color: var(--color-brand-primary);
+    font-weight: 600;
   }
   
   a {
-    @apply text-blue-500 hover:text-blue-600 transition-colors;
+    color: var(--color-brand-accent);
+    transition-property: color;
+    transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+    transition-duration: 150ms;
+  }
+  
+  a:hover {
+    color: var(--color-brand-secondary);
   }
   
   button {
-    @apply transition-colors duration-200;
+    transition-property: color, background-color, border-color;
+    transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+    transition-duration: 200ms;
   }
 }
 
 /* Utility classes for consistency */
 @layer components {
   .card-modern {
-    @apply bg-white rounded-xl shadow-sm border border-slate-200 p-4 transition-shadow hover:shadow-md;
+    @apply rounded-xl shadow-sm p-4 transition-shadow hover:shadow-md;
+    background-color: var(--color-brand-light);
+    border: 1px solid var(--color-brand-secondary);
   }
   
   .btn-modern {
@@ -38,26 +60,50 @@
   }
   
   .btn-primary-modern {
-    @apply btn-modern bg-blue-500 hover:bg-blue-600 text-white;
+    @apply btn-modern;
+    background-color: var(--color-brand-accent);
+    color: var(--color-brand-light);
+  }
+  
+  .btn-primary-modern:hover {
+    background-color: var(--color-brand-secondary);
   }
   
   .btn-secondary-modern {
-    @apply btn-modern bg-slate-100 hover:bg-slate-200 text-slate-900;
+    @apply btn-modern;
+    background-color: var(--color-brand-light);
+    color: var(--color-brand-primary);
+  }
+  
+  .btn-secondary-modern:hover {
+    background-color: var(--color-brand-light);
   }
   
   .input-modern {
-    @apply w-full px-4 py-2 rounded-lg border border-slate-200 bg-white text-slate-900 placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent;
+    @apply w-full px-4 py-2 rounded-lg focus:outline-none focus:ring-2 focus:border-transparent;
+    background-color: var(--color-brand-light);
+    color: var(--color-brand-primary);
+    border: 1px solid var(--color-brand-secondary);
+  }
+  
+  .input-modern::placeholder {
+    color: var(--color-brand-secondary);
+  }
+  
+  .input-modern:focus {
+    border-color: transparent;
+    --tw-ring-color: var(--color-brand-secondary);
   }
   
   .badge-success {
-    @apply bg-emerald-100 text-emerald-800 text-xs font-semibold px-3 py-1 rounded-full;
+    @apply bg-brand-light text-brand-primary text-xs font-semibold px-3 py-1 rounded-full;
   }
   
   .badge-danger {
-    @apply bg-red-100 text-red-800 text-xs font-semibold px-3 py-1 rounded-full;
+    @apply bg-brand-light text-brand-primary text-xs font-semibold px-3 py-1 rounded-full;
   }
   
   .section-header {
-    @apply text-2xl font-bold text-slate-900 border-l-4 border-blue-500 pl-4;
+    @apply text-2xl font-bold text-brand-primary border-l-4 border-brand-primary pl-4;
   }
 }

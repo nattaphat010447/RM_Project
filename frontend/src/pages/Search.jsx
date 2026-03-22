@@ -93,14 +93,14 @@ const Search = () => {
     setSelectedGenres(selectedGenres.filter(g => g !== genre));
   };
 
-  if (loading) return <div className="min-h-screen flex justify-center items-center text-2xl font-bold text-indigo-900 bg-gray-50">Loading data...</div>;
+  if (loading) return <div className="min-h-screen flex justify-center items-center text-2xl font-bold text-brand-primary bg-brand-light">Loading data...</div>;
 
   return (
-    <div className="min-h-screen bg-slate-50 py-10 px-4 md:px-10">
+    <div className="min-h-screen bg-brand-light py-10 px-4 md:px-10">
       <div className="max-w-6xl mx-auto">
-        <h2 className="text-4xl font-bold text-slate-900 mb-8 text-center tracking-tight">Search</h2>
+        <h2 className="text-4xl font-bold text-brand-primary mb-8 text-center tracking-tight">Search</h2>
 
-        <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6 md:p-8 mb-10">
+        <div className="bg-brand-light rounded-xl shadow-sm border border-brand-secondary p-6 md:p-8 mb-10">
           
           <div className="mb-6 relative">
             <input 
@@ -108,36 +108,36 @@ const Search = () => {
               placeholder="Search by manga title or author..." 
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full bg-slate-50 border border-slate-200 text-slate-900 text-lg rounded-lg px-5 py-4 pl-12 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition"
+              className="w-full bg-brand-light border border-brand-secondary text-brand-primary text-lg rounded-lg px-5 py-4 pl-12 focus:outline-none focus:border-brand-accent focus:ring-2 focus:ring-brand-light transition"
             />
-            <svg className="w-6 h-6 text-slate-400 absolute left-4 top-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+            <svg className="w-6 h-6 text-brand-primary absolute left-4 top-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
           </div>
 
-          <div className="border-t border-slate-200 pt-6">
-            <h3 className="text-lg font-semibold text-slate-900 mb-3 flex items-center">
-              <svg className="w-5 h-5 mr-2 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"></path></svg>
+          <div className="border-t border-brand-secondary pt-6">
+            <h3 className="text-lg font-semibold text-brand-primary mb-3 flex items-center">
+              <svg className="w-5 h-5 mr-2 text-brand-secondary" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"></path></svg>
               Filter by genre
             </h3>
 
             <div className="flex flex-wrap gap-2 mb-4 min-h-[32px]">
-              {selectedGenres.length === 0 && <span className="text-slate-500 text-sm italic">No genres selected</span>}
+              {selectedGenres.length === 0 && <span className="text-brand-primary text-sm italic">No genres selected</span>}
               {selectedGenres.map(genre => (
-                <span key={genre} className="bg-blue-600 text-white px-4 py-1.5 rounded-full text-sm font-semibold flex items-center gap-2 shadow-sm animate-fade-in">
+                <span key={genre} className="bg-brand-secondary text-brand-light px-4 py-1.5 rounded-full text-sm font-semibold flex items-center gap-2 shadow-sm animate-fade-in">
                   {genre}
-                  <button onClick={() => removeGenre(genre)} className="hover:text-red-300 focus:outline-none transition">
+                  <button onClick={() => removeGenre(genre)} className="hover:text-brand-light focus:outline-none transition">
                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12"></path></svg>
                   </button>
                 </span>
               ))}
             </div>
 
-            <div className="bg-slate-50 rounded-lg p-4 border border-slate-200">
+            <div className="bg-brand-light rounded-lg p-4 border border-brand-secondary">
               <input 
                 type="text" 
                 placeholder="Search genres" 
                 value={genreSearch}
                 onChange={(e) => setGenreSearch(e.target.value)}
-                className="w-full bg-white border border-slate-200 text-sm rounded-lg px-4 py-2 mb-3 focus:outline-none focus:border-blue-400"
+                className="w-full bg-brand-light border border-brand-secondary text-sm rounded-lg px-4 py-2 mb-3 focus:outline-none focus:border-brand-accent"
               />
               
               <div className="flex flex-wrap gap-2 max-h-40 overflow-y-auto custom-scrollbar">
@@ -148,7 +148,7 @@ const Search = () => {
                     <button 
                       key={genre}
                       onClick={() => toggleGenre(genre)}
-                      className="bg-white border border-slate-300 hover:border-blue-400 hover:text-blue-600 text-slate-600 px-3 py-1.5 rounded-full text-sm font-medium transition shadow-sm"
+                      className="bg-brand-light border border-brand-secondary hover:border-brand-accent hover:text-brand-secondary text-brand-primary px-3 py-1.5 rounded-full text-sm font-medium transition shadow-sm"
                     >
                       + {genre}
                     </button>
@@ -159,21 +159,21 @@ const Search = () => {
           </div>
         </div>
 
-        <div className="mb-4 text-gray-600 font-semibold flex justify-between items-end">
-          <span>Results: <span className="text-blue-600 text-xl font-bold">{filteredMangas.length}</span> items</span>
+        <div className="mb-4 text-brand-primary font-semibold flex justify-between items-end">
+          <span>Results: <span className="text-brand-secondary text-xl font-bold">{filteredMangas.length}</span> items</span>
         </div>
 
         {filteredMangas.length === 0 ? (
-          <div className="bg-white rounded-xl shadow-sm p-16 text-center border border-slate-200">
-            <svg className="w-16 h-16 text-slate-300 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-            <h2 className="text-2xl font-bold text-slate-500 mb-2">No manga found</h2>
-            <p className="text-slate-400">Try a different keyword or remove some genre filters.</p>
+          <div className="bg-brand-light rounded-xl shadow-sm p-16 text-center border border-brand-secondary">
+            <svg className="w-16 h-16 text-brand-light mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+            <h2 className="text-2xl font-bold text-brand-primary mb-2">No manga found</h2>
+            <p className="text-brand-primary">Try a different keyword or remove some genre filters.</p>
           </div>
         ) : (
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-6">
             {filteredMangas.map((manga) => (
-              <div key={manga.id} className="bg-white rounded-lg shadow-sm border border-slate-200 overflow-hidden transform hover:-translate-y-1 hover:shadow-lg transition duration-300 flex flex-col">
-                <Link to={`/comic/${manga.id}`} className="flex-1 flex flex-col">
+              <div key={manga.id} className="bg-brand-light rounded-lg shadow-sm border border-brand-secondary overflow-hidden transform hover:-translate-y-1 hover:shadow-lg transition duration-300 flex flex-col">
+                <Link to={`/manga/${manga.id}`} className="flex-1 flex flex-col">
                   <div className="relative pb-[140%]">
                     <img
                       src={getImageUrl(manga.cover_image_url)} 
@@ -182,14 +182,14 @@ const Search = () => {
                     />
                   </div>
                   <div className="p-3 flex-1 flex flex-col">
-                    <h3 className="text-sm font-semibold text-slate-900 line-clamp-2 leading-snug" title={manga.title}>{manga.title}</h3>
-                    <p className="text-xs text-slate-600 mt-1 truncate" title={manga.author}>{manga.author}</p>
+                    <h3 className="text-sm font-semibold text-brand-primary line-clamp-2 leading-snug" title={manga.title}>{manga.title}</h3>
+                    <p className="text-xs text-brand-primary mt-1 truncate" title={manga.author}>{manga.author}</p>
                     
                     <div className="flex justify-between items-center mt-auto pt-2">
-                      <span className="text-xs font-semibold text-amber-500">
+                      <span className="text-xs font-semibold text-brand-accent">
                         ★ {manga.avg_rating || '0.0'}
                       </span>
-                      <span className="text-[10px] font-semibold text-slate-500 uppercase tracking-wider">
+                      <span className="text-[10px] font-semibold text-brand-primary uppercase tracking-wider">
                         Sold {manga.sold_count || 0}
                       </span>
                     </div>
@@ -204,9 +204,9 @@ const Search = () => {
       
       <style dangerouslySetInnerHTML={{__html: `
         .custom-scrollbar::-webkit-scrollbar { width: 6px; }
-        .custom-scrollbar::-webkit-scrollbar-track { background: #f1f5f9; border-radius: 4px; }
-        .custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
-        .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: #FFFFFF; border-radius: 4px; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #547792; border-radius: 4px; }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #1A3263; }
         .animate-fade-in { animation: fadeIn 0.2s ease-in-out; }
         @keyframes fadeIn { from { opacity: 0; transform: scale(0.95); } to { opacity: 1; transform: scale(1); } }
       `}} />

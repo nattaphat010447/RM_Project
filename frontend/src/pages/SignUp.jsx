@@ -62,14 +62,14 @@ const SignUp = () => {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50 py-12 px-4 flex justify-center items-center">
-      <div className="bg-white p-8 rounded-xl shadow-lg border border-slate-200 w-full max-w-2xl">
-        <h2 className="text-3xl font-bold text-center text-slate-900 mb-8 tracking-tight">Create Account</h2>
+    <div className="min-h-screen bg-brand-light py-12 px-4 flex justify-center items-center">
+      <div className="bg-brand-light p-8 rounded-xl shadow-lg border border-brand-secondary w-full max-w-2xl">
+        <h2 className="text-3xl font-bold text-center text-brand-primary mb-8 tracking-tight">Create Account</h2>
         
         <form onSubmit={handleSubmit} className="space-y-6">
           {/* Section 1: Account Information */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="md:col-span-2 text-xs font-semibold text-slate-500 uppercase tracking-wide border-b border-slate-200 pb-2">Account Info</div>
+            <div className="md:col-span-2 text-xs font-semibold text-brand-primary uppercase tracking-wide border-b border-brand-secondary pb-2">Account Info</div>
             <input type="text" name="username" placeholder="Username" onChange={handleChange} required className="input-modern" />
             <input type="email" name="email" placeholder="Email Address" onChange={handleChange} required className="input-modern" />
             <input type="password" name="password" placeholder="Password" onChange={handleChange} required className="input-modern" />
@@ -78,12 +78,12 @@ const SignUp = () => {
 
           {/* Section 2: Personal Information */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="md:col-span-2 text-xs font-semibold text-slate-500 uppercase tracking-wide border-b border-slate-200 pb-2 mt-4">Personal Info</div>
+            <div className="md:col-span-2 text-xs font-semibold text-brand-primary uppercase tracking-wide border-b border-brand-secondary pb-2 mt-4">Personal Info</div>
             <input type="text" name="first_name" placeholder="First Name" onChange={handleChange} className="input-modern" />
             <input type="text" name="last_name" placeholder="Last Name" onChange={handleChange} className="input-modern" />
             <input type="tel" name="phone" placeholder="Phone Number (e.g. 0812345678)" onChange={handleChange} className="input-modern" />
             <div className="flex flex-col">
-              <label className="text-xs text-slate-600 ml-2 mb-1 font-medium">Date of Birth</label>
+              <label className="text-xs text-brand-primary ml-2 mb-1 font-medium">Date of Birth</label>
               <input type="date" name="dob" onChange={handleChange} className="input-modern" />
             </div>
             <div className="md:col-span-2">
@@ -91,7 +91,7 @@ const SignUp = () => {
             </div>
           </div>
 
-          <button type="submit" className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-lg transition duration-300 shadow-sm mt-6">
+          <button type="submit" className="w-full bg-brand-secondary hover:bg-brand-primary text-brand-light font-bold py-3 rounded-lg transition duration-300 shadow-sm mt-6">
             Create Account
           </button>
         </form>
