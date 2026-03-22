@@ -63,7 +63,7 @@ const Popular = () => {
               <div className="absolute top-2 left-2 bg-yellow-400 text-gray-900 w-10 h-10 rounded-full flex items-center justify-center font-black text-xl shadow-md border-2 border-white">
                 #{index + 1}
               </div>
-              <Link to={`/comic/${manga.id}`}>
+              <Link to={`/manga/${manga.id}`}>
                 <img
                   src={getImageUrl(manga.cover_image_url)}
                   alt={manga.title}

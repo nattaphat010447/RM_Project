@@ -173,7 +173,7 @@ const Search = () => {
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-6">
             {filteredMangas.map((manga) => (
               <div key={manga.id} className="bg-white rounded-xl shadow-md overflow-hidden transform hover:-translate-y-1 hover:shadow-xl transition duration-300 flex flex-col">
-                <Link to={`/comic/${manga.id}`} className="flex-1 flex flex-col">
+                <Link to={`/manga/${manga.id}`} className="flex-1 flex flex-col">
                   <div className="relative pb-[140%]">
                     <img
                       src={getImageUrl(manga.cover_image_url)} 

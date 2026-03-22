@@ -58,7 +58,7 @@ const ForYou = () => {
       <div className="max-w-6xl mx-auto grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-8">
         {mangas.map(manga => (
           <div key={manga.id} className="bg-white rounded-2xl shadow-lg overflow-hidden transform hover:-translate-y-2 transition duration-300">
-            <Link to={`/comic/${manga.id}`}>
+            <Link to={`/manga/${manga.id}`}>
               <img
                 src={getImageUrl(manga.cover_image_url)}
                 alt={manga.title}

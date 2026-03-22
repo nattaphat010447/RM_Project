@@ -45,7 +45,7 @@ const Navbar = () => {
   return (
     <nav className="bg-white shadow-sm px-8 py-4 flex justify-between items-center sticky top-0 z-50">
       <div className="text-2xl font-black text-indigo-900 tracking-wider">
-        <Link to="/">ComicRental</Link>
+        <Link to="/">MangaRental</Link>
       </div>
       
       <div className="hidden md:flex space-x-8">

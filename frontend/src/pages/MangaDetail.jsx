@@ -3,11 +3,11 @@ import { useNavigate, useParams } from 'react-router-dom';
 
 const API_URL = import.meta.env.VITE_API_BASE_URL;
 
-const ComicDetail = () => {
+const MangaDetail = () => {
   const navigate = useNavigate();
   const { id } = useParams();
   
-  const [comic, setComic] = useState(null);
+  const [manga, setManga] = useState(null);
   const [loading, setLoading] = useState(true);
   
   const [isAdded, setIsAdded] = useState(false);
@@ -40,7 +40,7 @@ const ComicDetail = () => {
         return response.json();
       })
       .then(data => {
-        setComic(data);
+        setManga(data);
         setLoading(false);
         
         const availableCopies = data.copies?.filter(c => c.status === 'AVAILABLE') || [];
@@ -50,7 +50,7 @@ const ComicDetail = () => {
         }
       })
       .catch(error => {
-        console.error("Error fetching comic detail: ", error);
+        console.error("Error fetching manga detail: ", error);
         setLoading(false);
       });
   }, [id, API_URL]);
@@ -91,14 +91,14 @@ const ComicDetail = () => {
   };
 
   if (loading) {
-    return <div className="min-h-screen bg-[#2d116c] flex items-center justify-center text-white text-2xl font-bold">Loading Comic Details...</div>;
+    return <div className="min-h-screen bg-[#2d116c] flex items-center justify-center text-white text-2xl font-bold">Loading Manga Details...</div>;
   }
 
-  if (!comic) {
-    return <div className="min-h-screen bg-[#2d116c] flex items-center justify-center text-white text-2xl font-bold">Comic not found!</div>;
+  if (!manga) {
+    return <div className="min-h-screen bg-[#2d116c] flex items-center justify-center text-white text-2xl font-bold">Manga not found!</div>;
   }
 
-  const availableCopies = comic.copies?.filter(c => c.status === 'AVAILABLE') || [];
+  const availableCopies = manga.copies?.filter(c => c.status === 'AVAILABLE') || [];
   const isOutOfStock = availableCopies.length === 0;
 
   return (
@@ -107,7 +107,7 @@ const ComicDetail = () => {
         
         {isAdded && (
           <div className="bg-[#d1e7dd] text-[#0f5132] px-6 py-4 rounded-md mb-6 font-bold shadow-md transition-all">
-            Added "{comic.title}" (Copy: {comic.copies.find(c => c.id.toString() === copyId.toString())?.serial_no}) to the cart for {rentalDays} days successfully.
+            Added "{manga.title}" (Copy: {manga.copies.find(c => c.id.toString() === copyId.toString())?.serial_no}) to the cart for {rentalDays} days successfully.
           </div>
         )}
 
@@ -124,21 +124,21 @@ const ComicDetail = () => {
 
           <div className="w-full md:w-2/5 mt-14 md:mt-0 flex justify-center items-start">
             <img 
-              src={getImageUrl(comic.cover_image_url)} 
-              alt={comic.title}  
+              src={getImageUrl(manga.cover_image_url)} 
+              alt={manga.title}  
               className="w-full max-w-sm h-auto object-cover rounded-xl shadow-md border border-gray-100"
             />
           </div>
 
           <div className="w-full md:w-3/5 flex flex-col pt-2 md:pt-4">
-            <h1 className="text-3xl font-bold text-purple-900 mb-4">{comic.title}</h1>
+            <h1 className="text-3xl font-bold text-purple-900 mb-4">{manga.title}</h1>
             
             <div className="space-y-2 text-gray-700 mb-6">
-              <p><span className="font-semibold text-gray-500 w-24 inline-block">Author:</span> {comic.author}</p>
-              <p><span className="font-semibold text-gray-500 w-24 inline-block">Category:</span> {comic.genre}</p>
+              <p><span className="font-semibold text-gray-500 w-24 inline-block">Author:</span> {manga.author}</p>
+              <p><span className="font-semibold text-gray-500 w-24 inline-block">Category:</span> {manga.genre}</p>
               <p className="pt-2">
                 <span className="font-semibold text-gray-800">Rental Price:</span> 
-                <span className="font-bold text-lg text-gray-900 ml-2">{comic.rental_price_per_day} THB/day</span>
+                <span className="font-bold text-lg text-gray-900 ml-2">{manga.rental_price_per_day} THB/day</span>
               </p>
             </div>
 
@@ -198,4 +198,4 @@ const ComicDetail = () => {
   );
 };
 
-export default ComicDetail;
+export default MangaDetail;
