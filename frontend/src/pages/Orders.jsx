@@ -1,21 +1,73 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 
+const StarRating = ({ initialRating, mangaId, onRate }) => {
+  const [hover, setHover] = useState(0);
+  const [rating, setRating] = useState(initialRating || 0);
+
+  const handleRating = async (rateValue) => {
+    setRating(rateValue);
+    await onRate(mangaId, rateValue);
+  };
+
+  return (
+    <div className="flex items-center space-x-1 bg-yellow-50 px-3 py-1.5 rounded-lg border border-yellow-200">
+      <span className="text-sm font-bold text-yellow-800 mr-2">ให้คะแนน:</span>
+      {[1, 2, 3, 4, 5].map((star) => (
+        <button
+          key={star}
+          type="button"
+          onClick={() => handleRating(star)}
+          onMouseEnter={() => setHover(star)}
+          onMouseLeave={() => setHover(0)}
+          className="focus:outline-none transition-transform hover:scale-125"
+        >
+          <span className={`text-2xl ${star <= (hover || rating) ? 'text-yellow-400' : 'text-gray-300'}`}>
+            ★
+          </span>
+        </button>
+      ))}
+    </div>
+  );
+};
+
 const Orders = () => {
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
-  const API_URL = import.meta.env.VITE_API_BASE_URL;
+  
+  const API_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000';
 
   const calculateRemainingDays = (dueDateStr) => {
     if (!dueDateStr) return null;
     const dueDate = new Date(dueDateStr);
     const today = new Date();
     
+    dueDate.setHours(0, 0, 0, 0);
+    today.setHours(0, 0, 0, 0);
+    
     const diffTime = dueDate - today;
     const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
     
     return diffDays;
+  };
+
+  const handleRateManga = async (mangaId, rating) => {
+    const token = localStorage.getItem('access_token');
+    try {
+      const response = await fetch(`${API_URL}/api/mangas/${mangaId}/review/`, {
+        method: 'POST',
+        headers: { 
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json' 
+        },
+        body: JSON.stringify({ rating })
+      });
+      const data = await response.json();
+      if (!response.ok) alert(data.error);
+    } catch (err) {
+      console.error("Rating error:", err);
+    }
   };
 
   useEffect(() => {
@@ -64,6 +116,22 @@ const Orders = () => {
     }
   };
 
+  const displayOrders = orders.map(order => {
+    const validItems = order.items.filter(item => {
+      if (item.item_status === 'LOST') return false;
+
+      if (order.status === 'CHECKED_OUT' && item.due_at) {
+        const remainingDays = calculateRemainingDays(item.due_at);
+        if (remainingDays <= -90) {
+          return false; 
+        }
+      }
+      return true;
+    });
+    
+    return { ...order, items: validItems };
+  }).filter(order => order.items.length > 0);
+
   if (loading) return <div className="min-h-screen bg-[#2d116c] flex justify-center items-center text-white text-2xl">Loading...</div>;
 
   return (
@@ -77,11 +145,11 @@ const Orders = () => {
           </Link>
         </div>
 
-        {orders.length === 0 ? (
-           <div className="text-center text-gray-500 font-bold text-xl py-10">คุณยังไม่มีประวัติการทำรายการ</div>
+        {displayOrders.length === 0 ? (
+           <div className="text-center text-gray-500 font-bold text-xl py-10">คุณยังไม่มีประวัติการทำรายการ (หรือรายการถูกจัดเก็บแล้ว)</div>
         ) : (
           <div className="space-y-8">
-            {orders.map((order) => (
+            {displayOrders.map((order) => (
               <div key={order.id} className="flex flex-col shadow-sm">
                 
                 <div className="bg-[#2d3748] text-white flex justify-between items-center px-4 py-3 rounded-t-lg">
@@ -129,13 +197,29 @@ const Orders = () => {
                               </div>
                             </div>
                             
-                            {order.status === 'CHECKED_OUT' && item.due_at && (
+                            {order.status === 'CHECKED_OUT' && item.due_at && remainingDays !== null && (
                               <div className={`px-4 py-2 text-sm font-bold border-t ${
-                                remainingDays <= 1 ? 'bg-red-50 text-red-600' : 'bg-green-50 text-green-700'
+                                remainingDays < 0 ? 'bg-red-100 text-red-600' : 
+                                remainingDays === 0 ? 'bg-orange-100 text-orange-600' : 'bg-green-50 text-green-700'
                               }`}>
-                                {remainingDays > 0 
-                                  ? `เหลือเวลาคืนอีก: ${remainingDays} วัน` 
-                                  : remainingDays === 0 ? "ต้องคืนวันนี้!" : `เกินกำหนดคืน: ${Math.abs(remainingDays)} วัน`}
+                                {remainingDays > 0 && `เหลือเวลาคืนอีก: ${remainingDays} วัน`}
+                                {remainingDays === 0 && `ต้องคืนภายในวันนี้!`}
+                                {remainingDays < 0 && `เลยกำหนดคืนมาแล้ว: ${Math.abs(remainingDays)} วัน`}
+                              </div>
+                            )}
+                            
+                            {item.item_status === 'RETURNED' && (
+                              <div className="px-4 py-3 bg-white border-t border-gray-100 flex justify-between items-center">
+                                <span className="text-sm font-bold text-green-600 flex items-center gap-1">
+                                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                                  คืนหนังสือสำเร็จแล้ว
+                                </span>
+                                
+                                <StarRating 
+                                  initialRating={item.user_rating} 
+                                  mangaId={item.manga_id} 
+                                  onRate={handleRateManga} 
+                                />
                               </div>
                             )}
                           </div>

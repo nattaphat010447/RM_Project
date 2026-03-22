@@ -9,12 +9,26 @@ const ForYou = () => {
 
   const getImageUrl = (url) => {
     if (!url) return 'https://via.placeholder.com/150x220?text=No+Cover';
+    
     if (url.startsWith('http')) return url;
-    if (url.startsWith('/media/')) {
-      const baseUrl = API_URL || ''; 
-      return `${baseUrl.replace(/\/$/, '')}${url}`;
+
+    if (url.startsWith('/images/') || url.startsWith('images/')) {
+      return url.startsWith('/') ? url : `/${url}`;
     }
-    return url;
+
+    const baseUrl = API_URL ? API_URL.replace(/\/$/, '') : 'http://localhost:8000';
+    
+    if (url.startsWith('/media/') || url.startsWith('media/')) {
+      const cleanPath = url.startsWith('/') ? url : `/${url}`;
+      return `${baseUrl}${cleanPath}`;
+    }
+
+    return `${baseUrl}/media/${url}`;
+  };
+
+  const renderStars = (rating) => {
+    const num = Math.round(rating || 0);
+    return '★'.repeat(num) + '☆'.repeat(5 - num);
   };
   
   // TODO: ในอนาคตจะเปลี่ยนเป็นการเรียก API ที่ให้คำแนะนำจากโมเดล MBCGCN จริงๆ แทนการ hardcode ID แบบนี้
@@ -53,6 +67,15 @@ const ForYou = () => {
               <div className="p-4">
                 <h3 className="text-xl font-bold text-gray-800 truncate">{manga.title}</h3>
                 <p className="text-sm text-gray-500 mt-1">{manga.genre}</p>
+              </div>
+              
+              <div className="mt-auto flex justify-between items-end border-t border-gray-100 pt-3">
+                <div className="flex text-yellow-400 text-sm">
+                  {renderStars(manga.avg_rating)}
+                </div>
+                <span className="text-xs font-bold text-gray-400 bg-gray-50 px-2 py-1 rounded-md">
+                  Sold {manga.sold_count || 0}
+                </span>
               </div>
             </Link>
           </div>

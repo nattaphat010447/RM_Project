@@ -1,11 +1,12 @@
 from django.urls import path
 from .views import (
     MangaDetailAPIView, MangaListAPIView, UserRegistrationAPIView, 
-    add_to_cart, checkout_order, get_user_profile, view_cart, 
+    add_to_cart, admin_all_history, checkout_order, get_user_profile, view_cart, 
     remove_from_cart, checkout_cart, my_orders, cancel_order, 
     popular_mangas, admin_orders, approve_order, reject_order, 
     return_item, fine_item, admin_users, admin_user_detail,
-    admin_add_manga, admin_manage_manga, search_customers, manual_checkout
+    admin_add_manga, admin_manage_manga, search_customers, manual_checkout,
+    submit_manga_review, my_profile
 )
 
 urlpatterns = [
@@ -20,6 +21,7 @@ urlpatterns = [
     path('orders/<int:order_id>/cancel/', cancel_order, name='cancel-order'),
     path('mangas/popular/', popular_mangas, name='popular-mangas'),
     path('me/', get_user_profile, name='user-profile'),
+    path('users/profile/', my_profile, name='my-profile'),
 
     path('admin/orders/', admin_orders, name='admin-orders'),
     path('admin/orders/<int:order_id>/approve/', approve_order, name='approve-order'),
@@ -29,9 +31,10 @@ urlpatterns = [
     path('admin/orders/<int:order_id>/items/<int:item_id>/fine/', fine_item, name='fine-item'),
     path('admin/users/', admin_users, name='admin-users'),
     path('admin/users/<int:user_id>/', admin_user_detail, name='admin-user-detail'),
-    
     path('admin/mangas/', admin_add_manga, name='admin-add-manga'),
     path('admin/mangas/<int:manga_id>/', admin_manage_manga, name='admin-manage-manga'),
     path('admin/customers/search/', search_customers, name='search-customers'),
     path('admin/manual-checkout/', manual_checkout, name='manual-checkout'),
+    path('admin/history/', admin_all_history, name='admin-all-history'),
+    path('mangas/<int:manga_id>/review/', submit_manga_review, name='submit-review'),
 ]

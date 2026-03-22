@@ -9,7 +9,6 @@ const AdminDashboard = () => {
     { title: 'การจัดการสมาชิก', path: '/admin/members' },
     { title: 'การจัดการหนังสือและเช่าหนังสือให้ลูกค้า', path: '/admin/mangas' },
     { title: 'ประวัติการเช่า', path: '/admin/history' },
-    { title: 'รายการสูญหายประจำเดือน', path: '/admin/lost-items' },
   ];
 
   return (

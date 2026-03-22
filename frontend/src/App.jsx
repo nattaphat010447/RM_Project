@@ -12,6 +12,7 @@ import Orders from './pages/Orders';
 import Popular from './pages/Popular';
 import ForYou from './pages/ForYou';
 import Search from './pages/Search';
+import MyProfile from './pages/MyProfile';
 
 import AdminRoute from './components/AdminRoute';
 import AdminDashboard from './pages/AdminDashboard';
@@ -21,6 +22,7 @@ import AdminMemberForm from './pages/AdminMemberForm';
 import AdminMangas from './pages/AdminMangas';
 import AdminMangaDetail from './pages/AdminMangaDetail';
 import AdminMangaForm from './pages/AdminMangaForm';
+import AdminLostHistory from './pages/AdminLostHistory';
 
 function App() {
   return (
@@ -109,6 +111,20 @@ function App() {
               <AdminMangaDetail />
             </AdminRoute>
           } 
+        />
+        <Route
+          path="/admin/history"
+          element={
+            <AdminRoute>
+              <AdminLostHistory />
+            </AdminRoute>
+          }
+        />
+        <Route
+          path="/profile"
+          element={
+            <MyProfile />
+          }
         />
       </Routes>
     </Router>

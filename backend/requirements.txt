@@ -7,3 +7,4 @@ django-cors-headers
 dotenv
 cryptography
 Pillow
+apscheduler

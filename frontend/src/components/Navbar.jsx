@@ -12,7 +12,7 @@ const Navbar = () => {
   useEffect(() => {
     const token = localStorage.getItem('access_token');
     const role = localStorage.getItem('user_role'); // ดึง Role มาจาก Storage
-    
+
     setIsLoggedIn(!!token);
     setUserRole(role);
 
@@ -68,6 +68,7 @@ const Navbar = () => {
           
           {isDropdownOpen && (
             <div className="absolute right-0 mt-3 w-56 bg-white rounded-xl shadow-xl py-2 z-50 border border-gray-100 transform origin-top-right transition-all">
+              <Link to="/profile" className="block px-5 py-3 text-sm text-gray-700 hover:bg-indigo-50 hover:text-indigo-700 font-semibold" onClick={() => setIsDropdownOpen(false)}>My Profile</Link>
               <Link to="/cart" className="block px-5 py-3 text-sm text-gray-700 hover:bg-indigo-50 hover:text-indigo-700 font-semibold" onClick={() => setIsDropdownOpen(false)}>My Cart</Link>
               <Link to="/orders" className="block px-5 py-3 text-sm text-gray-700 hover:bg-indigo-50 hover:text-indigo-700 font-semibold" onClick={() => setIsDropdownOpen(false)}>My Orders</Link>
               

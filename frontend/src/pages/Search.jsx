@@ -16,12 +16,21 @@ const Search = () => {
 
   const getImageUrl = (url) => {
     if (!url) return 'https://via.placeholder.com/150x220?text=No+Cover';
+    
     if (url.startsWith('http')) return url;
-    if (url.startsWith('/media/')) {
-      const baseUrl = API_URL || ''; 
-      return `${baseUrl.replace(/\/$/, '')}${url}`;
+
+    if (url.startsWith('/images/') || url.startsWith('images/')) {
+      return url.startsWith('/') ? url : `/${url}`;
     }
-    return url;
+
+    const baseUrl = API_URL ? API_URL.replace(/\/$/, '') : 'http://localhost:8000';
+    
+    if (url.startsWith('/media/') || url.startsWith('media/')) {
+      const cleanPath = url.startsWith('/') ? url : `/${url}`;
+      return `${baseUrl}${cleanPath}`;
+    }
+
+    return `${baseUrl}/media/${url}`;
   };
 
   useEffect(() => {
@@ -164,7 +173,7 @@ const Search = () => {
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-6">
             {filteredMangas.map((manga) => (
               <div key={manga.id} className="bg-white rounded-xl shadow-md overflow-hidden transform hover:-translate-y-1 hover:shadow-xl transition duration-300 flex flex-col">
-                <Link to={`/comic/${manga.id}`} className="flex-1">
+                <Link to={`/comic/${manga.id}`} className="flex-1 flex flex-col">
                   <div className="relative pb-[140%]">
                     <img
                       src={getImageUrl(manga.cover_image_url)} 
@@ -172,12 +181,16 @@ const Search = () => {
                       className="absolute top-0 left-0 w-full h-full object-cover"
                     />
                   </div>
-                  <div className="p-3">
+                  <div className="p-3 flex-1 flex flex-col">
                     <h3 className="text-sm font-bold text-gray-800 line-clamp-2 leading-snug" title={manga.title}>{manga.title}</h3>
                     <p className="text-xs text-gray-500 mt-1 truncate" title={manga.author}>{manga.author}</p>
-                    <div className="flex justify-between items-center mt-2">
-                      <span className="text-xs font-semibold text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded">
-                        ★ {manga.avg_rating || 'N/A'}
+                    
+                    <div className="flex justify-between items-center mt-auto pt-2">
+                      <span className="text-xs font-semibold text-yellow-500">
+                        ★ {manga.avg_rating || '0.0'}
+                      </span>
+                      <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">
+                        Sold {manga.sold_count || 0}
                       </span>
                     </div>
                   </div>

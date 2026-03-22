@@ -113,3 +113,16 @@ class FineLog(models.Model):
 
     def __str__(self):
         return f"Fine: {self.user.username} - {self.fine_type} ({self.amount} THB)"
+
+class MangaReview(models.Model):
+    manga = models.ForeignKey(Manga, on_delete=models.CASCADE, related_name='reviews')
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    rating = models.IntegerField(default=5)
+    comment = models.TextField(blank=True, null=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        unique_together = ('manga', 'user') 
+
+    def __str__(self):
+        return f"{self.user.username} - {self.manga.title} ({self.rating} Stars)"

@@ -12,8 +12,8 @@ const AdminMemberForm = () => {
     fullName: '',
     email: '',
     phone: '',
-    address: '', // 🟢 เพิ่มที่อยู่
-    dob: '',     // 🟢 เพิ่มวันเกิด
+    address: '',
+    dob: '',
     password: ''
   });
 

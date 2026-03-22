@@ -9,9 +9,10 @@ from django.utils import timezone
 from datetime import timedelta
 from django.db.models import Count, Q
 from decimal import Decimal
+from django.utils.dateformat import format
 
-from .models import Manga, MangaCopy, Cart, CartItem, RentalOrder, RentalOrderItem, FineLog
-from .serializers import AdminUserSerializer, MangaSerializer, UserRegistrationSerializer, CartItemSerializer, RentalOrderSerializer
+from .models import Manga, MangaCopy, Cart, CartItem, RentalOrder, RentalOrderItem, FineLog, MangaReview
+from .serializers import AdminUserSerializer, MangaSerializer, UserRegistrationSerializer, CartItemSerializer, RentalOrderSerializer, UserProfileSerializer
 
 from .permissions import IsAdminRole
 
@@ -149,6 +150,34 @@ def popular_mangas(request):
     serializer = MangaSerializer(popular, many=True)
     return Response(serializer.data)
 
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def submit_manga_review(request, manga_id):
+    rating = request.data.get('rating')
+    
+    if not rating or not (1 <= int(rating) <= 5):
+        return Response({"error": "คะแนนต้องอยู่ระหว่าง 1 ถึง 5"}, status=400)
+
+    has_returned = RentalOrderItem.objects.filter(
+        order__user=request.user,
+        manga_copy__manga_id=manga_id,
+        item_status='RETURNED'
+    ).exists()
+
+    if not has_returned:
+        return Response({"error": "คุณสามารถให้คะแนนได้เฉพาะมังงะที่คืนแล้วเท่านั้น"}, status=403)
+
+    review, created = MangaReview.objects.update_or_create(
+        user=request.user,
+        manga=Manga.objects.get(id=manga_id),
+        defaults={'rating': int(rating)}
+    )
+
+    return Response({
+        "message": "ให้คะแนนสำเร็จ!", 
+        "rating": review.rating
+    })
 
 
 @api_view(['GET'])
@@ -469,3 +498,49 @@ def manual_checkout(request):
         return Response({"message": "ทำรายการเช่าหน้าร้านสำเร็จ!"}, status=201)
     except Exception as e:
         return Response({"error": f"DB Error: {str(e)}"}, status=400)
+
+@api_view(['GET'])
+@permission_classes([IsAdminRole])
+def admin_all_history(request):
+    history_items = RentalOrderItem.objects.filter(
+        item_status__in=['CHECKED_OUT', 'RETURNED', 'LOST']
+    ).order_by('-rental_date')
+    
+    data = []
+    for item in history_items:
+        display_status = item.item_status
+        if item.item_status == 'RETURNED':
+            if item.returned_at and item.due_at and item.returned_at.date() > item.due_at.date():
+                display_status = 'LATE'
+            else:
+                display_status = 'ON_TIME'
+
+        data.append({
+            "order_id": item.order.id,
+            "customer_name": item.order.user.get_full_name() or item.order.user.username,
+            "manga_title": item.manga_copy.manga.title,
+            "serial_no": item.manga_copy.serial_no,
+            "rental_date_formatted": format(item.rental_date, 'd/m/y H:i') if item.rental_date else "-",
+            "due_at_formatted": format(item.due_at, 'd/m/y H:i') if item.due_at else "-",
+            "returned_at_formatted": format(item.returned_at, 'd/m/y H:i') if item.returned_at else "-",
+            "item_status": item.item_status,
+            "display_status": display_status
+        })
+        
+    return Response(data)
+
+@api_view(['GET', 'PUT'])
+@permission_classes([IsAuthenticated])
+def my_profile(request):
+    user = request.user
+    
+    if request.method == 'GET':
+        serializer = UserProfileSerializer(user)
+        return Response(serializer.data)
+        
+    elif request.method == 'PUT':
+        serializer = UserProfileSerializer(user, data=request.data, partial=True)
+        if serializer.is_valid():
+            serializer.save()
+            return Response({"message": "อัปเดตข้อมูลโปรไฟล์สำเร็จ!"})
+        return Response(serializer.errors, status=400)

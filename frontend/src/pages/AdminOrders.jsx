@@ -120,7 +120,7 @@ const AdminOrders = () => {
 
         <div className="mb-10">
           <h2 className="text-xl font-bold text-gray-700 mb-4 border-b pb-2 flex justify-between items-center">
-            คำขอเช่าใหม่ (Online)
+            คำขอเช่าใหม่
             {requestedOrders.length > 0 && <span className="bg-red-500 text-white text-xs px-2 py-1 rounded-full animate-pulse">{requestedOrders.length}</span>}
           </h2>
           {requestedOrders.length === 0 ? <p className="text-gray-400 italic">ไม่มีรายการใหม่</p> : (

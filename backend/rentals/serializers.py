@@ -32,12 +32,35 @@ class MangaCopySerializer(serializers.ModelSerializer):
         fields = ['id', 'serial_no', 'status']
 
 class MangaSerializer(serializers.ModelSerializer):
+    sold_count = serializers.SerializerMethodField()
+    avg_rating = serializers.SerializerMethodField()
+    
+    available_copies = serializers.SerializerMethodField()
+
     cover_image_url = serializers.SerializerMethodField()
-    copies = MangaCopySerializer(many=True, read_only=True) 
 
     class Meta:
         model = Manga
-        fields = '__all__'
+        fields = [
+            'id', 'title', 'cover_image_url', 'author', 'genre', 
+            'rental_price_per_day', 'sold_count', 'avg_rating', 
+            'available_copies'
+        ]
+
+    def get_sold_count(self, obj):
+        from .models import RentalOrderItem
+        return RentalOrderItem.objects.filter(
+            manga_copy__manga=obj, 
+            item_status='RETURNED'
+        ).values('order__user').distinct().count()
+
+    def get_avg_rating(self, obj):
+        from django.db.models import Avg
+        avg = obj.reviews.aggregate(Avg('rating'))['rating__avg']
+        return round(avg, 1) if avg else 0.0
+
+    def get_available_copies(self, obj):
+        return obj.copies.filter(status='AVAILABLE').count()
 
     def get_cover_image_url(self, obj):
         if not obj.cover_image_url:
@@ -65,13 +88,24 @@ class CartItemSerializer(serializers.ModelSerializer):
             return obj.manga_copy.manga.cover_image_url.name
         return None
 
+from .models import MangaReview 
+
 class RentalOrderItemSerializer(serializers.ModelSerializer):
     manga_title = serializers.ReadOnlyField(source='manga_copy.manga.title')
     serial_no = serializers.ReadOnlyField(source='manga_copy.serial_no')
+    
+    manga_id = serializers.ReadOnlyField(source='manga_copy.manga.id')
+    user_rating = serializers.SerializerMethodField()
 
     class Meta:
         model = RentalOrderItem
-        fields = ['id', 'manga_title', 'serial_no', 'rent_price_per_day', 'rent_days', 'item_status', 'due_at']
+        fields = ['id', 'manga_id', 'manga_title', 'serial_no', 'rent_price_per_day', 'rent_days', 'item_status', 'due_at', 'user_rating']
+
+    def get_user_rating(self, obj):
+        user = obj.order.user
+        manga = obj.manga_copy.manga
+        review = MangaReview.objects.filter(user=user, manga=manga).first()
+        return review.rating if review else 0
 
 class RentalOrderSerializer(serializers.ModelSerializer):
     items = RentalOrderItemSerializer(many=True, read_only=True)
@@ -91,8 +125,23 @@ class AdminUserSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = User
-        fields = ['id', 'username', 'email', 'first_name', 'last_name', 'phone', 'full_name', 'is_active']
+        fields = ['id', 'username', 'email', 'first_name', 'last_name', 'phone', 'full_name', 'is_active', 'address', 'dob']
 
     def get_full_name(self, obj):
         name = f"{obj.first_name} {obj.last_name}".strip()
         return name if name else obj.username
+    
+class UserProfileSerializer(serializers.ModelSerializer):
+    password = serializers.CharField(write_only=True, required=False, allow_blank=True)
+
+    class Meta:
+        model = User
+        fields = ['username', 'email', 'first_name', 'last_name', 'phone', 'address', 'password']
+        read_only_fields = ['username', 'email'] 
+
+    def update(self, instance, validated_data):
+        password = validated_data.pop('password', None)
+        if password:
+            instance.set_password(password)
+
+        return super().update(instance, validated_data)

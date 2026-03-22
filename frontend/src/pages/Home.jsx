@@ -4,16 +4,27 @@ import { Link } from 'react-router-dom';
 const API_URL = import.meta.env.VITE_API_BASE_URL;
 
 const getImageUrl = (url) => {
-  // console.log("Current API_URL is:", import.meta.env.VITE_API_BASE_URL);
-  if (!url) return 'https://via.placeholder.com/150x220?text=No+Cover';
-  if (url.startsWith('http')) return url;
-  
-  if (url.startsWith('/media/')) {
-    const baseUrl = API_URL; 
-    return `${baseUrl}${url}`;
-  }
-  
-  return url;
+    if (!url) return 'https://via.placeholder.com/150x220?text=No+Cover';
+    
+    if (url.startsWith('http')) return url;
+
+    if (url.startsWith('/images/') || url.startsWith('images/')) {
+      return url.startsWith('/') ? url : `/${url}`;
+    }
+
+    const baseUrl = API_URL ? API_URL.replace(/\/$/, '') : 'http://localhost:8000';
+    
+    if (url.startsWith('/media/') || url.startsWith('media/')) {
+      const cleanPath = url.startsWith('/') ? url : `/${url}`;
+      return `${baseUrl}${cleanPath}`;
+    }
+
+    return `${baseUrl}/media/${url}`;
+  };
+
+const renderStars = (rating) => {
+  const num = Math.round(rating || 0);
+  return '★'.repeat(num) + '☆'.repeat(5 - num);
 };
 
 const ComicCard = ({ comic }) => {
@@ -22,12 +33,18 @@ const ComicCard = ({ comic }) => {
       <img src={getImageUrl(comic.cover_image_url)} alt={comic.title} className="w-full h-64 object-cover rounded-xl mb-4" />
       
       <h3 className="font-bold text-lg text-gray-800 line-clamp-1">{comic.title}</h3>
-      <div className="flex items-center justify-between mt-2 mb-4">
-        <span className="bg-red-500 text-white text-xs font-bold px-3 py-1 rounded-full uppercase tracking-wide truncate max-w-[100px]">
-          {comic.genre}
-        </span>
-        <div className="flex text-yellow-400 text-sm">
-          {'★'.repeat(4)}{'☆'.repeat(1)}
+      
+      <div className="flex flex-col mt-2 mb-4 gap-2">
+        <div className="flex justify-between items-center">
+          <span className="bg-red-500 text-white text-xs font-bold px-3 py-1 rounded-full uppercase tracking-wide truncate max-w-[100px]">
+            {comic.genre}
+          </span>
+          <div className="flex text-yellow-400 text-sm" title={`Rating: ${comic.avg_rating || 0}`}>
+            {renderStars(comic.avg_rating)}
+          </div>
+        </div>
+        <div className="text-xs font-bold text-gray-400 text-right">
+          Sold {comic.sold_count || 0}
         </div>
       </div>
       
