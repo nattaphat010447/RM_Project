@@ -7,6 +7,10 @@
 * **Shopping Cart System:** Users can add available manga copies to their cart and set rental durations.
 * **Rental Order Processing:** Checkout system with automatic rent fee calculations and return tracking.
 * **Dockerized Environment:** Easy setup and deployment using Docker Compose.
+* **Manga Rating & Reviews:** Users can rate mangas (1-5 stars) after returning them, automatically updating the manga's average rating.
+* **Automated Background Tasks:** Integrated APScheduler to automatically scan and mark overdue rentals (90+ days) as 'LOST' every 00:00 AM.
+* **Advanced Admin Dashboard:** Comprehensive history tracking, real-time search filtering, and member management.
+* **User Profile Management:** Users can update their personal information, delivery address, and password securely.
 
 ## Tech Stack
 
@@ -20,8 +24,8 @@
 
 To run this project, you only need to have the following installed on your machine:
 
-* [Docker](https://www.google.com/search?q=https://www.docker.com/products/docker-desktop/)
-* [Docker Compose](https://www.google.com/search?q=https://docs.docker.com/compose/install/)
+* [Docker](https://www.docker.com/products/docker-desktop/)
+* [Docker Compose](https://docs.docker.com/compose/install/)
 
 ## Environment Variables
 
@@ -72,6 +76,7 @@ Once the containers are running, set up the database schema and insert initial d
 
 1. **Run Migrations:**
 ```bash
+docker-compose exec backend python manage.py makemigrations
 docker-compose exec backend python manage.py migrate
 
 ```
