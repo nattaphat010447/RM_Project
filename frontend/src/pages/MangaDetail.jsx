@@ -91,70 +91,70 @@ const MangaDetail = () => {
   };
 
   if (loading) {
-    return <div className="min-h-screen bg-[#2d116c] flex items-center justify-center text-white text-2xl font-bold">Loading Manga Details...</div>;
+    return <div className="min-h-screen bg-slate-50 flex items-center justify-center text-slate-700 text-2xl font-semibold">Loading Comic Details...</div>;
   }
 
-  if (!manga) {
-    return <div className="min-h-screen bg-[#2d116c] flex items-center justify-center text-white text-2xl font-bold">Manga not found!</div>;
+  if (!comic) {
+    return <div className="min-h-screen bg-slate-50 flex items-center justify-center text-slate-700 text-2xl font-semibold">Comic not found!</div>;
   }
 
   const availableCopies = manga.copies?.filter(c => c.status === 'AVAILABLE') || [];
   const isOutOfStock = availableCopies.length === 0;
 
   return (
-    <div className="min-h-screen bg-[#2d116c] pt-10 px-4 pb-12">
+    <div className="min-h-screen bg-slate-50 pt-10 px-4 pb-12">
       <div className="max-w-4xl mx-auto">
         
         {isAdded && (
-          <div className="bg-[#d1e7dd] text-[#0f5132] px-6 py-4 rounded-md mb-6 font-bold shadow-md transition-all">
-            Added "{manga.title}" (Copy: {manga.copies.find(c => c.id.toString() === copyId.toString())?.serial_no}) to the cart for {rentalDays} days successfully.
+          <div className="bg-emerald-100 text-emerald-800 px-6 py-4 rounded-lg mb-6 font-semibold shadow-sm transition-all">
+            Added "{comic.title}" (Copy: {comic.copies.find(c => c.id.toString() === copyId.toString())?.serial_no}) to the cart for {rentalDays} days successfully.
           </div>
         )}
 
-        <div className="bg-white rounded-2xl p-6 md:p-10 relative shadow-2xl flex flex-col md:flex-row gap-10">
+        <div className="bg-white rounded-xl p-6 md:p-10 relative shadow-sm border border-slate-200 flex flex-col md:flex-row gap-10">
           
           <button 
             onClick={() => navigate(-1)} 
-            className="absolute top-6 left-6 w-10 h-10 bg-gray-50 hover:bg-gray-200 border border-gray-200 rounded-full flex items-center justify-center transition duration-200"
+            className="absolute top-6 left-6 w-10 h-10 bg-slate-100 hover:bg-slate-200 border border-slate-300 rounded-full flex items-center justify-center transition duration-200"
           >
-            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-slate-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
             </svg>
           </button>
 
           <div className="w-full md:w-2/5 mt-14 md:mt-0 flex justify-center items-start">
             <img 
-              src={getImageUrl(manga.cover_image_url)} 
-              alt={manga.title}  
-              className="w-full max-w-sm h-auto object-cover rounded-xl shadow-md border border-gray-100"
+              src={getImageUrl(comic.cover_image_url)} 
+              alt={comic.title}  
+              className="w-full max-w-sm h-auto object-cover rounded-lg shadow-sm border border-slate-200"
             />
           </div>
 
           <div className="w-full md:w-3/5 flex flex-col pt-2 md:pt-4">
-            <h1 className="text-3xl font-bold text-purple-900 mb-4">{manga.title}</h1>
+            <h1 className="text-3xl font-bold text-slate-900 mb-4">{comic.title}</h1>
             
-            <div className="space-y-2 text-gray-700 mb-6">
-              <p><span className="font-semibold text-gray-500 w-24 inline-block">Author:</span> {manga.author}</p>
-              <p><span className="font-semibold text-gray-500 w-24 inline-block">Category:</span> {manga.genre}</p>
+            <div className="space-y-2 text-slate-700 mb-6">
+              <p><span className="font-medium text-slate-600 w-24 inline-block">Author:</span> {comic.author}</p>
+              <p><span className="font-medium text-slate-600 w-24 inline-block">Category:</span> {comic.genre}</p>
               <p className="pt-2">
-                <span className="font-semibold text-gray-800">Rental Price:</span> 
-                <span className="font-bold text-lg text-gray-900 ml-2">{manga.rental_price_per_day} THB/day</span>
+                <span className="font-medium text-slate-800">Rental Price:</span> 
+                <span className="font-bold text-lg text-slate-900 ml-2">{comic.rental_price_per_day} THB/day</span>
               </p>
             </div>
 
             <div className="space-y-5 mb-8 flex-grow">
               
               <div>
-                <label className="block text-gray-700 font-semibold mb-2">Select copy to rent</label>
+                <label className="block text-slate-900 font-medium mb-2">Select copy to rent</label>
                 <div className="relative">
                   <select 
                     value={copyId}
                     onChange={(e) => setCopyId(e.target.value)}
                     disabled={isOutOfStock}
-                    className={`w-full appearance-none border border-gray-300 rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-purple-500 text-gray-700 ${isOutOfStock ? 'bg-gray-100 cursor-not-allowed' : 'bg-white'}`}
+                    className={`w-full appearance-none border border-slate-300 rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-500 text-slate-900 ${isOutOfStock ? 'bg-slate-100 cursor-not-allowed' : 'bg-white'}`}
                   >
                     {isOutOfStock ? (
-                      <option value="">Out of stock (ไม่มีเล่มว่าง)</option>
+                      <option value="">Out of stock</option>
                     ) : (
                       availableCopies.map(copy => (
                         <option key={copy.id} value={copy.id}>
@@ -163,21 +163,21 @@ const MangaDetail = () => {
                       ))
                     )}
                   </select>
-                  <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-4 text-gray-500">
+                  <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-4 text-slate-400">
                     <svg className="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"><path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z"/></svg>
                   </div>
                 </div>
               </div>
 
               <div>
-                <label className="block text-gray-700 font-semibold mb-2">Number of rental days</label>
+                <label className="block text-slate-900 font-medium mb-2">Number of rental days</label>
                 <input 
                   type="number" 
                   min="1"
                   value={rentalDays}
                   onChange={(e) => setRentalDays(e.target.value)}
                   disabled={isOutOfStock}
-                  className={`w-full border border-gray-300 rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-purple-500 text-gray-700 ${isOutOfStock ? 'bg-gray-100 cursor-not-allowed' : 'bg-white'}`}
+                  className={`w-full border border-slate-300 rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-500 text-slate-900 ${isOutOfStock ? 'bg-slate-100 cursor-not-allowed' : 'bg-white'}`}
                 />
               </div>
             </div>
@@ -185,7 +185,7 @@ const MangaDetail = () => {
             <button 
               onClick={handleAddToCart}
               disabled={isOutOfStock}
-              className={`w-full font-bold text-lg py-4 rounded-xl transition duration-200 shadow-md ${isOutOfStock ? 'bg-gray-300 text-gray-500 cursor-not-allowed' : 'bg-yellow-400 hover:bg-yellow-500 text-gray-900'}`}
+              className={`w-full font-bold text-lg py-4 rounded-lg transition duration-200 shadow-sm ${isOutOfStock ? 'bg-slate-300 text-slate-400 cursor-not-allowed' : 'bg-blue-600 hover:bg-blue-700 text-white'}`}
             >
               {isOutOfStock ? 'Out of Stock' : 'Add to Cart'}
             </button>

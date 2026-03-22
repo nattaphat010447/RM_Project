@@ -49,7 +49,7 @@ const AdminMangaDetail = () => {
 
   const handleSearchUser = async () => {
     if (searchUserQuery.length < 2) {
-      alert("กรุณาพิมพ์อย่างน้อย 2 ตัวอักษร"); return;
+      alert("Please enter at least 2 characters"); return;
     }
     const token = localStorage.getItem('access_token');
     try {
@@ -58,13 +58,13 @@ const AdminMangaDetail = () => {
       });
       const data = await response.json();
       setUserResults(data);
-      if(data.length === 0) alert("ไม่พบข้อมูลลูกค้า");
+      if(data.length === 0) alert("No customer found");
     } catch (err) { console.error(err); }
   };
 
   const handleCheckout = async () => {
-    if (!selectedUser) { alert("กรุณาเลือกลูกค้าก่อน"); return; }
-    if (!selectedCopy) { alert("กรุณาเลือกสำเนาหนังสือที่ว่าง"); return; }
+    if (!selectedUser) { alert("Please select a customer first"); return; }
+    if (!selectedCopy) { alert("Please select an available copy"); return; }
 
     const token = localStorage.getItem('access_token');
     try {
@@ -84,13 +84,13 @@ const AdminMangaDetail = () => {
       const data = await response.json();
 
       if (response.ok) {
-        alert("ทำรายการเช่าหน้าร้านสำเร็จ!");
+        alert("In-store rental created successfully!");
         navigate('/admin/orders');
       } else {
-        alert("ไม่สามารถบันทึกลงฐานข้อมูลได้: " + (data.error || "ข้อมูลไม่ถูกต้อง"));
+        alert("Unable to save record: " + (data.error || "Invalid data"));
       }
     } catch (err) { 
-      alert("ระบบขัดข้อง: " + err.message); 
+      alert("System error: " + err.message); 
     }
   };
 
@@ -115,36 +115,36 @@ const AdminMangaDetail = () => {
             />
             
             <div className="pt-2">
-              <h2 className="text-xl text-gray-500 mb-1">รายละเอียดหนังสือ (Admin)</h2>
+              <h2 className="text-xl text-gray-500 mb-1">Manga Details (Admin)</h2>
               <h1 className="text-3xl font-normal text-gray-800 mb-4">{manga.title}</h1>
-              <p className="text-sm text-gray-600 mb-2">ผู้แต่ง: {manga.author}</p>
-              <p className="text-sm text-gray-600 mb-4">หมวดหมู่: {manga.genre}</p>
-              <p className="text-sm font-bold text-gray-800">ราคาเช่า: {manga.rental_price_per_day} บาท/วัน</p>
+              <p className="text-sm text-gray-600 mb-2">Author: {manga.author}</p>
+              <p className="text-sm text-gray-600 mb-4">Genre: {manga.genre}</p>
+              <p className="text-sm font-bold text-gray-800">Rental Price: {manga.rental_price_per_day} THB/day</p>
             </div>
           </div>
           <Link to={`/admin/mangas/edit/${manga.id}`} className="text-blue-500 border border-blue-200 rounded-full px-6 py-2 hover:bg-blue-50 transition text-sm">
-            แก้ไขข้อมูลหนังสือ
+            Edit Manga
           </Link>
         </div>
 
         <div>
-          <h2 className="text-2xl font-normal text-gray-800 mb-2">เช่าหนังสือให้ลูกค้า</h2>
-          <p className="text-sm text-gray-500 mb-4">ค้นหาลูกค้า (ชื่อ, อีเมล)</p>
+          <h2 className="text-2xl font-normal text-gray-800 mb-2">Rent Manga for Customer</h2>
+          <p className="text-sm text-gray-500 mb-4">Search customer (name, email)</p>
           
           <div className="flex gap-2 mb-4">
             <input 
               type="text" 
-              placeholder="พิมพ์เพื่อค้นหา..." 
+              placeholder="Type to search..." 
               value={searchUserQuery}
               onChange={(e) => setSearchUserQuery(e.target.value)}
               className="flex-1 border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:border-indigo-500 text-gray-700"
             />
-            <button onClick={handleSearchUser} className="border border-gray-300 text-gray-600 px-6 py-2 rounded-lg hover:bg-gray-50">ค้นหา</button>
+            <button onClick={handleSearchUser} className="border border-gray-300 text-gray-600 px-6 py-2 rounded-lg hover:bg-gray-50">Search</button>
           </div>
 
           {userResults.length > 0 && !selectedUser && (
             <div className="bg-gray-50 border border-gray-200 rounded-lg p-4 mb-4">
-              <p className="text-xs font-bold text-gray-500 mb-2">เลือกลูกค้า:</p>
+              <p className="text-xs font-bold text-gray-500 mb-2">Select customer:</p>
               {userResults.map(user => (
                 <div key={user.id} onClick={() => setSelectedUser(user)} className="cursor-pointer hover:bg-indigo-50 p-2 rounded border-b border-gray-100 flex justify-between">
                   <span className="font-bold text-gray-700">{user.full_name}</span>
@@ -157,25 +157,25 @@ const AdminMangaDetail = () => {
           {selectedUser && (
             <div className="bg-indigo-50 border border-indigo-100 rounded-lg p-6 animate-fade-in mt-4">
               <div className="flex justify-between items-center mb-4">
-                <p className="font-bold text-indigo-900">กำลังทำรายการให้: {selectedUser.full_name}</p>
-                <button onClick={() => setSelectedUser(null)} className="text-sm text-red-500 underline">เปลี่ยนลูกค้า</button>
+                <p className="font-bold text-indigo-900">Processing for: {selectedUser.full_name}</p>
+                <button onClick={() => setSelectedUser(null)} className="text-sm text-red-500 underline">Change customer</button>
               </div>
               
               <div className="flex gap-4 mb-6">
                 <div className="flex-1">
-                  <label className="block text-sm font-bold text-gray-700 mb-1">เลือกสำเนา (Copy)</label>
+                  <label className="block text-sm font-bold text-gray-700 mb-1">Select copy</label>
                   <select 
                     value={selectedCopy} 
                     onChange={(e) => setSelectedCopy(e.target.value)}
                     className="w-full border border-gray-300 rounded px-3 py-2"
                   >
-                    {availableCopies.length === 0 ? <option value="">ไม่มีเล่มว่าง</option> : 
+                    {availableCopies.length === 0 ? <option value="">No copies available</option> : 
                       availableCopies.map(c => <option key={c.id} value={c.id}>{c.serial_no}</option>)
                     }
                   </select>
                 </div>
                 <div className="w-1/3">
-                  <label className="block text-sm font-bold text-gray-700 mb-1">จำนวนวัน</label>
+                  <label className="block text-sm font-bold text-gray-700 mb-1">Number of days</label>
                   <input 
                     type="number" min="1" value={rentDays} onChange={(e) => setRentDays(e.target.value)}
                     className="w-full border border-gray-300 rounded px-3 py-2"
@@ -188,7 +188,7 @@ const AdminMangaDetail = () => {
                 disabled={availableCopies.length === 0}
                 className="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 rounded-lg shadow-md disabled:bg-gray-400"
               >
-                ยืนยันการเช่าหน้าร้าน
+                Confirm In-Store Rental
               </button>
             </div>
           )}

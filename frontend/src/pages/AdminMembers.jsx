@@ -23,7 +23,7 @@ const AdminMembers = () => {
   useEffect(() => { fetchMembers(); }, []);
 
   const handleDelete = async (id, name) => {
-    if (!window.confirm(`คุณแน่ใจหรือไม่ที่จะลบสมาชิก "${name}"? (ข้อมูลจะถูกซ่อนจากระบบ)`)) return;
+    if (!window.confirm(`Are you sure you want to remove member "${name}"? (data will be hidden from the system)`)) return;
     
     const token = localStorage.getItem('access_token');
     try {
@@ -32,12 +32,12 @@ const AdminMembers = () => {
         headers: { 'Authorization': `Bearer ${token}` }
       });
       if (response.ok) {
-        alert("ลบสมาชิกสำเร็จ");
+        alert("Member removed successfully");
         setMembers(members.filter(m => m.id !== id));
       } else {
-        alert("เกิดข้อผิดพลาดในการลบ");
+        alert("Failed to remove member");
       }
-    } catch (err) { alert("ระบบขัดข้อง"); }
+    } catch (err) { alert("System error"); }
   };
 
   if (loading) return <div className="min-h-screen bg-gray-200 flex items-center justify-center">Loading...</div>;
@@ -52,11 +52,11 @@ const AdminMembers = () => {
           <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path></svg>
         </button>
 
-        <h1 className="text-2xl font-bold text-center text-gray-800 mb-8 mt-4">การจัดการสมาชิก</h1>
+        <h1 className="text-2xl font-bold text-center text-gray-800 mb-8 mt-4">Member Management</h1>
 
         <div className="flex justify-end mb-4">
           <Link to="/admin/members/new" className="bg-[#4CAF50] hover:bg-green-600 text-white font-bold py-2 px-4 rounded-md text-sm">
-            + เพิ่มสมาชิกใหม่
+            + Add New Member
           </Link>
         </div>
 
@@ -65,10 +65,10 @@ const AdminMembers = () => {
             <thead className="bg-gray-50 border-b">
               <tr>
                 <th className="px-4 py-3 font-bold text-gray-700">ID</th>
-                <th className="px-4 py-3 font-bold text-gray-700">ชื่อ</th>
-                <th className="px-4 py-3 font-bold text-gray-700">อีเมล</th>
-                <th className="px-4 py-3 font-bold text-gray-700">เบอร์โทร</th>
-                <th className="px-4 py-3 font-bold text-gray-700">การจัดการ</th>
+                <th className="px-4 py-3 font-bold text-gray-700">Name</th>
+                <th className="px-4 py-3 font-bold text-gray-700">Email</th>
+                <th className="px-4 py-3 font-bold text-gray-700">Phone</th>
+                <th className="px-4 py-3 font-bold text-gray-700">Actions</th>
               </tr>
             </thead>
             <tbody>
@@ -80,10 +80,10 @@ const AdminMembers = () => {
                   <td className="px-4 py-3 text-gray-600">{member.phone}</td>
                   <td className="px-4 py-3 flex justify-center gap-2">
                     <Link to={`/admin/members/edit/${member.id}`} className="bg-[#FFC107] hover:bg-yellow-500 text-gray-900 font-bold py-1 px-3 rounded text-xs shadow-sm">
-                      แก้ไข
+                      Edit
                     </Link>
                     <button onClick={() => handleDelete(member.id, member.full_name)} className="bg-[#F44336] hover:bg-red-600 text-white font-bold py-1 px-3 rounded text-xs shadow-sm">
-                      ลบ
+                      Delete
                     </button>
                   </td>
                 </tr>

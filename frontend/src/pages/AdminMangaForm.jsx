@@ -54,16 +54,16 @@ const AdminMangaForm = () => {
       });
 
       if (response.ok) {
-        alert("บันทึกข้อมูลสำเร็จ");
+        alert("Saved successfully");
         navigate('/admin/mangas');
       } else {
-        alert("เกิดข้อผิดพลาด");
+        alert("An error occurred");
       }
-    } catch (err) { alert("ระบบขัดข้อง"); }
+    } catch (err) { alert("System error"); }
   };
 
   const handleDelete = async () => {
-    if (!window.confirm("คุณแน่ใจหรือไม่ที่จะลบหนังสือเรื่องนี้?")) return;
+    if (!window.confirm("Are you sure you want to delete this manga?")) return;
     
     const token = localStorage.getItem('access_token');
     try {
@@ -75,9 +75,9 @@ const AdminMangaForm = () => {
       if (response.ok) {
         navigate('/admin/mangas');
       } else {
-        alert("เกิดข้อผิดพลาดในการลบ");
+        alert("Failed to delete manga");
       }
-    } catch (err) { alert("ระบบขัดข้อง"); }
+    } catch (err) { alert("System error"); }
   };
 
   const getImageUrl = (url) => {
@@ -102,58 +102,58 @@ const AdminMangaForm = () => {
   return (
     <div className="min-h-screen bg-gray-200 p-4 flex justify-center items-center">
       <div className="w-full max-w-3xl bg-white rounded-3xl shadow-xl p-8">
-        <h1 className="text-2xl font-bold mb-6">{isEditMode ? 'แก้ไขข้อมูลหนังสือ' : 'เพิ่มหนังสือใหม่'}</h1>
+        <h1 className="text-2xl font-bold mb-6">{isEditMode ? 'Edit Manga' : 'Add New Manga'}</h1>
         
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label className="block text-sm font-bold mb-1">ชื่อเรื่อง *</label>
+            <label className="block text-sm font-bold mb-1">Title *</label>
             <input type="text" required value={formData.title} onChange={e => setFormData({...formData, title: e.target.value})} className="w-full border rounded px-3 py-2" />
           </div>
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-bold mb-1">ผู้แต่ง</label>
+              <label className="block text-sm font-bold mb-1">Author</label>
               <input type="text" value={formData.author} onChange={e => setFormData({...formData, author: e.target.value})} className="w-full border rounded px-3 py-2" />
             </div>
             <div>
-              <label className="block text-sm font-bold mb-1">หมวดหมู่</label>
+              <label className="block text-sm font-bold mb-1">Genre</label>
               <input type="text" value={formData.genre} onChange={e => setFormData({...formData, genre: e.target.value})} className="w-full border rounded px-3 py-2" />
             </div>
           </div>
           
           <div>
-            <label className="block text-sm font-bold mb-1">เปลี่ยนรูปปก (เลือกไฟล์ใหม่หากต้องการเปลี่ยน)</label>
+            <label className="block text-sm font-bold mb-1">Cover Image (select new file to replace)</label>
             <input type="file" accept="image/*" onChange={e => setCoverFile(e.target.files[0])} className="w-full border rounded px-3 py-2" />
           </div>
           
           {isEditMode && currentImage && !coverFile && (
             <div className="my-2">
-              <p className="text-sm text-gray-500 mb-1">รูปปัจจุบัน:</p>
+              <p className="text-sm text-gray-500 mb-1">Current cover:</p>
               <img src={getImageUrl(currentImage)} alt="Current Cover" className="w-24 h-36 object-cover rounded border" />
             </div>
           )}
 
           <div>
-            <label className="block text-sm font-bold mb-1">ราคาค่าเช่าต่อวัน (บาท) *</label>
+            <label className="block text-sm font-bold mb-1">Rental Price per Day (THB) *</label>
             <input type="number" required value={formData.rental_price_per_day} onChange={e => setFormData({...formData, rental_price_per_day: e.target.value})} className="w-full border rounded px-3 py-2" />
           </div>
 
           {!isEditMode && (
             <div>
-              <label className="block text-sm font-bold mb-1">สำเนาหนังสือ (Serial No.)</label>
-              <input type="text" placeholder="คั่นด้วยลูกน้ำ เช่น OP-01, OP-02" value={formData.serial_numbers} onChange={e => setFormData({...formData, serial_numbers: e.target.value})} className="w-full border rounded px-3 py-2" />
+              <label className="block text-sm font-bold mb-1">Book Copies (Serial No.)</label>
+              <input type="text" placeholder="Separate with commas, e.g. OP-01, OP-02" value={formData.serial_numbers} onChange={e => setFormData({...formData, serial_numbers: e.target.value})} className="w-full border rounded px-3 py-2" />
             </div>
           )}
 
           <div className="flex justify-between mt-8 pt-4 border-t">
-            <button type="button" onClick={() => navigate(-1)} className="border px-6 py-2 rounded font-bold hover:bg-gray-50">← กลับ</button>
+            <button type="button" onClick={() => navigate(-1)} className="border px-6 py-2 rounded font-bold hover:bg-gray-50">← Back</button>
             <div className="flex gap-4">
               {isEditMode && (
                 <button type="button" onClick={handleDelete} className="bg-red-500 text-white px-6 py-2 rounded font-bold hover:bg-red-600 transition">
-                  ลบหนังสือ
+                  Delete Manga
                 </button>
               )}
               <button type="submit" className="bg-gray-800 text-white px-6 py-2 rounded font-bold hover:bg-black transition">
-                {isEditMode ? 'บันทึกการแก้ไข' : 'สร้างหนังสือใหม่'}
+                {isEditMode ? 'Save Changes' : 'Create Manga'}
               </button>
             </div>
           </div>

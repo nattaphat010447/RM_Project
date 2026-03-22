@@ -1,3 +1,63 @@
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+/* Modern base styles */
+@layer base {
+  body {
+    @apply bg-slate-50 text-slate-900;
+  }
+  
+  h1 {
+    @apply text-slate-900 font-bold;
+  }
+  
+  h2, h3, h4, h5, h6 {
+    @apply text-slate-800 font-semibold;
+  }
+  
+  a {
+    @apply text-blue-500 hover:text-blue-600 transition-colors;
+  }
+  
+  button {
+    @apply transition-colors duration-200;
+  }
+}
+
+/* Utility classes for consistency */
+@layer components {
+  .card-modern {
+    @apply bg-white rounded-xl shadow-sm border border-slate-200 p-4 transition-shadow hover:shadow-md;
+  }
+  
+  .btn-modern {
+    @apply inline-flex items-center justify-center font-medium rounded-lg transition-colors duration-200;
+  }
+  
+  .btn-primary-modern {
+    @apply btn-modern bg-blue-500 hover:bg-blue-600 text-white;
+  }
+  
+  .btn-secondary-modern {
+    @apply btn-modern bg-slate-100 hover:bg-slate-200 text-slate-900;
+  }
+  
+  .input-modern {
+    @apply w-full px-4 py-2 rounded-lg border border-slate-200 bg-white text-slate-900 placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent;
+  }
+  
+  .badge-success {
+    @apply bg-emerald-100 text-emerald-800 text-xs font-semibold px-3 py-1 rounded-full;
+  }
+  
+  .badge-danger {
+    @apply bg-red-100 text-red-800 text-xs font-semibold px-3 py-1 rounded-full;
+  }
+  
+  .section-header {
+    @apply text-2xl font-bold text-slate-900 border-l-4 border-blue-500 pl-4;
+  }
+}

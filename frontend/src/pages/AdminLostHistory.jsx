@@ -56,7 +56,7 @@ const AdminHistory = () => {
     return matchName || matchTitle || matchSerial || matchOrderId;
   });
 
-  if (loading) return <div className="min-h-screen bg-gray-200 flex justify-center items-center font-bold text-gray-500">Loading History...</div>;
+  if (loading) return <div className="min-h-screen bg-gray-200 flex justify-center items-center font-bold text-gray-500">Loading history...</div>;
 
   return (
     <div className="min-h-screen bg-gray-200 p-4 md:p-10 flex justify-center items-start pt-16">
@@ -67,7 +67,7 @@ const AdminHistory = () => {
             <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path></svg>
           </button>
           
-          <h1 className="text-2xl md:text-3xl font-black text-gray-800">ประวัติการเช่า</h1>
+          <h1 className="text-2xl md:text-3xl font-black text-gray-800">Rental History</h1>
           
           <button onClick={() => { localStorage.removeItem('access_token'); navigate('/signin'); }} className="text-gray-400 hover:text-red-500 transition duration-200">
             <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path></svg>
@@ -79,13 +79,13 @@ const AdminHistory = () => {
             onClick={() => setActiveTab('ALL')}
             className={`px-8 py-2 rounded-full font-bold transition-all ${activeTab === 'ALL' ? 'bg-gray-800 text-white shadow-md' : 'bg-gray-100 text-gray-500 hover:bg-gray-200'}`}
           >
-            ประวัติทั้งหมด
+            All Records
           </button>
           <button 
             onClick={() => setActiveTab('LOST')}
             className={`px-8 py-2 rounded-full font-bold transition-all ${activeTab === 'LOST' ? 'bg-red-500 text-white shadow-md' : 'bg-gray-100 text-gray-500 hover:bg-gray-200'}`}
           >
-            ประวัติสูญหาย
+            Lost Records
           </button>
         </div>
 
@@ -97,7 +97,7 @@ const AdminHistory = () => {
             </div>
             <input
               type="text"
-              placeholder="ค้นหาจาก ชื่อลูกค้า ชื่อหนังสือ รหัส หรือเลขที่ใบเช่า"
+              placeholder="Search by customer, manga title, serial, or order ID"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               className="w-full pl-10 pr-4 py-2.5 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-gray-800 focus:border-transparent text-sm transition-shadow"
@@ -117,18 +117,18 @@ const AdminHistory = () => {
             <thead>
               <tr className="border-b-2 border-gray-100 text-gray-800">
                 <th className="py-4 px-4 font-bold">ID</th>
-                <th className="py-4 px-4 font-bold">ลูกค้า</th>
-                <th className="py-4 px-4 font-bold">ชื่อมังงะ (Serial No)</th>
-                <th className="py-4 px-4 font-bold">วันที่เช่า</th>
-                <th className="py-4 px-4 font-bold">กำหนดคืน</th>
-                <th className="py-4 px-4 font-bold">วันที่คืนจริง</th>
-                <th className="py-4 px-4 font-bold">สถานะการคืน</th>
+                <th className="py-4 px-4 font-bold">Customer</th>
+                <th className="py-4 px-4 font-bold">Manga (Serial No)</th>
+                <th className="py-4 px-4 font-bold">Rented At</th>
+                <th className="py-4 px-4 font-bold">Due Date</th>
+                <th className="py-4 px-4 font-bold">Returned At</th>
+                <th className="py-4 px-4 font-bold">Return Status</th>
               </tr>
             </thead>
             <tbody>
               {displayedItems.length === 0 ? (
                 <tr>
-                  <td colSpan="7" className="py-12 text-gray-400 font-bold text-lg">ไม่มีประวัติในหมวดหมู่นี้</td>
+                  <td colSpan="7" className="py-12 text-gray-400 font-bold text-lg">No records in this category</td>
                 </tr>
               ) : (
                 displayedItems.map((item, index) => (
@@ -143,10 +143,10 @@ const AdminHistory = () => {
                     <td className="py-4 px-4 font-bold text-gray-800">{item.returned_at_formatted}</td>
                     <td className="py-4 px-4">
                       
-                      {item.display_status === 'ON_TIME' && <span className="bg-[#2e8b57] text-white px-3 py-1 rounded-md text-xs font-bold shadow-sm">ตรงเวลา</span>}
-                      {item.display_status === 'LATE' && <span className="bg-[#dc143c] text-white px-3 py-1 rounded-md text-xs font-bold shadow-sm">คืนช้า</span>}
-                      {item.item_status === 'LOST' && <span className="bg-gray-800 text-white px-3 py-1 rounded-md text-xs font-bold shadow-sm">สูญหาย</span>}
-                      {item.item_status === 'CHECKED_OUT' && <span className="bg-blue-500 text-white px-3 py-1 rounded-md text-xs font-bold shadow-sm">กำลังเช่า</span>}
+                      {item.display_status === 'ON_TIME' && <span className="bg-[#2e8b57] text-white px-3 py-1 rounded-md text-xs font-bold shadow-sm">On Time</span>}
+                      {item.display_status === 'LATE' && <span className="bg-[#dc143c] text-white px-3 py-1 rounded-md text-xs font-bold shadow-sm">Late</span>}
+                      {item.item_status === 'LOST' && <span className="bg-gray-800 text-white px-3 py-1 rounded-md text-xs font-bold shadow-sm">Lost</span>}
+                      {item.item_status === 'CHECKED_OUT' && <span className="bg-blue-500 text-white px-3 py-1 rounded-md text-xs font-bold shadow-sm">Checked Out</span>}
 
                     </td>
                   </tr>

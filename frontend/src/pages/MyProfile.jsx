@@ -82,18 +82,18 @@ const MyProfile = () => {
       const data = await response.json();
 
       if (response.ok) {
-        alert("อัปเดตข้อมูลโปรไฟล์เรียบร้อยแล้ว!");
+        alert("Profile updated successfully!");
         setFormData({...formData, password: ''});
       } else {
-        alert(data.error || "เกิดข้อผิดพลาดในการอัปเดต");
+        alert(data.error || "Failed to update profile");
       }
     } catch (err) {
       console.error(err);
-      alert("ระบบขัดข้อง");
+      alert("System error");
     }
   };
 
-  if (loading) return <div className="min-h-screen flex justify-center items-center font-bold text-gray-500 bg-gray-50">กำลังโหลดข้อมูล...</div>;
+  if (loading) return <div className="min-h-screen flex justify-center items-center font-bold text-gray-500 bg-gray-50">Loading profile...</div>;
 
   return (
     <div className="min-h-screen bg-gray-50 py-16 px-4">
@@ -101,7 +101,7 @@ const MyProfile = () => {
         
         <div className="bg-[#2d116c] px-8 py-6 text-white">
           <h1 className="text-3xl font-black tracking-wide">My Profile</h1>
-          <p className="text-purple-200 mt-1">จัดการข้อมูลส่วนตัวของคุณ</p>
+          <p className="text-purple-200 mt-1">Manage your personal information</p>
         </div>
 
         <form onSubmit={handleSubmit} className="p-8 space-y-6">
@@ -129,7 +129,7 @@ const MyProfile = () => {
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-4">
             <div>
-              <label className="block text-sm font-bold text-gray-700 mb-2">ชื่อ - นามสกุล</label>
+              <label className="block text-sm font-bold text-gray-700 mb-2">Full Name</label>
               <input 
                 type="text" required
                 value={formData.fullName}
@@ -138,7 +138,7 @@ const MyProfile = () => {
               />
             </div>
             <div>
-              <label className="block text-sm font-bold text-gray-700 mb-2">เบอร์โทรศัพท์</label>
+              <label className="block text-sm font-bold text-gray-700 mb-2">Phone Number</label>
               <input 
                 type="text" required
                 value={formData.phone}
@@ -149,7 +149,7 @@ const MyProfile = () => {
           </div>
 
           <div>
-            <label className="block text-sm font-bold text-gray-700 mb-2">ที่อยู่จัดส่ง / ติดต่อ</label>
+            <label className="block text-sm font-bold text-gray-700 mb-2">Shipping / Contact Address</label>
             <textarea 
               required rows="3"
               value={formData.address}
@@ -159,20 +159,20 @@ const MyProfile = () => {
           </div>
 
           <div className="bg-yellow-50 border border-yellow-200 rounded-xl p-6 mt-4">
-            <label className="block text-sm font-bold text-yellow-800 mb-2">เปลี่ยนรหัสผ่านใหม่ (ไม่บังคับ)</label>
+            <label className="block text-sm font-bold text-yellow-800 mb-2">New Password (optional)</label>
             <input 
               type="password"
               value={formData.password}
               onChange={(e) => setFormData({...formData, password: e.target.value})}
-              placeholder="ปล่อยว่างไว้หากไม่ต้องการเปลี่ยนรหัสผ่าน"
+              placeholder="Leave blank if you do not want to change your password"
               className="w-full border-2 border-yellow-200 rounded-lg px-4 py-2.5 text-gray-800 focus:outline-none focus:border-yellow-400 focus:ring-2 focus:ring-yellow-100 transition"
             />
-            <p className="text-xs text-yellow-600 mt-2 font-medium">หากกรอกรหัสผ่านในช่องนี้ รหัสผ่านเก่าของคุณจะถูกเปลี่ยนทันทีเมื่อกดบันทึก</p>
+            <p className="text-xs text-yellow-600 mt-2 font-medium">If you fill this field, your current password will be replaced when you save.</p>
           </div>
 
           <div className="pt-6 border-t border-gray-100">
             <button type="submit" className="w-full bg-indigo-900 hover:bg-indigo-800 text-white font-black text-lg py-3.5 rounded-xl shadow-md transition duration-200 transform hover:-translate-y-0.5">
-              บันทึกข้อมูล
+              Save Profile
             </button>
           </div>
 

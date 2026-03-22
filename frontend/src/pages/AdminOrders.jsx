@@ -41,7 +41,7 @@ const AdminOrders = () => {
   useEffect(() => { fetchOrders(); }, [API_URL]);
 
   const handleAction = async (orderId, action) => {
-    const confirmMsg = action === 'approve' ? "ยืนยันการอนุมัติ?" : action === 'reject' ? "ยืนยันการปฏิเสธ?" : "ยืนยันว่าลูกค้ารับหนังสือแล้ว?";
+    const confirmMsg = action === 'approve' ? "Confirm approval?" : action === 'reject' ? "Confirm rejection?" : "Confirm customer has received the books?";
     if (!window.confirm(confirmMsg)) return;
     
     const token = localStorage.getItem('access_token');
@@ -51,8 +51,8 @@ const AdminOrders = () => {
         headers: { 'Authorization': `Bearer ${token}` }
       });
       if (response.ok) fetchOrders();
-      else alert("เกิดข้อผิดพลาด");
-    } catch (err) { alert("ระบบขัดข้อง"); }
+      else alert("An error occurred");
+    } catch (err) { alert("System error"); }
   };
 
   const handleCompleteReturn = async (orderId, itemId) => {
@@ -66,15 +66,15 @@ const AdminOrders = () => {
         setReturningItems(returningItems.filter(id => id !== itemId));
         fetchOrders();
       } else {
-        alert("เกิดข้อผิดพลาด");
+        alert("An error occurred");
       }
-    } catch (err) { alert("ระบบขัดข้อง"); }
+    } catch (err) { alert("System error"); }
   };
 
   const handleSubmitFine = async (e) => {
     e.preventDefault();
     if (!fineData.fine_amount || fineData.fine_amount <= 0) {
-      alert("กรุณาระบุจำนวนเงินค่าปรับ"); return;
+      alert("Please enter a valid fine amount"); return;
     }
 
     const token = localStorage.getItem('access_token');
@@ -92,15 +92,15 @@ const AdminOrders = () => {
       });
 
       if (response.ok) {
-        alert("บันทึกค่าปรับและรับคืนสำเร็จ!");
+        alert("Fine saved and return completed!");
         setFineModal({ isOpen: false, orderId: null, itemId: null, mangaTitle: '' });
         setFineData({ fine_type: 'LATE', fine_amount: '' });
         setReturningItems(returningItems.filter(id => id !== fineModal.itemId));
         fetchOrders();
       } else {
-        alert("เกิดข้อผิดพลาดในการบันทึกค่าปรับ");
+        alert("Failed to save fine");
       }
-    } catch (err) { alert("ระบบขัดข้อง"); }
+    } catch (err) { alert("System error"); }
   };
 
   if (loading) return <div className="min-h-screen bg-gray-200 flex items-center justify-center font-bold text-gray-600">Loading Orders...</div>;
@@ -120,20 +120,20 @@ const AdminOrders = () => {
 
         <div className="mb-10">
           <h2 className="text-xl font-bold text-gray-700 mb-4 border-b pb-2 flex justify-between items-center">
-            คำขอเช่าใหม่
+            New Rental Requests
             {requestedOrders.length > 0 && <span className="bg-red-500 text-white text-xs px-2 py-1 rounded-full animate-pulse">{requestedOrders.length}</span>}
           </h2>
-          {requestedOrders.length === 0 ? <p className="text-gray-400 italic">ไม่มีรายการใหม่</p> : (
+          {requestedOrders.length === 0 ? <p className="text-gray-400 italic">No new requests</p> : (
             <div className="space-y-4">
               {requestedOrders.map(order => (
                 <div key={order.id} className="bg-gray-50 border border-gray-200 rounded-xl p-5 flex justify-between items-center shadow-sm">
                   <div>
-                    <p className="text-sm font-bold text-gray-800">ลูกค้า: {order.customer_name}</p>
-                    <p className="text-xs text-gray-500">ยื่นคำขอเมื่อ: {order.requested_at_formatted}</p>
+                    <p className="text-sm font-bold text-gray-800">Customer: {order.customer_name}</p>
+                    <p className="text-xs text-gray-500">Requested at: {order.requested_at_formatted}</p>
                   </div>
                   <div className="flex gap-2">
-                    <button onClick={() => handleAction(order.id, 'approve')} className="bg-green-500 hover:bg-green-600 text-white py-2 px-6 rounded-lg text-sm font-bold shadow-md transition">อนุมัติ</button>
-                    <button onClick={() => handleAction(order.id, 'reject')} className="bg-red-500 hover:bg-red-600 text-white py-2 px-6 rounded-lg text-sm font-bold shadow-md transition">ปฏิเสธ</button>
+                    <button onClick={() => handleAction(order.id, 'approve')} className="bg-green-500 hover:bg-green-600 text-white py-2 px-6 rounded-lg text-sm font-bold shadow-md transition">Approve</button>
+                    <button onClick={() => handleAction(order.id, 'reject')} className="bg-red-500 hover:bg-red-600 text-white py-2 px-6 rounded-lg text-sm font-bold shadow-md transition">Reject</button>
                   </div>
                 </div>
               ))}
@@ -142,13 +142,13 @@ const AdminOrders = () => {
         </div>
 
         <div className="mb-10">
-          <h2 className="text-xl font-bold text-gray-700 mb-4 border-b pb-2">รอลูกค้ามารับหนังสือ</h2>
-          {approvedOrders.length === 0 ? <p className="text-gray-400 italic">ไม่มีรายการค้างรับ</p> : (
+          <h2 className="text-xl font-bold text-gray-700 mb-4 border-b pb-2">Awaiting Pickup</h2>
+          {approvedOrders.length === 0 ? <p className="text-gray-400 italic">No pending pickups</p> : (
             <div className="space-y-4">
               {approvedOrders.map(order => (
                 <div key={order.id} className="bg-indigo-50 border border-indigo-100 rounded-xl p-5 flex justify-between items-center shadow-sm">
-                  <p className="text-sm font-bold text-indigo-900 uppercase">ลูกค้า: {order.customer_name}</p>
-                  <button onClick={() => handleAction(order.id, 'checkout')} className="bg-indigo-600 hover:bg-indigo-700 text-white py-2 px-6 rounded-lg text-sm font-bold shadow-md transition">ลูกค้ารับหนังสือแล้ว</button>
+                  <p className="text-sm font-bold text-indigo-900 uppercase">Customer: {order.customer_name}</p>
+                  <button onClick={() => handleAction(order.id, 'checkout')} className="bg-indigo-600 hover:bg-indigo-700 text-white py-2 px-6 rounded-lg text-sm font-bold shadow-md transition">Mark as Picked Up</button>
                 </div>
               ))}
             </div>
@@ -156,14 +156,14 @@ const AdminOrders = () => {
         </div>
 
         <div>
-          <h2 className="text-xl font-bold text-gray-700 mb-4 border-b pb-2">รายการที่อยู่ระหว่างการเช่า</h2>
-          {checkedOutOrders.length === 0 ? <p className="text-gray-400 italic">ไม่มีรายการที่กำลังเช่า</p> : (
+          <h2 className="text-xl font-bold text-gray-700 mb-4 border-b pb-2">Currently Rented</h2>
+          {checkedOutOrders.length === 0 ? <p className="text-gray-400 italic">No active rentals</p> : (
             <div className="space-y-6">
               {checkedOutOrders.map(order => (
                 <div key={order.id} className="border-2 border-gray-100 rounded-2xl p-6 hover:border-indigo-200 transition">
                   <div className="flex justify-between items-center mb-4">
                     <p className="text-sm font-bold text-gray-800">
-                      ลูกค้า: <span className="text-indigo-600 underline decoration-indigo-200">{order.customer_name}</span> 
+                      Customer: <span className="text-indigo-600 underline decoration-indigo-200">{order.customer_name}</span> 
                       <span className="text-xs text-gray-400 ml-3">ID: #{order.id}</span>
                     </p>
                   </div>
@@ -172,9 +172,9 @@ const AdminOrders = () => {
                     <table className="w-full text-sm text-left">
                       <thead className="bg-gray-50 text-gray-500 font-bold uppercase text-[10px] tracking-widest border-b">
                         <tr>
-                          <th className="px-4 py-3">ชื่อหนังสือ</th>
+                          <th className="px-4 py-3">Manga Title</th>
                           <th className="px-4 py-3">Serial No.</th>
-                          <th className="px-4 py-3 text-right">สถานะ/การจัดการ</th>
+                          <th className="px-4 py-3 text-right">Status/Action</th>
                         </tr>
                       </thead>
                       <tbody>
@@ -190,7 +190,7 @@ const AdminOrders = () => {
                                     onClick={() => setReturningItems([...returningItems, item.id])}
                                     className="bg-white border-2 border-indigo-500 text-indigo-600 hover:bg-indigo-50 font-bold py-1.5 px-4 rounded-lg text-xs transition shadow-sm"
                                   >
-                                    รับคืนหนังสือ
+                                    Return Book
                                   </button>
                                 ) : (
                                   <div className="flex justify-end items-center gap-2 animate-fade-in">
@@ -198,13 +198,13 @@ const AdminOrders = () => {
                                       onClick={() => handleCompleteReturn(order.id, item.id)}
                                       className="bg-green-500 hover:bg-green-600 text-white font-bold py-1.5 px-3 rounded-lg shadow-md text-xs transition"
                                     >
-                                      คืนปกติ
+                                      Normal Return
                                     </button>
                                     <button 
                                       onClick={() => setFineModal({ isOpen: true, orderId: order.id, itemId: item.id, mangaTitle: item.manga_title })}
                                       className="bg-red-500 hover:bg-red-600 text-white font-bold py-1.5 px-3 rounded-lg shadow-md text-xs transition"
                                     >
-                                      มีค่าปรับ
+                                      With Fine
                                     </button>
                                     <button 
                                       onClick={() => setReturningItems(returningItems.filter(id => id !== item.id))}
@@ -216,7 +216,7 @@ const AdminOrders = () => {
                                 )
                               ) : (
                                 <span className={`font-bold text-[10px] uppercase px-3 py-1 rounded-full ${item.item_status?.toUpperCase() === 'RETURNED' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
-                                  {item.item_status === 'RETURNED' ? 'คืนแล้ว' : item.item_status}
+                                  {item.item_status === 'RETURNED' ? 'Returned' : item.item_status}
                                 </span>
                               )}
 
@@ -236,25 +236,25 @@ const AdminOrders = () => {
       {fineModal.isOpen && (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex justify-center items-center z-50 p-4">
           <div className="bg-white rounded-3xl shadow-2xl p-8 w-full max-w-sm animate-fade-in border-t-8 border-red-500">
-            <h3 className="text-2xl font-black text-gray-800 mb-2">แจ้งชำระค่าปรับ</h3>
-            <p className="text-sm text-gray-500 mb-6 italic">สำหรับเล่ม: {fineModal.mangaTitle}</p>
+            <h3 className="text-2xl font-black text-gray-800 mb-2">Fine Payment</h3>
+            <p className="text-sm text-gray-500 mb-6 italic">For item: {fineModal.mangaTitle}</p>
             
             <form onSubmit={handleSubmitFine} className="space-y-5">
               <div>
-                <label className="block text-xs font-black text-gray-400 uppercase mb-2">สาเหตุการปรับ</label>
+                <label className="block text-xs font-black text-gray-400 uppercase mb-2">Fine Reason</label>
                 <select 
                   value={fineData.fine_type} 
                   onChange={(e) => setFineData({...fineData, fine_type: e.target.value})}
                   className="w-full border-2 border-gray-100 rounded-xl px-4 py-3 text-gray-700 focus:outline-none focus:border-red-400 bg-gray-50"
                 >
-                  <option value="LATE">คืนล่าช้า (Late)</option>
-                  <option value="DAMAGE">เสียหาย (Damage)</option>
-                  <option value="LOST">สูญหาย (Lost)</option>
+                  <option value="LATE">Late Return</option>
+                  <option value="DAMAGE">Damaged</option>
+                  <option value="LOST">Lost</option>
                 </select>
               </div>
               
               <div>
-                <label className="block text-xs font-black text-gray-400 uppercase mb-2">จำนวนเงิน (บาท)</label>
+                <label className="block text-xs font-black text-gray-400 uppercase mb-2">Amount (THB)</label>
                 <input 
                   type="number" 
                   min="1"
@@ -272,13 +272,13 @@ const AdminOrders = () => {
                   onClick={() => setFineModal({ isOpen: false, orderId: null, itemId: null, mangaTitle: '' })}
                   className="flex-1 text-gray-400 font-bold hover:text-gray-600 transition"
                 >
-                  ยกเลิก
+                  Cancel
                 </button>
                 <button 
                   type="submit" 
                   className="flex-1 bg-red-600 hover:bg-red-700 text-white font-bold py-3 rounded-xl transition shadow-lg"
                 >
-                  ยืนยันบันทึก
+                  Confirm
                 </button>
               </div>
             </form>
