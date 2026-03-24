@@ -24,6 +24,8 @@ class Manga(models.Model):
     avg_rating = models.DecimalField(max_digits=3, decimal_places=2, default=0.00)
 
     is_active = models.BooleanField(default=True)
+    
+    mbrs_id = models.IntegerField(null=True, blank=True, db_index=True)
 
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
@@ -118,7 +120,6 @@ class MangaReview(models.Model):
     manga = models.ForeignKey(Manga, on_delete=models.CASCADE, related_name='reviews')
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     rating = models.IntegerField(default=5)
-    comment = models.TextField(blank=True, null=True)
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:

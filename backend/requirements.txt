@@ -8,3 +8,7 @@ dotenv
 cryptography
 Pillow
 apscheduler
+pandas
+torch
+torch_geometric
+thefuzz

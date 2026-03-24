@@ -6,7 +6,7 @@ from .views import (
     popular_mangas, admin_orders, approve_order, reject_order, 
     return_item, fine_item, admin_users, admin_user_detail,
     admin_add_manga, admin_manage_manga, search_customers, manual_checkout,
-    submit_manga_review, my_profile
+    submit_manga_review, my_profile, RecommendationView
 )
 
 urlpatterns = [
@@ -37,4 +37,6 @@ urlpatterns = [
     path('admin/manual-checkout/', manual_checkout, name='manual-checkout'),
     path('admin/history/', admin_all_history, name='admin-all-history'),
     path('mangas/<int:manga_id>/review/', submit_manga_review, name='submit-review'),
+
+    path('recommendations/', RecommendationView.as_view(), name='manga-recommendations'),
 ]

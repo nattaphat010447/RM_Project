@@ -10,6 +10,8 @@ from datetime import timedelta
 from django.db.models import Count, Q
 from decimal import Decimal
 from django.utils.dateformat import format
+from rest_framework.views import APIView
+from .recommender import RecommenderService
 
 from .models import Manga, MangaCopy, Cart, CartItem, RentalOrder, RentalOrderItem, FineLog, MangaReview
 from .serializers import AdminUserSerializer, MangaSerializer, UserRegistrationSerializer, CartItemSerializer, RentalOrderSerializer, UserProfileSerializer
@@ -544,3 +546,34 @@ def my_profile(request):
             serializer.save()
             return Response({"message": "อัปเดตข้อมูลโปรไฟล์สำเร็จ!"})
         return Response(serializer.errors, status=400)
+        
+# backend/rentals/views.py
+
+class RecommendationView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        username = request.user.username
+        service = RecommenderService()
+        
+        recommended_ids = service.get_recommendations(username)
+        
+        if not recommended_ids:
+            queryset = Manga.objects.filter(is_active=True).order_by('-created_at')[:2]
+        else:
+            all_matches = Manga.objects.filter(mbrs_id__in=recommended_ids, is_active=True)
+            
+            unique_mangas = {}
+            for m in all_matches:
+                if m.mbrs_id not in unique_mangas:
+                    unique_mangas[m.mbrs_id] = m
+            
+            sorted_mangas = []
+            for rid in recommended_ids:
+                if rid in unique_mangas:
+                    sorted_mangas.append(unique_mangas[rid])
+            
+            queryset = sorted_mangas[:10]
+
+        serializer = MangaSerializer(queryset, many=True, context={'request': request})
+        return Response(serializer.data)
