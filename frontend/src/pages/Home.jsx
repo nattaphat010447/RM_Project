@@ -29,28 +29,28 @@ const renderStars = (rating) => {
 
 const MangaCard = ({ manga }) => {
   return (
-    <div className="bg-white rounded-2xl shadow-md p-4 flex flex-col hover:shadow-xl transition-shadow duration-300">
-      <img src={getImageUrl(manga.cover_image_url)} alt={manga.title} className="w-full h-64 object-cover rounded-xl mb-4" />
+    <div className="bg-brand-light rounded-xl shadow-md p-4 flex flex-col hover:shadow-xl transition-shadow duration-300">
+      <img src={getImageUrl(manga.cover_image_url)} alt={manga.title} className="w-full h-64 object-cover rounded-lg mb-4" />
       
-      <h3 className="font-bold text-lg text-gray-800 line-clamp-1">{manga.title}</h3>
+      <h3 className="font-semibold text-lg text-brand-primary line-clamp-1">{manga.title}</h3>
       
       <div className="flex flex-col mt-2 mb-4 gap-2">
+        <span className="bg-brand-light text-brand-primary text-xs font-semibold rounded-full uppercase tracking-wide truncate">
+          {manga.genre}
+        </span>
         <div className="flex justify-between items-center">
-          <span className="bg-red-500 text-white text-xs font-bold px-3 py-1 rounded-full uppercase tracking-wide truncate max-w-[100px]">
-            {manga.genre}
-          </span>
-          <div className="flex text-yellow-400 text-sm" title={`Rating: ${manga.avg_rating || 0}`}>
+          <div className="flex text-brand-accent text-sm" title={`Rating: ${manga.avg_rating || 0}`}>
             {renderStars(manga.avg_rating)}
           </div>
-        </div>
-        <div className="text-xs font-bold text-gray-400 text-right">
-          Sold {manga.sold_count || 0}
+          <div className="text-xs font-medium text-brand-primary text-right">
+            Sold {manga.sold_count || 0}
+          </div>
         </div>
       </div>
       
       <Link 
         to={`/manga/${manga.id}`}
-        className="mt-auto w-full bg-yellow-400 hover:bg-yellow-500 text-gray-900 font-bold py-2 rounded-xl transition duration-200 shadow-sm block text-center"
+        className="mt-auto w-full bg-brand-secondary hover:bg-brand-primary text-brand-light font-semibold py-2 rounded-lg transition duration-200 shadow-sm block text-center"
       >
         Rent
       </Link>
@@ -76,48 +76,44 @@ const Home = () => {
   }, []);
 
   return (
-    <div className="min-h-screen bg-gray-50 pb-12">
-      <div className="relative bg-blue-900 w-full h-80 flex flex-col items-center justify-center overflow-hidden">
-        <div className="absolute inset-0 opacity-20" style={{ background: 'repeating-conic-gradient(from 0deg, transparent 0deg 10deg, rgba(255,255,255,0.3) 10deg 20deg)' }}></div>
-        <div className="relative z-10 flex flex-col items-center">
-          <h1 className="text-4xl md:text-5xl font-black text-yellow-400 tracking-widest uppercase drop-shadow-lg mb-4 text-center transform -rotate-2">
-            MANGA BOOK RENTAL STORE
-          </h1>
-          <div className="w-40 h-40 bg-yellow-300 rounded-full border-4 border-yellow-500 flex items-center justify-center overflow-hidden shadow-2xl">
-             <span className="font-bold text-yellow-800">Logo Image</span>
-          </div>
-        </div>
+    <div className="min-h-screen bg-brand-light pb-12">
+      <div className="w-full h-80 overflow-hidden">
+        <img
+          src="/images/mangas/banner.svg"
+          alt="Manga Book Rental Store Banner"
+          className="w-full h-full object-cover"
+        />
       </div>
 
       <div className="max-w-6xl mx-auto px-6 mt-12 space-y-16">
         
         {loading ? (
-          <div className="text-center text-xl font-bold text-gray-500 my-20">Loading Mangas...</div>
+          <div className="text-center text-xl font-semibold text-brand-primary my-20">Loading Mangas...</div>
         ) : (
           <>
             <section>
-              <h2 className="text-2xl font-black text-gray-800 mb-6 border-l-4 border-purple-600 pl-4">Recommend for You</h2>
+              <h2 className="section-header mb-6">Recommended for You</h2>
               <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-8">
                 {mangas.slice(0, 3).map(manga => (
                   <MangaCard key={`rec-${manga.id}`} manga={manga} />
                 ))}
               </div>
               <div className="mt-6 flex justify-end">
-                <button className="text-gray-500 hover:text-purple-600 font-bold flex items-center transition">
+                <button className="text-brand-primary hover:text-brand-secondary font-semibold flex items-center transition">
                   More <span className="ml-1">→</span>
                 </button>
               </div>
             </section>
 
             <section>
-              <h2 className="text-2xl font-black text-gray-800 mb-6 border-l-4 border-purple-600 pl-4">Popular This Week</h2>
+              <h2 className="section-header mb-6">Popular This Week</h2>
               <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-8">
                 {mangas.slice(3, 6).map(manga => (
                   <MangaCard key={`pop-${manga.id}`} manga={manga} />
                 ))}
               </div>
               <div className="mt-6 flex justify-end">
-                <button className="text-gray-500 hover:text-purple-600 font-bold flex items-center transition">
+                <button className="text-brand-primary hover:text-brand-secondary font-semibold flex items-center transition">
                   More <span className="ml-1">→</span>
                 </button>
               </div>

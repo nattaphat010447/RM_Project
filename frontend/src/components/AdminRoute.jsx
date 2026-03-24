@@ -45,10 +45,10 @@ const AdminRoute = ({ children }) => {
 
   if (isAdmin === null) {
     return (
-      <div className="min-h-screen bg-gray-100 flex items-center justify-center">
+      <div className="min-h-screen bg-brand-light flex items-center justify-center">
         <div className="flex flex-col items-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-900 mb-4"></div>
-          <p className="text-gray-600 font-bold">Checking security permissions...</p>
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-brand-primary mb-4"></div>
+          <p className="text-brand-primary font-bold">Checking security permissions...</p>
         </div>
       </div>
     );

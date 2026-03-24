@@ -34,17 +34,18 @@ class MangaCopySerializer(serializers.ModelSerializer):
 class MangaSerializer(serializers.ModelSerializer):
     sold_count = serializers.SerializerMethodField()
     avg_rating = serializers.SerializerMethodField()
-    
     available_copies = serializers.SerializerMethodField()
-
     cover_image_url = serializers.SerializerMethodField()
+    
+    copies = MangaCopySerializer(many=True, read_only=True)
 
     class Meta:
         model = Manga
         fields = [
             'id', 'title', 'cover_image_url', 'author', 'genre', 
             'rental_price_per_day', 'sold_count', 'avg_rating', 
-            'available_copies'
+            'available_copies', 
+            'copies'
         ]
 
     def get_sold_count(self, obj):

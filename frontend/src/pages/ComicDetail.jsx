@@ -91,27 +91,27 @@ const MangaDetail = () => {
   };
 
   if (loading) {
-    return <div className="min-h-screen bg-brand-light flex items-center justify-center text-brand-primary text-2xl font-semibold">Loading Manga Details...</div>;
+    return <div className="min-h-screen bg-brand-primary flex items-center justify-center text-brand-light text-2xl font-bold">Loading Manga Details...</div>;
   }
 
   if (!manga) {
-    return <div className="min-h-screen bg-brand-light flex items-center justify-center text-brand-primary text-2xl font-semibold">Manga not found!</div>;
+    return <div className="min-h-screen bg-brand-primary flex items-center justify-center text-brand-light text-2xl font-bold">Manga not found!</div>;
   }
 
   const availableCopies = manga.copies?.filter(c => c.status === 'AVAILABLE') || [];
   const isOutOfStock = availableCopies.length === 0;
 
   return (
-    <div className="min-h-screen bg-brand-light pt-10 px-4 pb-12">
+    <div className="min-h-screen bg-brand-primary pt-10 px-4 pb-12">
       <div className="max-w-4xl mx-auto">
         
         {isAdded && (
-          <div className="bg-brand-light text-brand-primary px-6 py-4 rounded-lg mb-6 font-semibold shadow-sm transition-all">
+          <div className="bg-brand-light text-brand-primary px-6 py-4 rounded-md mb-6 font-bold shadow-md transition-all">
             Added "{manga.title}" (Copy: {manga.copies.find(c => c.id.toString() === copyId.toString())?.serial_no}) to the cart for {rentalDays} days successfully.
           </div>
         )}
 
-        <div className="bg-brand-light rounded-xl p-6 md:p-10 relative shadow-md flex flex-col md:flex-row gap-10">
+        <div className="bg-brand-light rounded-2xl p-6 md:p-10 relative shadow-2xl flex flex-col md:flex-row gap-10">
           
           <button 
             onClick={() => navigate(-1)} 
@@ -126,7 +126,7 @@ const MangaDetail = () => {
             <img 
               src={getImageUrl(manga.cover_image_url)} 
               alt={manga.title}  
-              className="w-full max-w-sm h-auto object-cover rounded-lg shadow-md"
+              className="w-full max-w-sm h-auto object-cover rounded-xl shadow-md border border-brand-light"
             />
           </div>
 
@@ -134,10 +134,10 @@ const MangaDetail = () => {
             <h1 className="text-3xl font-bold text-brand-primary mb-4">{manga.title}</h1>
             
             <div className="space-y-2 text-brand-primary mb-6">
-              <p><span className="font-medium text-brand-primary w-24 inline-block">Author:</span> {manga.author}</p>
-              <p><span className="font-medium text-brand-primary w-24 inline-block">Category:</span> {manga.genre}</p>
+              <p><span className="font-semibold text-brand-primary w-24 inline-block">Author:</span> {manga.author}</p>
+              <p><span className="font-semibold text-brand-primary w-24 inline-block">Category:</span> {manga.genre}</p>
               <p className="pt-2">
-                <span className="font-medium text-brand-primary">Rental Price:</span> 
+                <span className="font-semibold text-brand-primary">Rental Price:</span> 
                 <span className="font-bold text-lg text-brand-primary ml-2">{manga.rental_price_per_day} THB/day</span>
               </p>
             </div>
@@ -145,16 +145,16 @@ const MangaDetail = () => {
             <div className="space-y-5 mb-8 flex-grow">
               
               <div>
-                <label className="block text-brand-primary font-medium mb-2">Select copy to rent</label>
+                <label className="block text-brand-primary font-semibold mb-2">Select copy to rent</label>
                 <div className="relative">
                   <select 
                     value={copyId}
                     onChange={(e) => setCopyId(e.target.value)}
                     disabled={isOutOfStock}
-                    className={`w-full appearance-none rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-brand-secondary text-brand-primary ${isOutOfStock ? 'bg-brand-light cursor-not-allowed shadow-md' : 'bg-brand-light shadow-md'}`}
+                    className={`w-full appearance-none border border-brand-secondary rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-brand-secondary text-brand-primary ${isOutOfStock ? 'bg-brand-light cursor-not-allowed' : 'bg-brand-light'}`}
                   >
                     {isOutOfStock ? (
-                      <option value="">Out of stock</option>
+                      <option value="">Out of stock (ไม่มีเล่มว่าง)</option>
                     ) : (
                       availableCopies.map(copy => (
                         <option key={copy.id} value={copy.id}>
@@ -170,14 +170,14 @@ const MangaDetail = () => {
               </div>
 
               <div>
-                <label className="block text-brand-primary font-medium mb-2">Number of rental days</label>
+                <label className="block text-brand-primary font-semibold mb-2">Number of rental days</label>
                 <input 
                   type="number" 
                   min="1"
                   value={rentalDays}
                   onChange={(e) => setRentalDays(e.target.value)}
                   disabled={isOutOfStock}
-                  className={`w-full rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-brand-secondary text-brand-primary ${isOutOfStock ? 'bg-brand-light cursor-not-allowed shadow-md' : 'bg-brand-light shadow-md'}`}
+                  className={`w-full border border-brand-secondary rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-brand-secondary text-brand-primary ${isOutOfStock ? 'bg-brand-light cursor-not-allowed' : 'bg-brand-light'}`}
                 />
               </div>
             </div>
@@ -185,7 +185,7 @@ const MangaDetail = () => {
             <button 
               onClick={handleAddToCart}
               disabled={isOutOfStock}
-              className={`w-full font-bold text-lg py-4 rounded-lg transition duration-200 shadow-sm ${isOutOfStock ? 'bg-brand-light text-brand-primary cursor-not-allowed' : 'bg-brand-secondary hover:bg-brand-primary text-brand-light'}`}
+              className={`w-full font-bold text-lg py-4 rounded-xl transition duration-200 shadow-md ${isOutOfStock ? 'bg-brand-light text-brand-primary cursor-not-allowed' : 'bg-brand-accent hover:bg-brand-accent text-brand-primary'}`}
             >
               {isOutOfStock ? 'Out of Stock' : 'Add to Cart'}
             </button>

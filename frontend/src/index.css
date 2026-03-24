@@ -1,3 +1,117 @@
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+/* Brand color CSS variables */
+:root {
+  --color-brand-primary: #1A3263;
+  --color-brand-secondary: #FAB95B;
+  --color-brand-accent: #FAB95B;
+  --color-brand-light: #FFFFFF;
+}
+
+/* Modern base styles */
+@layer base {
+  body {
+    background-color: var(--color-brand-light);
+    color: var(--color-brand-primary);
+  }
+  
+  h1 {
+    color: var(--color-brand-primary);
+    font-weight: 700;
+  }
+  
+  h2, h3, h4, h5, h6 {
+    color: var(--color-brand-primary);
+    font-weight: 600;
+  }
+  
+  a {
+    color: var(--color-brand-accent);
+    transition-property: color;
+    transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+    transition-duration: 150ms;
+  }
+  
+  a:hover {
+    color: var(--color-brand-secondary);
+  }
+  
+  button {
+    transition-property: color, background-color, border-color;
+    transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+    transition-duration: 200ms;
+  }
+}
+
+/* Utility classes for consistency */
+@layer components {
+  .card-modern {
+    @apply rounded-xl shadow-sm p-4 transition-shadow hover:shadow-md;
+    background-color: var(--color-brand-light);
+    border: 1px solid var(--color-brand-secondary);
+  }
+  
+  .btn-modern {
+    @apply inline-flex items-center justify-center font-medium rounded-lg transition-colors duration-200;
+  }
+  
+  .btn-primary-modern {
+    @apply btn-modern;
+    background-color: var(--color-brand-accent);
+    color: var(--color-brand-light);
+  }
+  
+  .btn-primary-modern:hover {
+    background-color: var(--color-brand-secondary);
+  }
+  
+  .btn-secondary-modern {
+    @apply btn-modern;
+    background-color: var(--color-brand-light);
+    color: var(--color-brand-primary);
+  }
+  
+  .btn-secondary-modern:hover {
+    background-color: var(--color-brand-light);
+  }
+  
+  .input-modern {
+    @apply w-full px-4 py-2 rounded-lg focus:outline-none focus:ring-2 focus:border-transparent;
+    background-color: var(--color-brand-light);
+    color: var(--color-brand-primary);
+    border: 1px solid var(--color-brand-primary);
+  }
+  
+  .input-modern::placeholder {
+    color: var(--color-brand-primary);
+    opacity: 0.6;
+  }
+  
+  .input-modern:focus {
+    border-color: transparent;
+    --tw-ring-color: var(--color-brand-secondary);
+  }
+
+  /* Global placeholder styling */
+  input::placeholder,
+  textarea::placeholder {
+    color: var(--color-brand-primary);
+    opacity: 0.6;
+  }
+  
+  .badge-success {
+    @apply bg-brand-light text-brand-primary text-xs font-semibold px-3 py-1 rounded-full;
+  }
+  
+  .badge-danger {
+    @apply bg-brand-light text-brand-primary text-xs font-semibold px-3 py-1 rounded-full;
+  }
+  
+  .section-header {
+    @apply text-2xl font-bold text-brand-primary border-l-4 border-brand-primary pl-4;
+  }
+}

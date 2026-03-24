@@ -81,119 +81,119 @@ const AdminMemberForm = () => {
       });
 
       if (response.ok) {
-        alert(isEditMode ? "บันทึกการแก้ไขสำเร็จ" : "เพิ่มสมาชิกใหม่สำเร็จ");
+        alert(isEditMode ? "Changes saved successfully" : "Member added successfully");
         navigate('/admin/members');
       } else {
         const errorData = await response.json();
-        const errorMessage = errorData.error || Object.values(errorData).flat().join('\n') || "เกิดข้อผิดพลาด กรุณาตรวจสอบข้อมูล";
-        alert(`เกิดข้อผิดพลาด:\n${errorMessage}`);
+        const errorMessage = errorData.error || Object.values(errorData).flat().join('\n') || "An error occurred. Please verify the input.";
+        alert(`Error:\n${errorMessage}`);
       }
     } catch (err) { 
-        alert("ระบบขัดข้อง: " + err.message); 
+        alert("System error: " + err.message); 
     }
   };
 
-  if (loading) return <div className="min-h-screen bg-gray-200 flex items-center justify-center">Loading...</div>;
+  if (loading) return <div className="min-h-screen bg-brand-light flex items-center justify-center">Loading...</div>;
 
   return (
-    <div className="min-h-screen bg-gray-200 p-4 flex items-center justify-center">
-      <div className="w-full max-w-3xl bg-white rounded-3xl shadow-xl p-8 md:p-12">
-        <h1 className="text-2xl font-bold text-gray-800 mb-8 border-b pb-4">
-          {isEditMode ? 'แก้ไขข้อมูลสมาชิก' : 'เพิ่มสมาชิกใหม่'}
+    <div className="min-h-screen bg-brand-light p-4 flex items-center justify-center">
+      <div className="w-full max-w-3xl bg-brand-light rounded-3xl shadow-md p-8 md:p-12">
+        <h1 className="text-2xl font-bold text-brand-primary mb-8 border-b pb-4">
+          {isEditMode ? 'Edit Member' : 'Add New Member'}
         </h1>
 
         <form onSubmit={handleSubmit} className="space-y-6">
           
           <div>
-            <label className="block text-sm font-bold text-gray-700 mb-2">ชื่อผู้ใช้ *</label>
+            <label className="block text-sm font-bold text-brand-primary mb-2">Username *</label>
             <input 
               type="text" required
               value={formData.username}
               onChange={(e) => setFormData({...formData, username: e.target.value})}
-              className="w-full border border-gray-300 rounded-lg px-4 py-2 text-gray-700 focus:outline-none focus:border-indigo-500 bg-gray-50"
-              placeholder="โปรดใส่ชื่อผู้ใช้ที่ไม่ซ้ำกับสมาชิกคนอื่น"
+              className="w-full rounded-lg px-4 py-2 text-brand-primary focus:outline-none focus:ring-2 focus:ring-brand-secondary bg-brand-light shadow-md"
+              placeholder="Enter a unique username"
             />
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-bold text-gray-700 mb-2">ชื่อเต็ม *</label>
+              <label className="block text-sm font-bold text-brand-primary mb-2">Full Name *</label>
               <input 
                 type="text" required
                 value={formData.fullName}
                 onChange={(e) => setFormData({...formData, fullName: e.target.value})}
-                className="w-full border border-gray-300 rounded-lg px-4 py-2 text-gray-700 focus:outline-none focus:border-indigo-500"
-                placeholder="โปรดใส่ชื่อและนามสกุล"
+                className="w-full rounded-lg px-4 py-2 text-brand-primary focus:outline-none focus:ring-2 focus:ring-brand-secondary bg-brand-light shadow-md"
+                placeholder="Enter first and last name"
               />
             </div>
 
             <div>
-              <label className="block text-sm font-bold text-gray-700 mb-2">วันเกิด *</label>
+              <label className="block text-sm font-bold text-brand-primary mb-2">Date of Birth *</label>
               <input 
                 type="date" required
                 value={formData.dob}
                 onChange={(e) => setFormData({...formData, dob: e.target.value})}
-                className="w-full border border-gray-300 rounded-lg px-4 py-2 text-gray-700 focus:outline-none focus:border-indigo-500"
+                className="w-full rounded-lg px-4 py-2 text-brand-primary focus:outline-none focus:ring-2 focus:ring-brand-secondary bg-brand-light shadow-md"
               />
             </div>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-bold text-gray-700 mb-2">อีเมล *</label>
+              <label className="block text-sm font-bold text-brand-primary mb-2">Email *</label>
               <input 
                 type="email" required
                 value={formData.email}
                 onChange={(e) => setFormData({...formData, email: e.target.value})}
-                className="w-full border border-gray-300 rounded-lg px-4 py-2 text-gray-700 focus:outline-none focus:border-indigo-500"
-                placeholder="โปรดใส่อีเมลของสมาชิก"
+                className="w-full rounded-lg px-4 py-2 text-brand-primary focus:outline-none focus:ring-2 focus:ring-brand-secondary bg-brand-light shadow-md"
+                placeholder="Enter member email"
               />
             </div>
 
             <div>
-              <label className="block text-sm font-bold text-gray-700 mb-2">เบอร์โทรศัพท์ *</label>
+              <label className="block text-sm font-bold text-brand-primary mb-2">Phone *</label>
               <input 
                 type="text" required
                 value={formData.phone}
                 onChange={(e) => setFormData({...formData, phone: e.target.value})}
-                className="w-full border border-gray-300 rounded-lg px-4 py-2 text-gray-700 focus:outline-none focus:border-indigo-500"
-                placeholder="โปรดใส่เบอร์โทรศัพท์"
+                className="w-full rounded-lg px-4 py-2 text-brand-primary focus:outline-none focus:ring-2 focus:ring-brand-secondary bg-brand-light shadow-md"
+                placeholder="Enter phone number"
               />
             </div>
           </div>
 
           <div>
-            <label className="block text-sm font-bold text-gray-700 mb-2">ที่อยู่ *</label>
+            <label className="block text-sm font-bold text-brand-primary mb-2">Address *</label>
             <textarea 
               required
               rows="3"
               value={formData.address}
               onChange={(e) => setFormData({...formData, address: e.target.value})}
-              className="w-full border border-gray-300 rounded-lg px-4 py-2 text-gray-700 focus:outline-none focus:border-indigo-500 resize-none"
-              placeholder="โปรดใส่ที่อยู่ของสมาชิก"
+              className="w-full rounded-lg px-4 py-2 text-brand-primary focus:outline-none focus:ring-2 focus:ring-brand-secondary bg-brand-light shadow-md resize-none"
+              placeholder="Enter member address"
             ></textarea>
           </div>
 
-          <div className="bg-[#FEF9E7] border border-[#FDEBD0] rounded-lg p-5 mt-8">
-            <label className="block text-sm font-bold text-gray-700 mb-2">
-              รหัสผ่าน {isEditMode ? '(กรอกใหม่หากต้องการเปลี่ยน)' : '*'}
+          <div className="bg-brand-light rounded-lg p-5 mt-8 shadow-md">
+            <label className="block text-sm font-bold text-brand-primary mb-2">
+              Password {isEditMode ? '(enter only if you want to change it)' : '*'}
             </label>
             <input 
               type="password"
               required={!isEditMode}
               value={formData.password}
               onChange={(e) => setFormData({...formData, password: e.target.value})}
-              placeholder={isEditMode ? "ทิ้งว่างไว้หากไม่ต้องการเปลี่ยนรหัสผ่าน" : "ตั้งรหัสผ่านให้สมาชิก..."}
-              className="w-full border border-gray-300 rounded-lg px-4 py-2 text-gray-700 focus:outline-none focus:border-yellow-400"
+              placeholder={isEditMode ? "Leave empty to keep current password" : "Set a password..."}
+              className="w-full rounded-lg px-4 py-2 text-brand-primary focus:outline-none focus:ring-2 focus:ring-brand-secondary bg-brand-light shadow-md"
             />
           </div>
 
           <div className="flex justify-between items-center mt-10 pt-6 border-t">
-            <button type="button" onClick={() => navigate('/admin/members')} className="border border-gray-300 hover:bg-gray-50 text-gray-700 font-bold py-2 px-6 rounded-lg transition">
-              ← กลับ
+            <button type="button" onClick={() => navigate('/admin/members')} className="border border-brand-secondary hover:bg-brand-light text-brand-primary font-bold py-2 px-6 rounded-lg transition">
+              ← Back
             </button>
-            <button type="submit" className="bg-[#2C3E50] hover:bg-gray-800 text-white font-bold py-2 px-6 rounded-lg transition shadow-md">
-              {isEditMode ? 'บันทึกการแก้ไข' : 'สร้างสมาชิก'}
+            <button type="submit" className="bg-brand-primary hover:bg-brand-primary text-brand-light font-bold py-2 px-6 rounded-lg transition shadow-md">
+              {isEditMode ? 'Save Changes' : 'Create Member'}
             </button>
           </div>
         </form>

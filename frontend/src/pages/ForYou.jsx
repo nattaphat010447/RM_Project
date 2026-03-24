@@ -30,8 +30,8 @@ const ForYou = () => {
     const num = Math.round(rating || 0);
     return '★'.repeat(num) + '☆'.repeat(5 - num);
   };
-  
-  // TODO: ในอนาคตจะเปลี่ยนเป็นการเรียก API ที่ให้คำแนะนำจากโมเดล MBCGCN จริงๆ แทนการ hardcode ID แบบนี้
+
+  // TODO: Replace hardcoded IDs with real recommendations from the MBCGCN model API.
   const recommendedIds = [1, 2, 3]; 
 
   useEffect(() => {
@@ -48,35 +48,39 @@ const ForYou = () => {
       });
   }, []);
 
-  if (loading) return <div className="text-center mt-20 text-2xl">กำลังประมวลผลคำแนะนำจาก โมเดล</div>;
+  if (loading) return <div className="text-center mt-20 text-2xl">Generating recommendations from the model...</div>;
 
   return (
-    <div className="min-h-screen bg-gray-50 py-12 px-6">
-      <h2 className="text-4xl font-black text-indigo-900 mb-2 text-center">FOR YOU</h2>
-      <p className="text-center text-gray-500 mb-10">Recommended manga for you</p>
+    <div className="min-h-screen bg-brand-light py-12 px-6">
+      <h2 className="text-4xl font-bold text-brand-primary mb-2 text-center">FOR YOU</h2>
+      <p className="text-center text-brand-primary mb-10">Recommended manga for you</p>
       
-      <div className="max-w-6xl mx-auto grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-8">
+      <div className="max-w-6xl mx-auto grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-8">
         {mangas.map(manga => (
-          <div key={manga.id} className="bg-white rounded-2xl shadow-lg overflow-hidden transform hover:-translate-y-2 transition duration-300">
-            <Link to={`/manga/${manga.id}`}>
-              <img
-                src={getImageUrl(manga.cover_image_url)}
-                alt={manga.title}
-                className="w-full h-72 object-cover"
-              />
-              <div className="p-4">
-                <h3 className="text-xl font-bold text-gray-800 truncate">{manga.title}</h3>
-                <p className="text-sm text-gray-500 mt-1">{manga.genre}</p>
-              </div>
-              
-              <div className="mt-auto flex justify-between items-end border-t border-gray-100 pt-3">
-                <div className="flex text-yellow-400 text-sm">
+          <div key={manga.id} className="bg-brand-light rounded-xl shadow-md p-4 flex flex-col hover:shadow-xl transition-shadow duration-300">
+            <img src={getImageUrl(manga.cover_image_url)} alt={manga.title} className="w-full h-64 object-cover rounded-lg mb-4" />
+            
+            <h3 className="font-semibold text-lg text-brand-primary line-clamp-1">{manga.title}</h3>
+            
+            <div className="flex flex-col mt-2 mb-4 gap-2">
+              <span className="bg-brand-light text-brand-primary text-xs font-semibold rounded-full uppercase tracking-wide truncate">
+                {manga.genre}
+              </span>
+              <div className="flex justify-between items-center">
+                <div className="flex text-brand-accent text-sm" title={`Rating: ${manga.avg_rating || 0}`}>
                   {renderStars(manga.avg_rating)}
                 </div>
-                <span className="text-xs font-bold text-gray-400 bg-gray-50 px-2 py-1 rounded-md">
+                <div className="text-xs font-medium text-brand-primary text-right">
                   Sold {manga.sold_count || 0}
-                </span>
+                </div>
               </div>
+            </div>
+            
+            <Link 
+              to={`/manga/${manga.id}`}
+              className="mt-auto w-full bg-brand-secondary hover:bg-brand-primary text-brand-light font-semibold py-2 rounded-lg transition duration-200 shadow-sm block text-center"
+            >
+              Rent
             </Link>
           </div>
         ))}
