@@ -101,46 +101,46 @@ const AdminMangaForm = () => {
 
   return (
     <div className="min-h-screen bg-brand-light p-4 flex justify-center items-center">
-      <div className="w-full max-w-3xl bg-brand-light rounded-3xl shadow-xl p-8">
+      <div className="w-full max-w-3xl bg-brand-light rounded-3xl shadow-md p-8">
         <h1 className="text-2xl font-bold mb-6">{isEditMode ? 'Edit Manga' : 'Add New Manga'}</h1>
         
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
             <label className="block text-sm font-bold mb-1">Title *</label>
-            <input type="text" required value={formData.title} onChange={e => setFormData({...formData, title: e.target.value})} className="w-full border rounded px-3 py-2" />
+            <input type="text" required value={formData.title} onChange={e => setFormData({...formData, title: e.target.value})} className="w-full rounded px-3 py-2 shadow-md" />
           </div>
           <div className="grid grid-cols-2 gap-4">
             <div>
               <label className="block text-sm font-bold mb-1">Author</label>
-              <input type="text" value={formData.author} onChange={e => setFormData({...formData, author: e.target.value})} className="w-full border rounded px-3 py-2" />
+              <input type="text" value={formData.author} onChange={e => setFormData({...formData, author: e.target.value})} className="w-full rounded px-3 py-2 shadow-md" />
             </div>
             <div>
               <label className="block text-sm font-bold mb-1">Genre</label>
-              <input type="text" value={formData.genre} onChange={e => setFormData({...formData, genre: e.target.value})} className="w-full border rounded px-3 py-2" />
+              <input type="text" value={formData.genre} onChange={e => setFormData({...formData, genre: e.target.value})} className="w-full rounded px-3 py-2 shadow-md" />
             </div>
           </div>
           
           <div>
             <label className="block text-sm font-bold mb-1">Cover Image (select new file to replace)</label>
-            <input type="file" accept="image/*" onChange={e => setCoverFile(e.target.files[0])} className="w-full border rounded px-3 py-2" />
+            <input type="file" accept="image/*" onChange={e => setCoverFile(e.target.files[0])} className="w-full rounded px-3 py-2 shadow-md" />
           </div>
           
           {isEditMode && currentImage && !coverFile && (
             <div className="my-2">
               <p className="text-sm text-brand-primary mb-1">Current cover:</p>
-              <img src={getImageUrl(currentImage)} alt="Current Cover" className="w-24 h-36 object-cover rounded border" />
+              <img src={getImageUrl(currentImage)} alt="Current Cover" className="w-24 h-36 object-cover rounded shadow-md" />
             </div>
           )}
 
           <div>
             <label className="block text-sm font-bold mb-1">Rental Price per Day (THB) *</label>
-            <input type="number" required value={formData.rental_price_per_day} onChange={e => setFormData({...formData, rental_price_per_day: e.target.value})} className="w-full border rounded px-3 py-2" />
+            <input type="number" required value={formData.rental_price_per_day} onChange={e => setFormData({...formData, rental_price_per_day: e.target.value})} className="w-full rounded px-3 py-2 shadow-md" />
           </div>
 
           {!isEditMode && (
             <div>
               <label className="block text-sm font-bold mb-1">Book Copies (Serial No.)</label>
-              <input type="text" placeholder="Separate with commas, e.g. OP-01, OP-02" value={formData.serial_numbers} onChange={e => setFormData({...formData, serial_numbers: e.target.value})} className="w-full border rounded px-3 py-2" />
+              <input type="text" placeholder="Separate with commas, e.g. OP-01, OP-02" value={formData.serial_numbers} onChange={e => setFormData({...formData, serial_numbers: e.target.value})} className="w-full rounded px-3 py-2 shadow-md" />
             </div>
           )}
 

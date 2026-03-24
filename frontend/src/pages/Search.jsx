@@ -33,6 +33,11 @@ const Search = () => {
     return `${baseUrl}/media/${url}`;
   };
 
+  const renderStars = (rating) => {
+    const num = Math.round(rating || 0);
+    return '★'.repeat(num) + '☆'.repeat(5 - num);
+  };
+
   useEffect(() => {
     
     fetch(`${API_URL}/api/mangas/`)
@@ -100,7 +105,7 @@ const Search = () => {
       <div className="max-w-6xl mx-auto">
         <h2 className="text-4xl font-bold text-brand-primary mb-8 text-center tracking-tight">Search</h2>
 
-        <div className="bg-brand-light rounded-xl shadow-sm border border-brand-secondary p-6 md:p-8 mb-10">
+        <div className="bg-brand-light rounded-xl shadow-md p-6 md:p-8 mb-10">
           
           <div className="mb-6 relative">
             <input 
@@ -108,12 +113,12 @@ const Search = () => {
               placeholder="Search by manga title or author..." 
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full bg-brand-light border border-brand-secondary text-brand-primary text-lg rounded-lg px-5 py-4 pl-12 focus:outline-none focus:border-brand-accent focus:ring-2 focus:ring-brand-light transition"
+              className="w-full bg-brand-light border border-brand-primary text-brand-primary text-lg rounded-lg px-5 py-4 pl-12 focus:outline-none focus:border-brand-accent focus:ring-2 focus:ring-brand-light transition"
             />
             <svg className="w-6 h-6 text-brand-primary absolute left-4 top-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
           </div>
 
-          <div className="border-t border-brand-secondary pt-6">
+          <div className="border-t border-brand-primary pt-6">
             <h3 className="text-lg font-semibold text-brand-primary mb-3 flex items-center">
               <svg className="w-5 h-5 mr-2 text-brand-secondary" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"></path></svg>
               Filter by genre
@@ -131,13 +136,13 @@ const Search = () => {
               ))}
             </div>
 
-            <div className="bg-brand-light rounded-lg p-4 border border-brand-secondary">
+            <div className="bg-brand-light rounded-lg p-4 shadow-md">
               <input 
                 type="text" 
                 placeholder="Search genres" 
                 value={genreSearch}
                 onChange={(e) => setGenreSearch(e.target.value)}
-                className="w-full bg-brand-light border border-brand-secondary text-sm rounded-lg px-4 py-2 mb-3 focus:outline-none focus:border-brand-accent"
+                className="w-full bg-brand-light border border-brand-primary text-sm rounded-lg px-4 py-2 mb-3 focus:outline-none focus:border-brand-accent"
               />
               
               <div className="flex flex-wrap gap-2 max-h-40 overflow-y-auto custom-scrollbar">
@@ -148,7 +153,7 @@ const Search = () => {
                     <button 
                       key={genre}
                       onClick={() => toggleGenre(genre)}
-                      className="bg-brand-light border border-brand-secondary hover:border-brand-accent hover:text-brand-secondary text-brand-primary px-3 py-1.5 rounded-full text-sm font-medium transition shadow-sm"
+                      className="bg-brand-light border border-brand-primary hover:border-brand-accent hover:text-brand-secondary text-brand-primary px-3 py-1.5 rounded-full text-sm font-medium transition shadow-md"
                     >
                       + {genre}
                     </button>
@@ -164,36 +169,38 @@ const Search = () => {
         </div>
 
         {filteredMangas.length === 0 ? (
-          <div className="bg-brand-light rounded-xl shadow-sm p-16 text-center border border-brand-secondary">
+          <div className="bg-brand-light rounded-xl shadow-md p-16 text-center">
             <svg className="w-16 h-16 text-brand-light mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
             <h2 className="text-2xl font-bold text-brand-primary mb-2">No manga found</h2>
             <p className="text-brand-primary">Try a different keyword or remove some genre filters.</p>
           </div>
         ) : (
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-8">
             {filteredMangas.map((manga) => (
-              <div key={manga.id} className="bg-brand-light rounded-lg shadow-sm border border-brand-secondary overflow-hidden transform hover:-translate-y-1 hover:shadow-lg transition duration-300 flex flex-col">
-                <Link to={`/manga/${manga.id}`} className="flex-1 flex flex-col">
-                  <div className="relative pb-[140%]">
-                    <img
-                      src={getImageUrl(manga.cover_image_url)} 
-                      alt={manga.title}
-                      className="absolute top-0 left-0 w-full h-full object-cover"
-                    />
-                  </div>
-                  <div className="p-3 flex-1 flex flex-col">
-                    <h3 className="text-sm font-semibold text-brand-primary line-clamp-2 leading-snug" title={manga.title}>{manga.title}</h3>
-                    <p className="text-xs text-brand-primary mt-1 truncate" title={manga.author}>{manga.author}</p>
-                    
-                    <div className="flex justify-between items-center mt-auto pt-2">
-                      <span className="text-xs font-semibold text-brand-accent">
-                        ★ {manga.avg_rating || '0.0'}
-                      </span>
-                      <span className="text-[10px] font-semibold text-brand-primary uppercase tracking-wider">
-                        Sold {manga.sold_count || 0}
-                      </span>
+              <div key={manga.id} className="bg-brand-light rounded-xl shadow-md p-4 flex flex-col hover:shadow-xl transition-shadow duration-300">
+                <img src={getImageUrl(manga.cover_image_url)} alt={manga.title} className="w-full h-64 object-cover rounded-lg mb-4" />
+                
+                <h3 className="font-semibold text-lg text-brand-primary line-clamp-1">{manga.title}</h3>
+                
+                <div className="flex flex-col mt-2 mb-4 gap-2">
+                  <span className="bg-brand-light text-brand-primary text-xs font-semibold rounded-full uppercase tracking-wide truncate">
+                    {manga.genre}
+                  </span>
+                  <div className="flex justify-between items-center">
+                    <div className="flex text-brand-accent text-sm" title={`Rating: ${manga.avg_rating || 0}`}>
+                      {renderStars(manga.avg_rating)}
+                    </div>
+                    <div className="text-xs font-medium text-brand-primary text-right">
+                      Sold {manga.sold_count || 0}
                     </div>
                   </div>
+                </div>
+                
+                <Link 
+                  to={`/manga/${manga.id}`}
+                  className="mt-auto w-full bg-brand-secondary hover:bg-brand-primary text-brand-light font-semibold py-2 rounded-lg transition duration-200 shadow-sm block text-center"
+                >
+                  Rent
                 </Link>
               </div>
             ))}

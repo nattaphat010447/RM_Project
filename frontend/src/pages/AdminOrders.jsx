@@ -111,12 +111,12 @@ const AdminOrders = () => {
 
   return (
     <div className="min-h-screen bg-brand-light p-4 md:p-10 relative">
-      <div className="max-w-5xl mx-auto bg-brand-light rounded-3xl shadow-xl p-8 relative">
+      <div className="max-w-5xl mx-auto bg-brand-light rounded-3xl shadow-md p-8 relative">
         
         <button onClick={() => navigate('/admin/dashboard')} className="absolute top-8 left-8 text-brand-primary hover:text-brand-primary transition">
           <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path></svg>
         </button>
-        <h1 className="text-3xl font-black text-center text-brand-primary mb-10 uppercase tracking-tighter">Rental Management</h1>
+        <h1 className="text-3xl font-black text-center text-brand-primary mb-10 tracking-tighter">Rental Management</h1>
 
         <div className="mb-10">
           <h2 className="text-xl font-bold text-brand-primary mb-4 border-b pb-2 flex justify-between items-center">
@@ -126,7 +126,7 @@ const AdminOrders = () => {
           {requestedOrders.length === 0 ? <p className="text-brand-primary italic">No new requests</p> : (
             <div className="space-y-4">
               {requestedOrders.map(order => (
-                <div key={order.id} className="bg-brand-light border border-brand-secondary rounded-xl p-5 flex justify-between items-center shadow-sm">
+                <div key={order.id} className="bg-brand-light rounded-xl p-5 flex justify-between items-center shadow-md hover:shadow-lg transition">
                   <div>
                     <p className="text-sm font-bold text-brand-primary">Customer: {order.customer_name}</p>
                     <p className="text-xs text-brand-primary">Requested at: {order.requested_at_formatted}</p>
@@ -146,7 +146,7 @@ const AdminOrders = () => {
           {approvedOrders.length === 0 ? <p className="text-brand-primary italic">No pending pickups</p> : (
             <div className="space-y-4">
               {approvedOrders.map(order => (
-                <div key={order.id} className="bg-brand-light border border-brand-light rounded-xl p-5 flex justify-between items-center shadow-sm">
+                <div key={order.id} className="bg-brand-light rounded-xl p-5 flex justify-between items-center shadow-md hover:shadow-lg transition">
                   <p className="text-sm font-bold text-brand-primary uppercase">Customer: {order.customer_name}</p>
                   <button onClick={() => handleAction(order.id, 'checkout')} className="bg-brand-secondary hover:bg-brand-primary text-brand-light py-2 px-6 rounded-lg text-sm font-bold shadow-md transition">Mark as Picked Up</button>
                 </div>
@@ -160,7 +160,7 @@ const AdminOrders = () => {
           {checkedOutOrders.length === 0 ? <p className="text-brand-primary italic">No active rentals</p> : (
             <div className="space-y-6">
               {checkedOutOrders.map(order => (
-                <div key={order.id} className="border-2 border-brand-light rounded-2xl p-6 hover:border-brand-secondary transition">
+                <div key={order.id} className="rounded-2xl p-6 shadow-md hover:shadow-lg transition">
                   <div className="flex justify-between items-center mb-4">
                     <p className="text-sm font-bold text-brand-primary">
                       Customer: <span className="text-brand-secondary underline decoration-brand-light">{order.customer_name}</span> 
@@ -235,7 +235,7 @@ const AdminOrders = () => {
 
       {fineModal.isOpen && (
         <div className="fixed inset-0 bg-brand-primary/60 backdrop-blur-sm flex justify-center items-center z-50 p-4">
-          <div className="bg-brand-light rounded-3xl shadow-2xl p-8 w-full max-w-sm animate-fade-in border-t-8 border-brand-secondary">
+          <div className="bg-brand-light rounded-3xl shadow-lg p-8 w-full max-w-sm animate-fade-in">
             <h3 className="text-2xl font-black text-brand-primary mb-2">Fine Payment</h3>
             <p className="text-sm text-brand-primary mb-6 italic">For item: {fineModal.mangaTitle}</p>
             
@@ -245,7 +245,7 @@ const AdminOrders = () => {
                 <select 
                   value={fineData.fine_type} 
                   onChange={(e) => setFineData({...fineData, fine_type: e.target.value})}
-                  className="w-full border-2 border-brand-light rounded-xl px-4 py-3 text-brand-primary focus:outline-none focus:border-brand-accent bg-brand-light"
+                  className="w-full rounded-xl px-4 py-3 text-brand-primary focus:outline-none focus:ring-2 focus:ring-brand-secondary bg-brand-light shadow-md"
                 >
                   <option value="LATE">Late Return</option>
                   <option value="DAMAGE">Damaged</option>
@@ -261,7 +261,7 @@ const AdminOrders = () => {
                   required
                   value={fineData.fine_amount}
                   onChange={(e) => setFineData({...fineData, fine_amount: e.target.value})}
-                  className="w-full border-2 border-brand-light rounded-xl px-4 py-3 text-brand-primary focus:outline-none focus:border-brand-accent bg-brand-light"
+                  className="w-full rounded-xl px-4 py-3 text-brand-primary focus:outline-none focus:ring-2 focus:ring-brand-secondary bg-brand-light shadow-md"
                   placeholder="0.00"
                 />
               </div>

@@ -29,22 +29,22 @@ const renderStars = (rating) => {
 
 const MangaCard = ({ manga }) => {
   return (
-    <div className="bg-brand-light rounded-xl shadow-sm border border-brand-secondary p-4 flex flex-col hover:shadow-lg transition-shadow duration-300">
+    <div className="bg-brand-light rounded-xl shadow-md p-4 flex flex-col hover:shadow-xl transition-shadow duration-300">
       <img src={getImageUrl(manga.cover_image_url)} alt={manga.title} className="w-full h-64 object-cover rounded-lg mb-4" />
       
       <h3 className="font-semibold text-lg text-brand-primary line-clamp-1">{manga.title}</h3>
       
       <div className="flex flex-col mt-2 mb-4 gap-2">
+        <span className="bg-brand-light text-brand-primary text-xs font-semibold rounded-full uppercase tracking-wide truncate">
+          {manga.genre}
+        </span>
         <div className="flex justify-between items-center">
-          <span className="bg-brand-light text-brand-primary text-xs font-semibold px-3 py-1 rounded-full uppercase tracking-wide truncate max-w-[100px]">
-            {manga.genre}
-          </span>
           <div className="flex text-brand-accent text-sm" title={`Rating: ${manga.avg_rating || 0}`}>
             {renderStars(manga.avg_rating)}
           </div>
-        </div>
-        <div className="text-xs font-medium text-brand-primary text-right">
-          Sold {manga.sold_count || 0}
+          <div className="text-xs font-medium text-brand-primary text-right">
+            Sold {manga.sold_count || 0}
+          </div>
         </div>
       </div>
       

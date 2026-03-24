@@ -30,7 +30,7 @@ const ForYou = () => {
     const num = Math.round(rating || 0);
     return '★'.repeat(num) + '☆'.repeat(5 - num);
   };
-  
+
   // TODO: Replace hardcoded IDs with real recommendations from the MBCGCN model API.
   const recommendedIds = [1, 2, 3]; 
 
@@ -55,28 +55,32 @@ const ForYou = () => {
       <h2 className="text-4xl font-bold text-brand-primary mb-2 text-center">FOR YOU</h2>
       <p className="text-center text-brand-primary mb-10">Recommended manga for you</p>
       
-      <div className="max-w-6xl mx-auto grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-8">
+      <div className="max-w-6xl mx-auto grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-8">
         {mangas.map(manga => (
-          <div key={manga.id} className="bg-brand-light rounded-xl shadow-sm border border-brand-secondary overflow-hidden transform hover:-translate-y-2 transition duration-300">
-            <Link to={`/manga/${manga.id}`}>
-              <img
-                src={getImageUrl(manga.cover_image_url)}
-                alt={manga.title}
-                className="w-full h-72 object-cover"
-              />
-              <div className="p-4">
-                <h3 className="text-xl font-semibold text-brand-primary truncate">{manga.title}</h3>
-                <p className="text-sm text-brand-primary mt-1">{manga.genre}</p>
-              </div>
-              
-              <div className="mt-auto flex justify-between items-end border-t border-brand-secondary pt-3 px-4 pb-3">
-                <div className="flex text-brand-accent text-sm">
+          <div key={manga.id} className="bg-brand-light rounded-xl shadow-md p-4 flex flex-col hover:shadow-xl transition-shadow duration-300">
+            <img src={getImageUrl(manga.cover_image_url)} alt={manga.title} className="w-full h-64 object-cover rounded-lg mb-4" />
+            
+            <h3 className="font-semibold text-lg text-brand-primary line-clamp-1">{manga.title}</h3>
+            
+            <div className="flex flex-col mt-2 mb-4 gap-2">
+              <span className="bg-brand-light text-brand-primary text-xs font-semibold rounded-full uppercase tracking-wide truncate">
+                {manga.genre}
+              </span>
+              <div className="flex justify-between items-center">
+                <div className="flex text-brand-accent text-sm" title={`Rating: ${manga.avg_rating || 0}`}>
                   {renderStars(manga.avg_rating)}
                 </div>
-                <span className="text-xs font-semibold text-brand-primary bg-brand-light px-2 py-1 rounded-lg">
+                <div className="text-xs font-medium text-brand-primary text-right">
                   Sold {manga.sold_count || 0}
-                </span>
+                </div>
               </div>
+            </div>
+            
+            <Link 
+              to={`/manga/${manga.id}`}
+              className="mt-auto w-full bg-brand-secondary hover:bg-brand-primary text-brand-light font-semibold py-2 rounded-lg transition duration-200 shadow-sm block text-center"
+            >
+              Rent
             </Link>
           </div>
         ))}

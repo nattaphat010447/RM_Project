@@ -92,7 +92,7 @@ const Navbar = () => {
         </div>
       ) : (
         <div className="flex items-center space-x-4">
-          <Link to="/signin" className="text-brand-primary font-medium hover:text-brand-secondary transition">Sign In</Link>
+          <Link to="/signin" className="text-brand-primary border border-brand-primary font-medium hover:text-brand-secondary hover:border-brand-secondary py-2 px-6 rounded-lg transition">Sign In</Link>
           <Link to="/signup" className="bg-brand-secondary hover:bg-brand-primary text-brand-light font-semibold py-2 px-6 rounded-lg transition shadow-sm">Sign Up</Link>
         </div>
       )}

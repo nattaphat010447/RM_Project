@@ -44,7 +44,7 @@ const AdminMembers = () => {
 
   return (
     <div className="min-h-screen bg-brand-light p-4 flex items-center justify-center">
-      <div className="w-full max-w-4xl bg-brand-light rounded-3xl shadow-xl p-8 relative">
+      <div className="w-full max-w-4xl bg-brand-light rounded-3xl shadow-md p-8 relative">
         <button onClick={() => navigate('/admin/dashboard')} className="absolute top-6 left-6 text-brand-primary hover:text-brand-primary">
           <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path></svg>
         </button>
@@ -55,12 +55,12 @@ const AdminMembers = () => {
         <h1 className="text-2xl font-bold text-center text-brand-primary mb-8 mt-4">Member Management</h1>
 
         <div className="flex justify-end mb-4">
-          <Link to="/admin/members/new" className="bg-brand-secondary hover:bg-brand-primary text-brand-light font-bold py-2 px-4 rounded-md text-sm">
+          <Link to="/admin/members/new" className="bg-brand-secondary hover:bg-brand-primary text-brand-light font-bold py-2 px-4 rounded-md text-sm shadow-md">
             + Add New Member
           </Link>
         </div>
 
-        <div className="overflow-hidden border border-brand-secondary rounded-lg">
+        <div className="overflow-hidden rounded-lg shadow-md">
           <table className="w-full text-center text-sm">
             <thead className="bg-brand-light border-b">
               <tr>

@@ -48,7 +48,7 @@ const SignIn = () => {
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-brand-light">
-      <div className="bg-brand-light p-8 rounded-xl shadow-lg border border-brand-secondary w-full max-w-md">
+      <div className="bg-brand-light p-8 rounded-xl shadow-lg border border-brand-primary w-full max-w-md">
         
         <div className="flex justify-center mb-4">
           <div className="bg-brand-light p-4 rounded-full">

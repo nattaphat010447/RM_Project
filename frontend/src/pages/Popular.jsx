@@ -59,7 +59,7 @@ const Popular = () => {
       ) : (
         <div className="max-w-6xl mx-auto grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-8">
           {mangas.map((manga, index) => (
-            <div key={manga.id} className="bg-brand-light rounded-xl shadow-sm border border-brand-secondary overflow-hidden transform hover:-translate-y-2 transition duration-300 relative">
+            <div key={manga.id} className="bg-brand-light rounded-xl shadow-md overflow-hidden transform hover:shadow-xl transition duration-300 relative">
               <div className="absolute top-2 left-2 bg-brand-secondary text-brand-light w-10 h-10 rounded-full flex items-center justify-center font-bold text-xl shadow-md border-2 border-brand-light">
                 #{index + 1}
               </div>

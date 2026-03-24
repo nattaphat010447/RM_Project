@@ -13,7 +13,7 @@ const AdminDashboard = () => {
 
   return (
     <div className="min-h-screen bg-brand-light flex items-center justify-center p-4">
-      <div className="bg-brand-light w-full max-w-3xl rounded-xl shadow-sm border border-brand-secondary p-8 md:p-12 relative">
+      <div className="bg-brand-light w-full max-w-3xl rounded-xl shadow-md p-8 md:p-12 relative">
         <button 
           onClick={() => navigate('/')}
           className="absolute top-8 right-8 text-brand-primary hover:text-brand-primary transition"
@@ -30,7 +30,7 @@ const AdminDashboard = () => {
             <button
               key={index}
               onClick={() => navigate(item.path)}
-              className="w-full py-4 px-6 bg-brand-light border border-brand-secondary rounded-lg shadow-sm hover:shadow-md hover:bg-brand-light transition duration-200 text-brand-primary font-medium text-lg"
+              className="w-full py-4 px-6 bg-brand-light rounded-lg shadow-md hover:shadow-lg transition duration-200 text-brand-primary font-medium text-lg"
             >
               {item.title}
             </button>
