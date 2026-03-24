@@ -83,16 +83,24 @@
     @apply w-full px-4 py-2 rounded-lg focus:outline-none focus:ring-2 focus:border-transparent;
     background-color: var(--color-brand-light);
     color: var(--color-brand-primary);
-    border: 1px solid var(--color-brand-secondary);
+    border: 1px solid var(--color-brand-primary);
   }
   
   .input-modern::placeholder {
-    color: var(--color-brand-secondary);
+    color: var(--color-brand-primary);
+    opacity: 0.6;
   }
   
   .input-modern:focus {
     border-color: transparent;
     --tw-ring-color: var(--color-brand-secondary);
+  }
+
+  /* Global placeholder styling */
+  input::placeholder,
+  textarea::placeholder {
+    color: var(--color-brand-primary);
+    opacity: 0.6;
   }
   
   .badge-success {

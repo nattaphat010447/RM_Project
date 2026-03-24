@@ -39,9 +39,9 @@ const AdminMangas = () => {
 
   return (
     <div className="min-h-screen bg-brand-light p-4 md:p-10">
-      <div className="max-w-6xl mx-auto bg-brand-light rounded-xl shadow-sm border border-brand-secondary p-8">
+      <div className="max-w-6xl mx-auto bg-brand-light rounded-xl shadow-md p-8">
         
-        <div className="bg-brand-light rounded-lg px-6 py-3 mb-8 flex items-center border border-brand-secondary">
+        <div className="bg-brand-light rounded-lg px-6 py-3 mb-8 flex items-center shadow-md">
           <input 
             type="text" 
             placeholder="Search manga (title, author)" 
@@ -56,15 +56,15 @@ const AdminMangas = () => {
              <span className="text-2xl font-bold">← Back</span>
           </button>
           <h1 className="text-2xl font-bold text-brand-primary">All Manga</h1>
-          <Link to="/admin/mangas/new" className="bg-brand-light border border-brand-secondary hover:bg-brand-light text-brand-primary font-semibold py-2 px-4 rounded-lg shadow-sm text-sm">
+          <Link to="/admin/mangas/new" className="bg-brand-light shadow-md hover:shadow-lg text-brand-primary font-semibold py-2 px-4 rounded-lg transition text-sm">
             + Add Manga
           </Link>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {filteredMangas.map(manga => (
-            <Link key={manga.id} to={`/admin/mangas/${manga.id}`} className="border border-brand-secondary rounded-xl p-4 flex gap-4 hover:shadow-lg transition bg-brand-light shadow-sm">
-              <img src={getImageUrl(manga.cover_image_url)} alt={manga.title} className="w-24 h-36 object-cover rounded-lg border border-brand-secondary" />
+            <Link key={manga.id} to={`/admin/mangas/${manga.id}`} className="rounded-xl p-4 flex gap-4 hover:shadow-xl transition bg-brand-light shadow-md">
+              <img src={getImageUrl(manga.cover_image_url)} alt={manga.title} className="w-24 h-36 object-cover rounded-lg shadow-md" />
               <div className="flex flex-col justify-center">
                 <h3 className="text-brand-primary font-semibold text-lg mb-2 line-clamp-2">{manga.title}</h3>
                 <p className="text-xs text-brand-primary mb-1">Author: {manga.author}</p>

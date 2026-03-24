@@ -63,13 +63,13 @@ const SignUp = () => {
 
   return (
     <div className="min-h-screen bg-brand-light py-12 px-4 flex justify-center items-center">
-      <div className="bg-brand-light p-8 rounded-xl shadow-lg border border-brand-secondary w-full max-w-2xl">
+      <div className="bg-brand-light p-8 rounded-xl shadow-lg border border-brand-primary w-full max-w-2xl">
         <h2 className="text-3xl font-bold text-center text-brand-primary mb-8 tracking-tight">Create Account</h2>
         
         <form onSubmit={handleSubmit} className="space-y-6">
           {/* Section 1: Account Information */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="md:col-span-2 text-xs font-semibold text-brand-primary uppercase tracking-wide border-b border-brand-secondary pb-2">Account Info</div>
+            <div className="md:col-span-2 text-xs font-semibold text-brand-primary uppercase tracking-wide border-b border-brand-primary pb-2">Account Info</div>
             <input type="text" name="username" placeholder="Username" onChange={handleChange} required className="input-modern" />
             <input type="email" name="email" placeholder="Email Address" onChange={handleChange} required className="input-modern" />
             <input type="password" name="password" placeholder="Password" onChange={handleChange} required className="input-modern" />
@@ -78,7 +78,7 @@ const SignUp = () => {
 
           {/* Section 2: Personal Information */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="md:col-span-2 text-xs font-semibold text-brand-primary uppercase tracking-wide border-b border-brand-secondary pb-2 mt-4">Personal Info</div>
+            <div className="md:col-span-2 text-xs font-semibold text-brand-primary uppercase tracking-wide border-b border-brand-primary pb-2 mt-4">Personal Info</div>
             <input type="text" name="first_name" placeholder="First Name" onChange={handleChange} className="input-modern" />
             <input type="text" name="last_name" placeholder="Last Name" onChange={handleChange} className="input-modern" />
             <input type="tel" name="phone" placeholder="Phone Number (e.g. 0812345678)" onChange={handleChange} className="input-modern" />

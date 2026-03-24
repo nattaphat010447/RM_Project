@@ -100,7 +100,7 @@ const AdminMangaDetail = () => {
 
   return (
     <div className="min-h-screen bg-brand-light p-4 flex justify-center">
-      <div className="w-full max-w-5xl bg-brand-light rounded-3xl shadow-xl p-8 relative h-fit">
+      <div className="w-full max-w-5xl bg-brand-light rounded-3xl shadow-md p-8 relative h-fit">
         
         <div className="flex justify-between items-start mb-8 border-b border-brand-light pb-8">
           <div className="flex gap-8">
@@ -111,7 +111,7 @@ const AdminMangaDetail = () => {
             <img 
               src={getImageUrl(manga.cover_image_url)} 
               alt={manga.title} 
-              className="w-48 h-auto object-cover rounded-lg shadow-md border border-brand-secondary"
+              className="w-48 h-auto object-cover rounded-lg shadow-md"
             />
             
             <div className="pt-2">
@@ -137,9 +137,9 @@ const AdminMangaDetail = () => {
               placeholder="Type to search..." 
               value={searchUserQuery}
               onChange={(e) => setSearchUserQuery(e.target.value)}
-              className="flex-1 border border-brand-secondary rounded-lg px-4 py-2 focus:outline-none focus:border-brand-accent text-brand-primary"
+              className="flex-1 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-brand-secondary text-brand-primary bg-brand-light shadow-md"
             />
-            <button onClick={handleSearchUser} className="border border-brand-secondary text-brand-primary px-6 py-2 rounded-lg hover:bg-brand-light">Search</button>
+            <button onClick={handleSearchUser} className="text-brand-primary px-6 py-2 rounded-lg hover:bg-brand-light shadow-md transition font-semibold">Search</button>
           </div>
 
           {userResults.length > 0 && !selectedUser && (
@@ -155,7 +155,7 @@ const AdminMangaDetail = () => {
           )}
 
           {selectedUser && (
-            <div className="bg-brand-light border border-brand-light rounded-lg p-6 animate-fade-in mt-4">
+            <div className="bg-brand-light rounded-lg p-6 animate-fade-in mt-4 shadow-md">
               <div className="flex justify-between items-center mb-4">
                 <p className="font-bold text-brand-primary">Processing for: {selectedUser.full_name}</p>
                 <button onClick={() => setSelectedUser(null)} className="text-sm text-brand-secondary underline">Change customer</button>
@@ -167,7 +167,7 @@ const AdminMangaDetail = () => {
                   <select 
                     value={selectedCopy} 
                     onChange={(e) => setSelectedCopy(e.target.value)}
-                    className="w-full border border-brand-secondary rounded px-3 py-2"
+                    className="w-full rounded px-3 py-2 shadow-md text-brand-primary bg-brand-light focus:outline-none focus:ring-2 focus:ring-brand-secondary"
                   >
                     {availableCopies.length === 0 ? <option value="">No copies available</option> : 
                       availableCopies.map(c => <option key={c.id} value={c.id}>{c.serial_no}</option>)
@@ -178,7 +178,7 @@ const AdminMangaDetail = () => {
                   <label className="block text-sm font-bold text-brand-primary mb-1">Number of days</label>
                   <input 
                     type="number" min="1" value={rentDays} onChange={(e) => setRentDays(e.target.value)}
-                    className="w-full border border-brand-secondary rounded px-3 py-2"
+                    className="w-full rounded px-3 py-2 shadow-md text-brand-primary bg-brand-light focus:outline-none focus:ring-2 focus:ring-brand-secondary"
                   />
                 </div>
               </div>

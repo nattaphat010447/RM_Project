@@ -97,7 +97,7 @@ const AdminMemberForm = () => {
 
   return (
     <div className="min-h-screen bg-brand-light p-4 flex items-center justify-center">
-      <div className="w-full max-w-3xl bg-brand-light rounded-3xl shadow-xl p-8 md:p-12">
+      <div className="w-full max-w-3xl bg-brand-light rounded-3xl shadow-md p-8 md:p-12">
         <h1 className="text-2xl font-bold text-brand-primary mb-8 border-b pb-4">
           {isEditMode ? 'Edit Member' : 'Add New Member'}
         </h1>
@@ -110,7 +110,7 @@ const AdminMemberForm = () => {
               type="text" required
               value={formData.username}
               onChange={(e) => setFormData({...formData, username: e.target.value})}
-              className="w-full border border-brand-secondary rounded-lg px-4 py-2 text-brand-primary focus:outline-none focus:border-brand-accent bg-brand-light"
+              className="w-full rounded-lg px-4 py-2 text-brand-primary focus:outline-none focus:ring-2 focus:ring-brand-secondary bg-brand-light shadow-md"
               placeholder="Enter a unique username"
             />
           </div>
@@ -122,7 +122,7 @@ const AdminMemberForm = () => {
                 type="text" required
                 value={formData.fullName}
                 onChange={(e) => setFormData({...formData, fullName: e.target.value})}
-                className="w-full border border-brand-secondary rounded-lg px-4 py-2 text-brand-primary focus:outline-none focus:border-brand-accent"
+                className="w-full rounded-lg px-4 py-2 text-brand-primary focus:outline-none focus:ring-2 focus:ring-brand-secondary bg-brand-light shadow-md"
                 placeholder="Enter first and last name"
               />
             </div>
@@ -133,7 +133,7 @@ const AdminMemberForm = () => {
                 type="date" required
                 value={formData.dob}
                 onChange={(e) => setFormData({...formData, dob: e.target.value})}
-                className="w-full border border-brand-secondary rounded-lg px-4 py-2 text-brand-primary focus:outline-none focus:border-brand-accent"
+                className="w-full rounded-lg px-4 py-2 text-brand-primary focus:outline-none focus:ring-2 focus:ring-brand-secondary bg-brand-light shadow-md"
               />
             </div>
           </div>
@@ -145,7 +145,7 @@ const AdminMemberForm = () => {
                 type="email" required
                 value={formData.email}
                 onChange={(e) => setFormData({...formData, email: e.target.value})}
-                className="w-full border border-brand-secondary rounded-lg px-4 py-2 text-brand-primary focus:outline-none focus:border-brand-accent"
+                className="w-full rounded-lg px-4 py-2 text-brand-primary focus:outline-none focus:ring-2 focus:ring-brand-secondary bg-brand-light shadow-md"
                 placeholder="Enter member email"
               />
             </div>
@@ -156,7 +156,7 @@ const AdminMemberForm = () => {
                 type="text" required
                 value={formData.phone}
                 onChange={(e) => setFormData({...formData, phone: e.target.value})}
-                className="w-full border border-brand-secondary rounded-lg px-4 py-2 text-brand-primary focus:outline-none focus:border-brand-accent"
+                className="w-full rounded-lg px-4 py-2 text-brand-primary focus:outline-none focus:ring-2 focus:ring-brand-secondary bg-brand-light shadow-md"
                 placeholder="Enter phone number"
               />
             </div>
@@ -169,12 +169,12 @@ const AdminMemberForm = () => {
               rows="3"
               value={formData.address}
               onChange={(e) => setFormData({...formData, address: e.target.value})}
-              className="w-full border border-brand-secondary rounded-lg px-4 py-2 text-brand-primary focus:outline-none focus:border-brand-accent resize-none"
+              className="w-full rounded-lg px-4 py-2 text-brand-primary focus:outline-none focus:ring-2 focus:ring-brand-secondary bg-brand-light shadow-md resize-none"
               placeholder="Enter member address"
             ></textarea>
           </div>
 
-          <div className="bg-brand-light border border-brand-secondary rounded-lg p-5 mt-8">
+          <div className="bg-brand-light rounded-lg p-5 mt-8 shadow-md">
             <label className="block text-sm font-bold text-brand-primary mb-2">
               Password {isEditMode ? '(enter only if you want to change it)' : '*'}
             </label>
@@ -184,7 +184,7 @@ const AdminMemberForm = () => {
               value={formData.password}
               onChange={(e) => setFormData({...formData, password: e.target.value})}
               placeholder={isEditMode ? "Leave empty to keep current password" : "Set a password..."}
-              className="w-full border border-brand-secondary rounded-lg px-4 py-2 text-brand-primary focus:outline-none focus:border-brand-accent"
+              className="w-full rounded-lg px-4 py-2 text-brand-primary focus:outline-none focus:ring-2 focus:ring-brand-secondary bg-brand-light shadow-md"
             />
           </div>
 

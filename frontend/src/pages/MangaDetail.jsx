@@ -111,7 +111,7 @@ const MangaDetail = () => {
           </div>
         )}
 
-        <div className="bg-brand-light rounded-xl p-6 md:p-10 relative shadow-sm border border-brand-secondary flex flex-col md:flex-row gap-10">
+        <div className="bg-brand-light rounded-xl p-6 md:p-10 relative shadow-md flex flex-col md:flex-row gap-10">
           
           <button 
             onClick={() => navigate(-1)} 
@@ -126,7 +126,7 @@ const MangaDetail = () => {
             <img 
               src={getImageUrl(manga.cover_image_url)} 
               alt={manga.title}  
-              className="w-full max-w-sm h-auto object-cover rounded-lg shadow-sm border border-brand-secondary"
+              className="w-full max-w-sm h-auto object-cover rounded-lg shadow-md"
             />
           </div>
 
@@ -151,7 +151,7 @@ const MangaDetail = () => {
                     value={copyId}
                     onChange={(e) => setCopyId(e.target.value)}
                     disabled={isOutOfStock}
-                    className={`w-full appearance-none border border-brand-secondary rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-brand-secondary text-brand-primary ${isOutOfStock ? 'bg-brand-light cursor-not-allowed' : 'bg-brand-light'}`}
+                    className={`w-full appearance-none rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-brand-secondary text-brand-primary ${isOutOfStock ? 'bg-brand-light cursor-not-allowed shadow-md' : 'bg-brand-light shadow-md'}`}
                   >
                     {isOutOfStock ? (
                       <option value="">Out of stock</option>
@@ -177,7 +177,7 @@ const MangaDetail = () => {
                   value={rentalDays}
                   onChange={(e) => setRentalDays(e.target.value)}
                   disabled={isOutOfStock}
-                  className={`w-full border border-brand-secondary rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-brand-secondary text-brand-primary ${isOutOfStock ? 'bg-brand-light cursor-not-allowed' : 'bg-brand-light'}`}
+                  className={`w-full rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-brand-secondary text-brand-primary ${isOutOfStock ? 'bg-brand-light cursor-not-allowed shadow-md' : 'bg-brand-light shadow-md'}`}
                 />
               </div>
             </div>
