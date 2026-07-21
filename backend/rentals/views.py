@@ -546,8 +546,6 @@ def my_profile(request):
             serializer.save()
             return Response({"message": "อัปเดตข้อมูลโปรไฟล์สำเร็จ!"})
         return Response(serializer.errors, status=400)
-        
-# backend/rentals/views.py
 
 class RecommendationView(APIView):
     permission_classes = [IsAuthenticated]
@@ -559,10 +557,19 @@ class RecommendationView(APIView):
         recommended_ids = service.get_recommendations(username)
         
         if not recommended_ids:
-            queryset = Manga.objects.filter(is_active=True).order_by('-created_at')[:2]
+            past_rentals = RentalOrderItem.objects.filter(
+                order__user=request.user
+            ).values_list('manga_copy__manga__mbrs_id', flat=True).distinct()
+            
+            valid_past_ids = [m_id for m_id in past_rentals if m_id is not None]
+            
+            if valid_past_ids:
+                recommended_ids = service.get_item_based_recommendations(valid_past_ids)
+        
+        if not recommended_ids:
+            queryset = Manga.objects.filter(is_active=True).order_by('-created_at')[:10]
         else:
             all_matches = Manga.objects.filter(mbrs_id__in=recommended_ids, is_active=True)
-            
             unique_mangas = {}
             for m in all_matches:
                 if m.mbrs_id not in unique_mangas:
@@ -573,7 +580,15 @@ class RecommendationView(APIView):
                 if rid in unique_mangas:
                     sorted_mangas.append(unique_mangas[rid])
             
+            # เติมให้เต็ม ถ้าสุ่มมาไม่ถึง
             queryset = sorted_mangas[:10]
+            if len(queryset) < 10:
+                needed = 10 - len(queryset)
+                existing_ids = [m.id for m in queryset]
+                filler_mangas = list(Manga.objects.filter(is_active=True)
+                                     .exclude(id__in=existing_ids)
+                                     .order_by('-created_at')[:needed])
+                queryset.extend(filler_mangas)
 
         serializer = MangaSerializer(queryset, many=True, context={'request': request})
         return Response(serializer.data)
