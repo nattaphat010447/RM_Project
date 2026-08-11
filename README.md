@@ -16,7 +16,7 @@
 
 * **Frontend:** React.js (Vite), Tailwind CSS
 * **Backend:** Python, Django, Django REST Framework (DRF)
-* **Database:** MySQL 8.0
+* **Database:** PostgreSQL 15
 * **Authentication:** JSON Web Tokens (SimpleJWT)
 * **Recommendation Engine:** PyTorch, Graph Neural Network (MBCGCN)
 * **Infrastructure:** Docker, Docker Compose
@@ -33,13 +33,12 @@ To run this project, you only need to have the following installed on your machi
 Create a `.env` file in the **root directory** of the project and add the following configuration:
 
 ```env
-# MySQL
-MYSQL_ROOT_PASSWORD=rootpassword_secret
-MYSQL_DATABASE=manga_rental_db
-MYSQL_USER=manga_user
-MYSQL_PASSWORD=manga_password_secret
-MYSQL_HOST=db_mysql
-MYSQL_PORT=3306
+# PostgreSQL
+POSTGRES_DB=manga_rental_db
+POSTGRES_USER=manga_user
+POSTGRES_PASSWORD=manga_password_secret
+POSTGRES_HOST=db_postgres
+POSTGRES_PORT=5432
 
 # Django
 SECRET_KEY=your_django_super_secret_key

@@ -1,10 +1,9 @@
 Django>=4.2
 djangorestframework
 djangorestframework-simplejwt
-pymysql
-pymongo
+psycopg2-binary
 django-cors-headers
-dotenv
+python-dotenv
 cryptography
 Pillow
 apscheduler

@@ -1,13 +1,15 @@
 from django.urls import path
 from .views import (
-    MangaDetailAPIView, MangaListAPIView, UserRegistrationAPIView, 
-    add_to_cart, admin_all_history, checkout_order, get_user_profile, view_cart, 
-    remove_from_cart, checkout_cart, my_orders, cancel_order, 
-    popular_mangas, admin_orders, approve_order, reject_order, 
+    MangaDetailAPIView, MangaListAPIView, UserRegistrationAPIView,
+    add_to_cart, admin_all_history, checkout_order, get_user_profile, view_cart,
+    remove_from_cart, checkout_cart, my_orders, cancel_order,
+    popular_mangas, admin_orders, approve_order, reject_order,
     return_item, fine_item, admin_users, admin_user_detail,
     admin_add_manga, admin_manage_manga, search_customers, manual_checkout,
-    submit_manga_review, my_profile, RecommendationView
+    submit_manga_review, my_profile, RecommendationView, user_preferences
 )
+
+from .admin_ml_views import ab_test_variants, ab_test_metrics, trigger_model_retrain, model_training_status
 
 urlpatterns = [
     path('mangas/', MangaListAPIView.as_view(), name='manga-list'),
@@ -39,4 +41,13 @@ urlpatterns = [
     path('mangas/<int:manga_id>/review/', submit_manga_review, name='submit-review'),
 
     path('recommendations/', RecommendationView.as_view(), name='manga-recommendations'),
+    path('preferences/', user_preferences, name='user-preferences'),
+
+    # A/B Testing endpoints
+    path('admin/ab-test/variants/', ab_test_variants, name='ab-test-variants'),
+    path('admin/ab-test/metrics/', ab_test_metrics, name='ab-test-metrics'),
+
+    # Model training endpoints
+    path('admin/ml/retrain/', trigger_model_retrain, name='trigger-retrain'),
+    path('admin/ml/status/', model_training_status, name='training-status'),
 ]

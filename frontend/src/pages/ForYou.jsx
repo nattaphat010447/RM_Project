@@ -8,6 +8,7 @@ const ForYou = () => {
   const [mangas, setMangas] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [hasPreferences, setHasPreferences] = useState(false);
 
   const getImageUrl = (url) => {
       if (!url) return 'https://via.placeholder.com/150x220?text=No+Cover';
@@ -56,7 +57,8 @@ const ForYou = () => {
         }
 
         const data = await response.json();
-        setMangas(data);
+        setMangas(data.recommendations || data);
+        setHasPreferences(data.has_preferences || false);
         setLoading(false);
       } catch (err) {
         console.error("Error fetching recommendations:", err);
@@ -92,7 +94,22 @@ const ForYou = () => {
     <div className="min-h-screen bg-brand-light py-12 px-6">
       <h2 className="text-4xl font-bold text-brand-primary mb-2 text-center">FOR YOU</h2>
       <p className="text-center text-brand-primary mb-10">Recommended manga for you</p>
-      
+
+      {!hasPreferences && (
+        <div className="max-w-2xl mx-auto mb-8 p-6 bg-blue-50 border-2 border-blue-200 rounded-xl">
+          <h3 className="text-lg font-semibold text-blue-800 mb-2">🎯 ยังไม่ได้ตั้งค่าความชอบ</h3>
+          <p className="text-blue-700 mb-4">
+            เลือก 4 มังงะที่คุณชอบเพื่อรับคำแนะนำที่ตรงใจมากขึ้น!
+          </p>
+          <Link
+            to="/onboarding"
+            className="inline-block bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-6 rounded-lg transition"
+          >
+            เลือกมังงะที่ชอบ
+          </Link>
+        </div>
+      )}
+
       {mangas.length === 0 ? (
         <div className="text-center text-brand-primary mt-10 text-lg p-8 border-2 border-dashed border-brand-secondary rounded-xl max-w-2xl mx-auto">
           ยังไม่มีข้อมูลแนะนำสำหรับคุณ <br/> ลองเช่าหรือหยิบมังงะลงตะกร้าดูก่อนสิ!
@@ -110,8 +127,14 @@ const ForYou = () => {
                 <div className="p-4 flex-grow">
                   <h3 className="text-xl font-semibold text-brand-primary truncate">{manga.title}</h3>
                   <p className="text-sm text-brand-primary mt-1">{manga.genre}</p>
+
+                  {manga.explanation && (
+                    <p className="text-xs text-blue-600 mt-2 italic border-l-2 border-blue-400 pl-2">
+                      {manga.explanation}
+                    </p>
+                  )}
                 </div>
-                
+
                 <div className="mt-auto flex justify-between items-end border-t border-brand-secondary pt-3 px-4 pb-3">
                   <div className="flex text-brand-accent text-sm">
                     {renderStars(manga.avg_rating)}

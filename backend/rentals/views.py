@@ -13,10 +13,13 @@ from django.utils.dateformat import format
 from rest_framework.views import APIView
 from .recommender import RecommenderService
 
-from .models import Manga, MangaCopy, Cart, CartItem, RentalOrder, RentalOrderItem, FineLog, MangaReview
+from .models import Manga, MangaCopy, Cart, CartItem, RentalOrder, RentalOrderItem, FineLog, MangaReview, UserPreference, ABTestVariant, ABTestEvent, ModelTrainingLog
 from .serializers import AdminUserSerializer, MangaSerializer, UserRegistrationSerializer, CartItemSerializer, RentalOrderSerializer, UserProfileSerializer
 
 from .permissions import IsAdminRole
+from .ab_testing import ABTestManager
+import subprocess
+import threading
 
 User = get_user_model()
 
@@ -617,42 +620,162 @@ class RecommendationView(APIView):
     def get(self, request):
         username = request.user.username
         service = RecommenderService()
-        
-        recommended_ids = service.get_recommendations(username)
-        
-        if not recommended_ids:
+
+        # Check if user has preferences (cold-start solution)
+        user_prefs = UserPreference.objects.filter(user=request.user).select_related('manga')
+        preference_mbrs_ids = [pref.manga.mbrs_id for pref in user_prefs if pref.manga.mbrs_id is not None]
+
+        # Get recommendations with explanations
+        rec_with_explanations = service.get_recommendations_with_explanations(
+            username=username,
+            preference_mbrs_ids=preference_mbrs_ids if preference_mbrs_ids else None,
+            top_k=10
+        )
+
+        if not rec_with_explanations:
+            # Fallback: try item-based from rental history
             past_rentals = RentalOrderItem.objects.filter(
                 order__user=request.user
             ).values_list('manga_copy__manga__mbrs_id', flat=True).distinct()
-            
+
             valid_past_ids = [m_id for m_id in past_rentals if m_id is not None]
-            
+
             if valid_past_ids:
                 recommended_ids = service.get_item_based_recommendations(valid_past_ids)
-        
-        if not recommended_ids:
+                rec_with_explanations = [(rid, 'rental_history', valid_past_ids[:3]) for rid in recommended_ids]
+
+        if not rec_with_explanations:
+            # Final fallback: popular manga
             queryset = Manga.objects.filter(is_active=True).order_by('-created_at')[:10]
-        else:
-            all_matches = Manga.objects.filter(mbrs_id__in=recommended_ids, is_active=True)
-            unique_mangas = {}
-            for m in all_matches:
-                if m.mbrs_id not in unique_mangas:
-                    unique_mangas[m.mbrs_id] = m
-            
-            sorted_mangas = []
-            for rid in recommended_ids:
-                if rid in unique_mangas:
-                    sorted_mangas.append(unique_mangas[rid])
-            
-            # เติมให้เต็ม ถ้าสุ่มมาไม่ถึง
-            queryset = sorted_mangas[:10]
-            if len(queryset) < 10:
-                needed = 10 - len(queryset)
-                existing_ids = [m.id for m in queryset]
-                filler_mangas = list(Manga.objects.filter(is_active=True)
-                                     .exclude(id__in=existing_ids)
-                                     .order_by('-created_at')[:needed])
-                queryset.extend(filler_mangas)
+            serializer = MangaSerializer(queryset, many=True, context={'request': request})
+            return Response({
+                'recommendations': serializer.data,
+                'explanation_type': 'popular',
+                'explanation': 'มังงะยอดนิยมและเรื่องใหม่ล่าสุด'
+            })
+
+        # Map mbrs_id to Manga objects
+        mbrs_ids = [rec[0] for rec in rec_with_explanations]
+        all_matches = Manga.objects.filter(mbrs_id__in=mbrs_ids, is_active=True)
+
+        unique_mangas = {}
+        for m in all_matches:
+            if m.mbrs_id not in unique_mangas:
+                unique_mangas[m.mbrs_id] = m
+
+        sorted_mangas = []
+        explanations = []
+
+        for mbrs_id, explanation_type, source_ids in rec_with_explanations:
+            if mbrs_id in unique_mangas:
+                manga = unique_mangas[mbrs_id]
+                sorted_mangas.append(manga)
+
+                # Generate explanation text
+                if explanation_type == 'user_history':
+                    explanation = 'แนะนำเฉพาะสำหรับคุณจากประวัติการเช่า'
+                elif explanation_type == 'preferences':
+                    # Find manga titles from source_ids
+                    source_mangas = Manga.objects.filter(mbrs_id__in=source_ids[:2], is_active=True)[:2]
+                    if source_mangas:
+                        titles = ', '.join([m.title for m in source_mangas])
+                        explanation = f'แนะนำเพราะคุณชอบ {titles}'
+                    else:
+                        explanation = 'แนะนำตามความชอบของคุณ'
+                elif explanation_type == 'rental_history':
+                    source_mangas = Manga.objects.filter(mbrs_id__in=source_ids[:2], is_active=True)[:2]
+                    if source_mangas:
+                        titles = ', '.join([m.title for m in source_mangas])
+                        explanation = f'คล้ายกับเรื่องที่คุณเคยเช่า: {titles}'
+                    else:
+                        explanation = 'แนะนำตามประวัติการเช่าของคุณ'
+                else:
+                    explanation = 'แนะนำสำหรับคุณ'
+
+                explanations.append(explanation)
+
+        # Fill with popular if less than 10
+        queryset = sorted_mangas[:10]
+        if len(queryset) < 10:
+            needed = 10 - len(queryset)
+            existing_ids = [m.id for m in queryset]
+            filler_mangas = list(Manga.objects.filter(is_active=True)
+                                 .exclude(id__in=existing_ids)
+                                 .order_by('-created_at')[:needed])
+            queryset.extend(filler_mangas)
+            explanations.extend(['มังงะยอดนิยม'] * needed)
 
         serializer = MangaSerializer(queryset, many=True, context={'request': request})
-        return Response(serializer.data)
+
+        # Add explanations to response
+        recommendations_with_explanations = []
+        for manga_data, explanation in zip(serializer.data, explanations):
+            manga_data['explanation'] = explanation
+            recommendations_with_explanations.append(manga_data)
+
+        return Response({
+            'recommendations': recommendations_with_explanations,
+            'has_preferences': len(preference_mbrs_ids) > 0
+        })
+
+@api_view(['GET', 'POST'])
+@permission_classes([IsAuthenticated])
+def user_preferences(request):
+    """
+    GET: Retrieve user's selected manga preferences (for cold-start)
+    POST: Update user's manga preferences (select 4 manga)
+    """
+    user = request.user
+
+    if request.method == 'GET':
+        preferences = UserPreference.objects.filter(user=user).select_related('manga')
+        data = []
+        for pref in preferences:
+            data.append({
+                'id': pref.id,
+                'manga_id': pref.manga.id,
+                'manga_title': pref.manga.title,
+                'manga_cover': request.build_absolute_uri(pref.manga.cover_image_url.url) if pref.manga.cover_image_url else None,
+                'order': pref.order,
+                'created_at': pref.created_at,
+            })
+        return Response({
+            'preferences': data,
+            'count': len(data),
+            'has_preferences': len(data) > 0
+        })
+
+    elif request.method == 'POST':
+        manga_ids = request.data.get('manga_ids', [])
+
+        if not manga_ids or not isinstance(manga_ids, list):
+            return Response({"error": "กรุณาระบุ manga_ids เป็น array"}, status=400)
+
+        if len(manga_ids) < 4:
+            return Response({"error": "กรุณาเลือกมังงะอย่างน้อย 4 เรื่อง"}, status=400)
+
+        if len(manga_ids) > 4:
+            return Response({"error": "เลือกได้สูงสุด 4 เรื่องเท่านั้น"}, status=400)
+
+        # Check all manga exist
+        mangas = Manga.objects.filter(id__in=manga_ids, is_active=True)
+        if mangas.count() != len(manga_ids):
+            return Response({"error": "มีมังงะบางเรื่องไม่พบในระบบ"}, status=400)
+
+        with transaction.atomic():
+            # Clear existing preferences
+            UserPreference.objects.filter(user=user).delete()
+
+            # Create new preferences
+            for order, manga_id in enumerate(manga_ids, start=1):
+                manga = mangas.get(id=manga_id)
+                UserPreference.objects.create(
+                    user=user,
+                    manga=manga,
+                    order=order
+                )
+
+        return Response({
+            "message": "บันทึกความชอบสำเร็จ!",
+            "manga_ids": manga_ids
+        }, status=201)
