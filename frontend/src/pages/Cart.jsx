@@ -1,29 +1,26 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
+import { authFetch } from '../api';
 
 const Cart = () => {
   const [cartItems, setCartItems] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [isCheckingOut, setIsCheckingOut] = useState(false);
   const navigate = useNavigate();
-  
+
   const API_URL = import.meta.env.VITE_API_BASE_URL;
 
   const getImageUrl = (url) => {
     if (!url) return 'https://via.placeholder.com/150x220?text=No+Cover';
-    
     if (url.startsWith('http')) return url;
-
     if (url.startsWith('/images/') || url.startsWith('images/')) {
       return url.startsWith('/') ? url : `/${url}`;
     }
-
     const baseUrl = API_URL ? API_URL.replace(/\/$/, '') : 'http://localhost:8000';
-    
     if (url.startsWith('/media/') || url.startsWith('media/')) {
       const cleanPath = url.startsWith('/') ? url : `/${url}`;
       return `${baseUrl}${cleanPath}`;
     }
-
     return `${baseUrl}/media/${url}`;
   };
 
@@ -36,14 +33,12 @@ const Cart = () => {
     }
 
     try {
-      const response = await fetch(`${API_URL}/api/cart/`, {
-        headers: { 'Authorization': `Bearer ${token}` }
-      });
+      const response = await authFetch(`${API_URL}/api/cart/`);
       if (response.ok) {
         const data = await response.json();
         setCartItems(data);
-      } else if (response.status === 500) {
-        console.error("Backend Error: Check if Serializer is returning String for images.");
+      } else {
+        console.error("Failed to load cart:", response.status);
       }
     } catch (error) {
       console.error("Error fetching cart:", error);
@@ -54,14 +49,12 @@ const Cart = () => {
 
   useEffect(() => {
     fetchCart();
-  }, [API_URL, navigate]);
+  }, []);
 
   const handleRemove = async (itemId) => {
-    const token = localStorage.getItem('access_token');
     try {
-      const response = await fetch(`${API_URL}/api/cart/remove/${itemId}/`, {
+      const response = await authFetch(`${API_URL}/api/cart/remove/${itemId}/`, {
         method: 'DELETE',
-        headers: { 'Authorization': `Bearer ${token}` }
       });
       if (response.ok) {
         setCartItems(cartItems.filter(item => item.id !== itemId));
@@ -80,15 +73,15 @@ const Cart = () => {
   };
 
   const handleCheckout = async () => {
-    const token = localStorage.getItem('access_token');
+    if (isCheckingOut) return;
+    setIsCheckingOut(true);
     try {
-      const response = await fetch(`${API_URL}/api/cart/checkout/`, {
+      const response = await authFetch(`${API_URL}/api/cart/checkout/`, {
         method: 'POST',
-        headers: { 'Authorization': `Bearer ${token}` }
       });
-      
+
       const data = await response.json();
-      
+
       if (response.ok) {
         alert(data.message);
         navigate('/orders');
@@ -98,6 +91,8 @@ const Cart = () => {
     } catch (error) {
       console.error("Checkout error:", error);
       alert("System error.");
+    } finally {
+      setIsCheckingOut(false);
     }
   };
 
@@ -123,10 +118,10 @@ const Cart = () => {
             <div className="w-full lg:w-2/3 space-y-4">
               {cartItems.map((item) => (
                 <div key={item.id} className="bg-brand-light rounded-xl shadow-sm border border-brand-secondary p-4 flex flex-col sm:flex-row items-center gap-6">
-                  <img 
-                    src={getImageUrl(item.manga_cover)} 
-                    alt={item.manga_title} 
-                    className="w-24 h-32 object-cover rounded-lg" 
+                  <img
+                    src={getImageUrl(item.manga_cover)}
+                    alt={item.manga_title}
+                    className="w-24 h-32 object-cover rounded-lg"
                   />
                   <div className="flex-1 text-center sm:text-left">
                     <h3 className="text-xl font-semibold text-brand-primary">{item.manga_title}</h3>
@@ -137,9 +132,9 @@ const Cart = () => {
                   </div>
                   <div className="text-center sm:text-right flex flex-col items-center sm:items-end gap-3">
                     <span className="text-2xl font-bold text-brand-secondary">
-                      {(parseFloat(item.rental_price_per_day) * item.rent_days).toFixed(2)} THB
+                      {(parseFloat(item.rental_price_per_day) * item.rent_days || 0).toFixed(2)} THB
                     </span>
-                    <button 
+                    <button
                       onClick={() => handleRemove(item.id)}
                       className="text-brand-secondary hover:text-brand-secondary font-medium text-sm transition"
                     >
@@ -161,11 +156,12 @@ const Cart = () => {
                   <span>Total</span>
                   <span>{calculateTotal()} THB</span>
                 </div>
-                <button 
-                  className="w-full bg-brand-secondary hover:bg-brand-primary text-brand-light font-semibold text-lg py-3 rounded-lg mt-8 transition duration-200 shadow-sm"
+                <button
+                  className={`w-full text-brand-light font-semibold text-lg py-3 rounded-lg mt-8 transition duration-200 shadow-sm ${isCheckingOut ? 'bg-brand-primary opacity-70 cursor-not-allowed' : 'bg-brand-secondary hover:bg-brand-primary'}`}
                   onClick={handleCheckout}
+                  disabled={isCheckingOut}
                 >
-                  Confirm Order
+                  {isCheckingOut ? 'Processing...' : 'Confirm Order'}
                 </button>
               </div>
             </div>

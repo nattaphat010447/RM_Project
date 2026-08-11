@@ -8,7 +8,7 @@ from django.db import transaction
 from django.utils import timezone
 from datetime import timedelta
 from django.db.models import Count, Q
-from decimal import Decimal
+from decimal import Decimal, InvalidOperation
 from django.utils.dateformat import format
 from rest_framework.views import APIView
 from .recommender import RecommenderService
@@ -37,21 +37,30 @@ class UserRegistrationAPIView(generics.CreateAPIView):
 @permission_classes([IsAuthenticated])
 def add_to_cart(request, manga_id):
     user = request.user
-    
+
+    try:
+        rent_days = int(request.data.get('rent_days', 7))
+    except (TypeError, ValueError):
+        return Response({"error": "rent_days must be a valid integer."}, status=400)
+    if rent_days < 1:
+        return Response({"error": "rent_days must be at least 1."}, status=400)
+
     cart, created = Cart.objects.get_or_create(user=user)
     manga = get_object_or_404(Manga, id=manga_id)
-    
-    available_copy = MangaCopy.objects.filter(manga=manga, status=MangaCopy.Status.AVAILABLE).first()
-    
-    if not available_copy:
-        return Response({"error": "Sorry, no copies are currently available for rent."}, status=400)
-    
-    if CartItem.objects.filter(cart=cart, manga_copy=available_copy).exists():
-        return Response({"error": "This item is already in your cart."}, status=400)
 
-    rent_days = request.data.get('rent_days', 7)
-    CartItem.objects.create(cart=cart, manga_copy=available_copy, rent_days=rent_days)
-    
+    with transaction.atomic():
+        available_copy = MangaCopy.objects.select_for_update().filter(
+            manga=manga, status=MangaCopy.Status.AVAILABLE
+        ).first()
+
+        if not available_copy:
+            return Response({"error": "Sorry, no copies are currently available for rent."}, status=400)
+
+        if CartItem.objects.filter(cart=cart, manga_copy=available_copy).exists():
+            return Response({"error": "This item is already in your cart."}, status=400)
+
+        CartItem.objects.create(cart=cart, manga_copy=available_copy, rent_days=rent_days)
+
     return Response({"message": f"'{manga.title}' added to cart successfully!"}, status=201)
 
 @api_view(['GET'])
@@ -75,15 +84,31 @@ def remove_from_cart(request, item_id):
 def checkout_cart(request):
     user = request.user
     cart = get_object_or_404(Cart, user=user)
-    items = cart.items.all()
+    items = list(cart.items.all())
 
-    if not items.exists():
+    if not items:
         return Response({"error": "Your cart is empty."}, status=400)
-
-    total_fee = sum([item.manga_copy.manga.rental_price_per_day * item.rent_days for item in items])
 
     try:
         with transaction.atomic():
+            copy_ids = [item.manga_copy_id for item in items]
+            locked_copies = {
+                c.id: c for c in MangaCopy.objects.select_for_update().filter(id__in=copy_ids)
+            }
+
+            unavailable_titles = []
+            for item in items:
+                copy = locked_copies.get(item.manga_copy_id)
+                if not copy or copy.status != MangaCopy.Status.AVAILABLE:
+                    unavailable_titles.append(item.manga_copy.manga.title)
+
+            if unavailable_titles:
+                return Response({
+                    "error": f"Sorry, these items are no longer available: {', '.join(unavailable_titles)}. Please remove them from your cart and try again."
+                }, status=409)
+
+            total_fee = sum(item.manga_copy.manga.rental_price_per_day * item.rent_days for item in items)
+
             order = RentalOrder.objects.create(
                 user=user,
                 total_rent_fee=total_fee,
@@ -91,17 +116,18 @@ def checkout_cart(request):
             )
 
             for item in items:
+                copy = locked_copies[item.manga_copy_id]
                 RentalOrderItem.objects.create(
                     order=order,
-                    manga_copy=item.manga_copy,
-                    rent_price_per_day=item.manga_copy.manga.rental_price_per_day,
+                    manga_copy=copy,
+                    rent_price_per_day=copy.manga.rental_price_per_day,
                     rent_days=item.rent_days,
                     item_status=RentalOrderItem.ItemStatus.REQUESTED
                 )
-                item.manga_copy.status = MangaCopy.Status.RESERVED
-                item.manga_copy.save()
+                copy.status = MangaCopy.Status.RESERVED
+                copy.save()
 
-            items.delete()
+            cart.items.filter(id__in=[item.id for item in items]).delete()
 
         return Response({"message": "Rental request confirmed! Please wait for admin approval.", "order_id": order.id}, status=201)
     except Exception as e:
@@ -157,8 +183,13 @@ def popular_mangas(request):
 @permission_classes([IsAuthenticated])
 def submit_manga_review(request, manga_id):
     rating = request.data.get('rating')
-    
-    if not rating or not (1 <= int(rating) <= 5):
+
+    try:
+        rating = int(rating)
+    except (TypeError, ValueError):
+        return Response({"error": "คะแนนต้องอยู่ระหว่าง 1 ถึง 5"}, status=400)
+
+    if not (1 <= rating <= 5):
         return Response({"error": "คะแนนต้องอยู่ระหว่าง 1 ถึง 5"}, status=400)
 
     has_returned = RentalOrderItem.objects.filter(
@@ -240,25 +271,38 @@ def reject_order(request, order_id):
 @api_view(['POST'])
 @permission_classes([IsAdminRole])
 def checkout_order(request, order_id):
-    order = get_object_or_404(RentalOrder, id=order_id)
-    if order.status != RentalOrder.Status.APPROVED:
-        return Response({"error": "Order must be approved first."}, status=400)
-    
     with transaction.atomic():
+        order = get_object_or_404(RentalOrder.objects.select_for_update(), id=order_id)
+        if order.status != RentalOrder.Status.APPROVED:
+            return Response({"error": "Order must be approved first."}, status=400)
+
+        items = list(order.items.select_related('manga_copy').all())
+        copy_ids = [item.manga_copy_id for item in items]
+        locked_copies = {
+            c.id: c for c in MangaCopy.objects.select_for_update().filter(id__in=copy_ids)
+        }
+
+        not_reserved = [c for c in locked_copies.values() if c.status != MangaCopy.Status.RESERVED]
+        if not_reserved:
+            return Response({
+                "error": "Some copies in this order are no longer reserved and cannot be checked out."
+            }, status=409)
+
         order.status = RentalOrder.Status.CHECKED_OUT
         order.checked_out_at = timezone.now()
-        
-        for item in order.items.all():
+
+        for item in items:
             item.item_status = RentalOrderItem.ItemStatus.CHECKED_OUT
             item.rental_date = timezone.now()
             item.due_at = timezone.now() + timedelta(days=item.rent_days)
             item.save()
-            
-            item.manga_copy.status = MangaCopy.Status.RENTED
-            item.manga_copy.save()
-            
+
+            copy = locked_copies[item.manga_copy_id]
+            copy.status = MangaCopy.Status.RENTED
+            copy.save()
+
         order.save()
-            
+
     return Response({"message": "ทำรายการรับหนังสือสำเร็จ!"})
 
 @api_view(['POST'])
@@ -293,7 +337,16 @@ def fine_item(request, order_id, item_id):
         return Response({"error": "Item is not checked out."}, status=400)
 
     fine_type = request.data.get('fine_type', 'LATE')
-    fine_amount = request.data.get('fine_amount', 0)
+    if fine_type not in ('LATE', 'DAMAGE', 'LOST'):
+        return Response({"error": "Invalid fine_type."}, status=400)
+
+    try:
+        fine_amount = Decimal(str(request.data.get('fine_amount', 0)))
+    except (InvalidOperation, TypeError, ValueError):
+        return Response({"error": "fine_amount must be a valid number."}, status=400)
+
+    if fine_amount < 0:
+        return Response({"error": "fine_amount cannot be negative."}, status=400)
 
     with transaction.atomic():
         if fine_type == 'LOST':
@@ -310,22 +363,22 @@ def fine_item(request, order_id, item_id):
         item.save()
         item.manga_copy.save()
 
-        if Decimal(fine_amount) > 0:
+        if fine_amount > 0:
             FineLog.objects.create(
                 order_item=item,
                 user=item.order.user,
                 fine_type=fine_type,
-                amount=Decimal(fine_amount)
+                amount=fine_amount
             )
 
         order = item.order
-        order.total_fine += Decimal(fine_amount)
-        
+        order.total_fine += fine_amount
+
         active_items = order.items.filter(item_status=RentalOrderItem.ItemStatus.CHECKED_OUT)
         if not active_items.exists():
             order.status = RentalOrder.Status.RETURNED
             order.returned_at = timezone.now()
-            
+
         order.save()
 
     return Response({"message": f"บันทึกค่าปรับ {fine_amount} บาท และรับคืนสำเร็จ!"})
@@ -466,15 +519,26 @@ def manual_checkout(request):
     data = request.data
     user_id = data.get('user_id')
     copy_id = data.get('copy_id')
-    rent_days = int(data.get('rent_days', 7))
+
+    try:
+        rent_days = int(data.get('rent_days', 7))
+    except (TypeError, ValueError):
+        return Response({"error": "rent_days must be a valid integer."}, status=400)
+    if rent_days < 1:
+        return Response({"error": "rent_days must be at least 1."}, status=400)
 
     user = get_object_or_404(User, id=user_id)
-    copy = get_object_or_404(MangaCopy, id=copy_id, status=MangaCopy.Status.AVAILABLE)
-
-    total_fee = copy.manga.rental_price_per_day * rent_days
 
     try:
         with transaction.atomic():
+            copy = get_object_or_404(
+                MangaCopy.objects.select_for_update(), id=copy_id
+            )
+            if copy.status != MangaCopy.Status.AVAILABLE:
+                return Response({"error": "This copy is no longer available."}, status=409)
+
+            total_fee = copy.manga.rental_price_per_day * rent_days
+
             order = RentalOrder.objects.create(
                 user=user,
                 total_rent_fee=total_fee,
@@ -487,11 +551,11 @@ def manual_checkout(request):
             RentalOrderItem.objects.create(
                 order=order,
                 manga_copy=copy,
-                rent_price_per_day=...,
+                rent_price_per_day=copy.manga.rental_price_per_day,
                 rent_days=rent_days,
                 item_status='CHECKED_OUT',
                 rental_date=timezone.now(),
-                due_at = timezone.now() + timedelta(days=int(rent_days)) 
+                due_at=timezone.now() + timedelta(days=rent_days)
             )
 
             copy.status = MangaCopy.Status.RENTED

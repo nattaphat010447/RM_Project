@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams, Link } from 'react-router-dom';
+import { authFetch } from '../api';
 
 const API_URL = import.meta.env.VITE_API_BASE_URL;
 
@@ -8,12 +9,13 @@ const AdminMangaDetail = () => {
   const navigate = useNavigate();
 
   const [manga, setManga] = useState(null);
-  
+
   const [searchUserQuery, setSearchUserQuery] = useState('');
   const [userResults, setUserResults] = useState([]);
   const [selectedUser, setSelectedUser] = useState(null);
   const [selectedCopy, setSelectedCopy] = useState('');
   const [rentDays, setRentDays] = useState(7);
+  const [isCheckingOut, setIsCheckingOut] = useState(false);
 
   useEffect(() => {
     if (id === 'new') return;
@@ -30,20 +32,15 @@ const AdminMangaDetail = () => {
 
   const getImageUrl = (url) => {
     if (!url) return 'https://via.placeholder.com/150x220?text=No+Cover';
-    
     if (url.startsWith('http')) return url;
-
     if (url.startsWith('/images/') || url.startsWith('images/')) {
       return url.startsWith('/') ? url : `/${url}`;
     }
-
     const baseUrl = API_URL ? API_URL.replace(/\/$/, '') : 'http://localhost:8000';
-    
     if (url.startsWith('/media/') || url.startsWith('media/')) {
       const cleanPath = url.startsWith('/') ? url : `/${url}`;
       return `${baseUrl}${cleanPath}`;
     }
-
     return `${baseUrl}/media/${url}`;
   };
 
@@ -51,14 +48,11 @@ const AdminMangaDetail = () => {
     if (searchUserQuery.length < 2) {
       alert("Please enter at least 2 characters"); return;
     }
-    const token = localStorage.getItem('access_token');
     try {
-      const response = await fetch(`${API_URL}/api/admin/customers/search/?q=${searchUserQuery}`, {
-        headers: { 'Authorization': `Bearer ${token}` }
-      });
+      const response = await authFetch(`${API_URL}/api/admin/customers/search/?q=${encodeURIComponent(searchUserQuery)}`);
       const data = await response.json();
       setUserResults(data);
-      if(data.length === 0) alert("No customer found");
+      if (data.length === 0) alert("No customer found");
     } catch (err) { console.error(err); }
   };
 
@@ -66,18 +60,20 @@ const AdminMangaDetail = () => {
     if (!selectedUser) { alert("Please select a customer first"); return; }
     if (!selectedCopy) { alert("Please select an available copy"); return; }
 
-    const token = localStorage.getItem('access_token');
+    const days = parseInt(rentDays, 10);
+    if (!days || days < 1) { alert("Please enter a valid number of rental days (minimum 1)."); return; }
+
+    if (isCheckingOut) return;
+    setIsCheckingOut(true);
+
     try {
-      const response = await fetch(`${API_URL}/api/admin/manual-checkout/`, {
+      const response = await authFetch(`${API_URL}/api/admin/manual-checkout/`, {
         method: 'POST',
-        headers: { 
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           user_id: selectedUser.id,
           copy_id: parseInt(selectedCopy),
-          rent_days: parseInt(rentDays)
+          rent_days: days
         })
       });
 
@@ -89,8 +85,10 @@ const AdminMangaDetail = () => {
       } else {
         alert("Unable to save record: " + (data.error || "Invalid data"));
       }
-    } catch (err) { 
-      alert("System error: " + err.message); 
+    } catch (err) {
+      alert("System error: " + err.message);
+    } finally {
+      setIsCheckingOut(false);
     }
   };
 
@@ -101,19 +99,19 @@ const AdminMangaDetail = () => {
   return (
     <div className="min-h-screen bg-brand-light p-4 flex justify-center">
       <div className="w-full max-w-5xl bg-brand-light rounded-3xl shadow-md p-8 relative h-fit">
-        
+
         <div className="flex justify-between items-start mb-8 border-b border-brand-light pb-8">
           <div className="flex gap-8">
             <button onClick={() => navigate('/admin/mangas')} className="text-brand-primary hover:text-brand-primary mt-2">
               <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path></svg>
             </button>
-            
-            <img 
-              src={getImageUrl(manga.cover_image_url)} 
-              alt={manga.title} 
+
+            <img
+              src={getImageUrl(manga.cover_image_url)}
+              alt={manga.title}
               className="w-48 h-auto object-cover rounded-lg shadow-md"
             />
-            
+
             <div className="pt-2">
               <h2 className="text-xl text-brand-primary mb-1">Manga Details (Admin)</h2>
               <h1 className="text-3xl font-normal text-brand-primary mb-4">{manga.title}</h1>
@@ -130,11 +128,11 @@ const AdminMangaDetail = () => {
         <div>
           <h2 className="text-2xl font-normal text-brand-primary mb-2">Rent Manga for Customer</h2>
           <p className="text-sm text-brand-primary mb-4">Search customer (name, email)</p>
-          
+
           <div className="flex gap-2 mb-4">
-            <input 
-              type="text" 
-              placeholder="Type to search..." 
+            <input
+              type="text"
+              placeholder="Type to search..."
               value={searchUserQuery}
               onChange={(e) => setSearchUserQuery(e.target.value)}
               className="flex-1 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-brand-secondary text-brand-primary bg-brand-light shadow-md"
@@ -160,35 +158,38 @@ const AdminMangaDetail = () => {
                 <p className="font-bold text-brand-primary">Processing for: {selectedUser.full_name}</p>
                 <button onClick={() => setSelectedUser(null)} className="text-sm text-brand-secondary underline">Change customer</button>
               </div>
-              
+
               <div className="flex gap-4 mb-6">
                 <div className="flex-1">
                   <label className="block text-sm font-bold text-brand-primary mb-1">Select copy</label>
-                  <select 
-                    value={selectedCopy} 
+                  <select
+                    value={selectedCopy}
                     onChange={(e) => setSelectedCopy(e.target.value)}
                     className="w-full rounded px-3 py-2 shadow-md text-brand-primary bg-brand-light focus:outline-none focus:ring-2 focus:ring-brand-secondary"
                   >
-                    {availableCopies.length === 0 ? <option value="">No copies available</option> : 
+                    {availableCopies.length === 0 ? <option value="">No copies available</option> :
                       availableCopies.map(c => <option key={c.id} value={c.id}>{c.serial_no}</option>)
                     }
                   </select>
                 </div>
                 <div className="w-1/3">
                   <label className="block text-sm font-bold text-brand-primary mb-1">Number of days</label>
-                  <input 
-                    type="number" min="1" value={rentDays} onChange={(e) => setRentDays(e.target.value)}
+                  <input
+                    type="number"
+                    min="1"
+                    value={rentDays}
+                    onChange={(e) => setRentDays(e.target.value)}
                     className="w-full rounded px-3 py-2 shadow-md text-brand-primary bg-brand-light focus:outline-none focus:ring-2 focus:ring-brand-secondary"
                   />
                 </div>
               </div>
 
-              <button 
-                onClick={handleCheckout} 
-                disabled={availableCopies.length === 0}
-                className="w-full bg-brand-secondary hover:bg-brand-primary text-brand-light font-bold py-3 rounded-lg shadow-md disabled:bg-brand-light"
+              <button
+                onClick={handleCheckout}
+                disabled={availableCopies.length === 0 || isCheckingOut}
+                className={`w-full text-brand-light font-bold py-3 rounded-lg shadow-md ${(availableCopies.length === 0 || isCheckingOut) ? 'bg-brand-light cursor-not-allowed opacity-70' : 'bg-brand-secondary hover:bg-brand-primary'}`}
               >
-                Confirm In-Store Rental
+                {isCheckingOut ? 'Processing...' : 'Confirm In-Store Rental'}
               </button>
             </div>
           )}

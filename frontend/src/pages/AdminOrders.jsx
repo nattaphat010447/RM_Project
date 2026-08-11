@@ -1,17 +1,19 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { authFetch } from '../api';
 
 const AdminOrders = () => {
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
-  
-  const [returningItems, setReturningItems] = useState([]); 
-  
+
+  const [returningItems, setReturningItems] = useState([]);
+
   const [fineModal, setFineModal] = useState({ isOpen: false, orderId: null, itemId: null, mangaTitle: '' });
   const [fineData, setFineData] = useState({ fine_type: 'LATE', fine_amount: '' });
+  const [isSubmittingFine, setIsSubmittingFine] = useState(false);
 
   const navigate = useNavigate();
-  
+
   const API_URL = import.meta.env.VITE_API_BASE_URL;
 
   const fetchOrders = () => {
@@ -21,9 +23,7 @@ const AdminOrders = () => {
       return;
     }
 
-    fetch(`${API_URL}/api/admin/orders/`, {
-      headers: { 'Authorization': `Bearer ${token}` }
-    })
+    authFetch(`${API_URL}/api/admin/orders/`)
       .then(res => {
         if (!res.ok) throw new Error("Failed to fetch");
         return res.json();
@@ -43,12 +43,10 @@ const AdminOrders = () => {
   const handleAction = async (orderId, action) => {
     const confirmMsg = action === 'approve' ? "Confirm approval?" : action === 'reject' ? "Confirm rejection?" : "Confirm customer has received the books?";
     if (!window.confirm(confirmMsg)) return;
-    
-    const token = localStorage.getItem('access_token');
+
     try {
-      const response = await fetch(`${API_URL}/api/admin/orders/${orderId}/${action}/`, {
+      const response = await authFetch(`${API_URL}/api/admin/orders/${orderId}/${action}/`, {
         method: 'POST',
-        headers: { 'Authorization': `Bearer ${token}` }
       });
       if (response.ok) fetchOrders();
       else alert("An error occurred");
@@ -56,11 +54,9 @@ const AdminOrders = () => {
   };
 
   const handleCompleteReturn = async (orderId, itemId) => {
-    const token = localStorage.getItem('access_token');
     try {
-      const response = await fetch(`${API_URL}/api/admin/orders/${orderId}/items/${itemId}/return/`, {
+      const response = await authFetch(`${API_URL}/api/admin/orders/${orderId}/items/${itemId}/return/`, {
         method: 'POST',
-        headers: { 'Authorization': `Bearer ${token}` }
       });
       if (response.ok) {
         setReturningItems(returningItems.filter(id => id !== itemId));
@@ -73,21 +69,23 @@ const AdminOrders = () => {
 
   const handleSubmitFine = async (e) => {
     e.preventDefault();
-    if (!fineData.fine_amount || fineData.fine_amount <= 0) {
-      alert("Please enter a valid fine amount"); return;
+
+    const amount = parseFloat(fineData.fine_amount);
+    if (!fineData.fine_amount || isNaN(amount) || amount <= 0) {
+      alert("Please enter a valid fine amount (must be greater than 0).");
+      return;
     }
 
-    const token = localStorage.getItem('access_token');
+    if (isSubmittingFine) return;
+    setIsSubmittingFine(true);
+
     try {
-      const response = await fetch(`${API_URL}/api/admin/orders/${fineModal.orderId}/items/${fineModal.itemId}/fine/`, {
+      const response = await authFetch(`${API_URL}/api/admin/orders/${fineModal.orderId}/items/${fineModal.itemId}/fine/`, {
         method: 'POST',
-        headers: { 
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           fine_type: fineData.fine_type,
-          fine_amount: fineData.fine_amount
+          fine_amount: amount
         })
       });
 
@@ -101,6 +99,9 @@ const AdminOrders = () => {
         alert("Failed to save fine");
       }
     } catch (err) { alert("System error"); }
+    finally {
+      setIsSubmittingFine(false);
+    }
   };
 
   if (loading) return <div className="min-h-screen bg-brand-light flex items-center justify-center font-bold text-brand-primary">Loading Orders...</div>;
@@ -112,7 +113,7 @@ const AdminOrders = () => {
   return (
     <div className="min-h-screen bg-brand-light p-4 md:p-10 relative">
       <div className="max-w-5xl mx-auto bg-brand-light rounded-3xl shadow-md p-8 relative">
-        
+
         <button onClick={() => navigate('/admin/dashboard')} className="absolute top-8 left-8 text-brand-primary hover:text-brand-primary transition">
           <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path></svg>
         </button>
@@ -163,11 +164,11 @@ const AdminOrders = () => {
                 <div key={order.id} className="rounded-2xl p-6 shadow-md hover:shadow-lg transition">
                   <div className="flex justify-between items-center mb-4">
                     <p className="text-sm font-bold text-brand-primary">
-                      Customer: <span className="text-brand-secondary underline decoration-brand-light">{order.customer_name}</span> 
+                      Customer: <span className="text-brand-secondary underline decoration-brand-light">{order.customer_name}</span>
                       <span className="text-xs text-brand-primary ml-3">ID: #{order.id}</span>
                     </p>
                   </div>
-                  
+
                   <div className="overflow-x-auto">
                     <table className="w-full text-sm text-left">
                       <thead className="bg-brand-light text-brand-primary font-bold uppercase text-[10px] tracking-widest border-b">
@@ -183,10 +184,10 @@ const AdminOrders = () => {
                             <td className="px-4 py-4 font-bold text-brand-primary">{item.manga_title}</td>
                             <td className="px-4 py-4 text-brand-primary">{item.serial_no}</td>
                             <td className="px-4 py-4 text-right">
-                              
+
                               {item.item_status?.toUpperCase() === 'CHECKED_OUT' ? (
                                 !returningItems.includes(item.id) ? (
-                                  <button 
+                                  <button
                                     onClick={() => setReturningItems([...returningItems, item.id])}
                                     className="bg-brand-light border-2 border-brand-accent text-brand-secondary hover:bg-brand-light font-bold py-1.5 px-4 rounded-lg text-xs transition shadow-sm"
                                   >
@@ -194,19 +195,19 @@ const AdminOrders = () => {
                                   </button>
                                 ) : (
                                   <div className="flex justify-end items-center gap-2 animate-fade-in">
-                                    <button 
+                                    <button
                                       onClick={() => handleCompleteReturn(order.id, item.id)}
                                       className="bg-brand-accent hover:bg-brand-primary text-brand-light font-bold py-1.5 px-3 rounded-lg shadow-md text-xs transition"
                                     >
                                       Normal Return
                                     </button>
-                                    <button 
+                                    <button
                                       onClick={() => setFineModal({ isOpen: true, orderId: order.id, itemId: item.id, mangaTitle: item.manga_title })}
                                       className="bg-brand-accent hover:bg-brand-primary text-brand-light font-bold py-1.5 px-3 rounded-lg shadow-md text-xs transition"
                                     >
                                       With Fine
                                     </button>
-                                    <button 
+                                    <button
                                       onClick={() => setReturningItems(returningItems.filter(id => id !== item.id))}
                                       className="text-brand-light hover:text-brand-primary px-2 font-bold"
                                     >
@@ -238,12 +239,12 @@ const AdminOrders = () => {
           <div className="bg-brand-light rounded-3xl shadow-lg p-8 w-full max-w-sm animate-fade-in">
             <h3 className="text-2xl font-black text-brand-primary mb-2">Fine Payment</h3>
             <p className="text-sm text-brand-primary mb-6 italic">For item: {fineModal.mangaTitle}</p>
-            
+
             <form onSubmit={handleSubmitFine} className="space-y-5">
               <div>
                 <label className="block text-xs font-black text-brand-primary uppercase mb-2">Fine Reason</label>
-                <select 
-                  value={fineData.fine_type} 
+                <select
+                  value={fineData.fine_type}
                   onChange={(e) => setFineData({...fineData, fine_type: e.target.value})}
                   className="w-full rounded-xl px-4 py-3 text-brand-primary focus:outline-none focus:ring-2 focus:ring-brand-secondary bg-brand-light shadow-md"
                 >
@@ -252,12 +253,13 @@ const AdminOrders = () => {
                   <option value="LOST">Lost</option>
                 </select>
               </div>
-              
+
               <div>
                 <label className="block text-xs font-black text-brand-primary uppercase mb-2">Amount (THB)</label>
-                <input 
-                  type="number" 
-                  min="1"
+                <input
+                  type="number"
+                  min="0.01"
+                  step="0.01"
                   required
                   value={fineData.fine_amount}
                   onChange={(e) => setFineData({...fineData, fine_amount: e.target.value})}
@@ -267,18 +269,20 @@ const AdminOrders = () => {
               </div>
 
               <div className="flex gap-3 mt-8">
-                <button 
-                  type="button" 
+                <button
+                  type="button"
                   onClick={() => setFineModal({ isOpen: false, orderId: null, itemId: null, mangaTitle: '' })}
                   className="flex-1 text-brand-primary font-bold hover:text-brand-primary transition"
+                  disabled={isSubmittingFine}
                 >
                   Cancel
                 </button>
-                <button 
-                  type="submit" 
-                  className="flex-1 bg-brand-primary hover:bg-brand-primary text-brand-light font-bold py-3 rounded-xl transition shadow-lg"
+                <button
+                  type="submit"
+                  disabled={isSubmittingFine}
+                  className={`flex-1 text-brand-light font-bold py-3 rounded-xl transition shadow-lg ${isSubmittingFine ? 'bg-brand-primary opacity-70 cursor-not-allowed' : 'bg-brand-primary hover:bg-brand-primary'}`}
                 >
-                  Confirm
+                  {isSubmittingFine ? 'Saving...' : 'Confirm'}
                 </button>
               </div>
             </form>

@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
+import { authFetch } from '../api';
 
 const AdminMangaForm = () => {
   const { id } = useParams();
@@ -12,6 +13,7 @@ const AdminMangaForm = () => {
   });
   const [coverFile, setCoverFile] = useState(null);
   const [currentImage, setCurrentImage] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
     if (isEditMode) {
@@ -29,27 +31,39 @@ const AdminMangaForm = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    const token = localStorage.getItem('access_token');
-    
+
+    const price = parseFloat(formData.rental_price_per_day);
+    if (isNaN(price) || price <= 0) {
+      alert("Rental price must be greater than 0.");
+      return;
+    }
+
+    if (isSubmitting) return;
+    setIsSubmitting(true);
+
     const dataToSend = new FormData();
     dataToSend.append('title', formData.title);
     dataToSend.append('author', formData.author);
     dataToSend.append('genre', formData.genre);
-    dataToSend.append('rental_price_per_day', formData.rental_price_per_day);
-    
+    dataToSend.append('rental_price_per_day', price);
+
     if (coverFile) {
-        dataToSend.append('cover_image_url', coverFile);
+      dataToSend.append('cover_image_url', coverFile);
     }
-    
+
     if (!isEditMode && formData.serial_numbers) {
-        dataToSend.append('serial_numbers', formData.serial_numbers);
+      const serials = formData.serial_numbers
+        .split(',')
+        .map(s => s.trim())
+        .filter(s => s.length > 0);
+      const unique = [...new Set(serials)];
+      dataToSend.append('serial_numbers', unique.join(','));
     }
 
     try {
       const url = isEditMode ? `${API_URL}/api/admin/mangas/${id}/` : `${API_URL}/api/admin/mangas/`;
-      const response = await fetch(url, {
+      const response = await authFetch(url, {
         method: isEditMode ? 'PUT' : 'POST',
-        headers: { 'Authorization': `Bearer ${token}` }, 
         body: dataToSend
       });
 
@@ -59,17 +73,19 @@ const AdminMangaForm = () => {
       } else {
         alert("An error occurred");
       }
-    } catch (err) { alert("System error"); }
+    } catch (err) {
+      alert("System error");
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const handleDelete = async () => {
     if (!window.confirm("Are you sure you want to delete this manga?")) return;
-    
-    const token = localStorage.getItem('access_token');
+
     try {
-      const response = await fetch(`${API_URL}/api/admin/mangas/${id}/`, {
+      const response = await authFetch(`${API_URL}/api/admin/mangas/${id}/`, {
         method: 'DELETE',
-        headers: { 'Authorization': `Bearer ${token}` }
       });
 
       if (response.ok) {
@@ -82,20 +98,15 @@ const AdminMangaForm = () => {
 
   const getImageUrl = (url) => {
     if (!url) return 'https://via.placeholder.com/150x220?text=No+Cover';
-    
     if (url.startsWith('http')) return url;
-
     if (url.startsWith('/images/') || url.startsWith('images/')) {
       return url.startsWith('/') ? url : `/${url}`;
     }
-
     const baseUrl = API_URL ? API_URL.replace(/\/$/, '') : 'http://localhost:8000';
-    
     if (url.startsWith('/media/') || url.startsWith('media/')) {
       const cleanPath = url.startsWith('/') ? url : `/${url}`;
       return `${baseUrl}${cleanPath}`;
     }
-
     return `${baseUrl}/media/${url}`;
   };
 
@@ -103,7 +114,7 @@ const AdminMangaForm = () => {
     <div className="min-h-screen bg-brand-light p-4 flex justify-center items-center">
       <div className="w-full max-w-3xl bg-brand-light rounded-3xl shadow-md p-8">
         <h1 className="text-2xl font-bold mb-6">{isEditMode ? 'Edit Manga' : 'Add New Manga'}</h1>
-        
+
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
             <label className="block text-sm font-bold mb-1">Title *</label>
@@ -119,12 +130,12 @@ const AdminMangaForm = () => {
               <input type="text" value={formData.genre} onChange={e => setFormData({...formData, genre: e.target.value})} className="w-full rounded px-3 py-2 shadow-md" />
             </div>
           </div>
-          
+
           <div>
             <label className="block text-sm font-bold mb-1">Cover Image (select new file to replace)</label>
             <input type="file" accept="image/*" onChange={e => setCoverFile(e.target.files[0])} className="w-full rounded px-3 py-2 shadow-md" />
           </div>
-          
+
           {isEditMode && currentImage && !coverFile && (
             <div className="my-2">
               <p className="text-sm text-brand-primary mb-1">Current cover:</p>
@@ -134,7 +145,15 @@ const AdminMangaForm = () => {
 
           <div>
             <label className="block text-sm font-bold mb-1">Rental Price per Day (THB) *</label>
-            <input type="number" required value={formData.rental_price_per_day} onChange={e => setFormData({...formData, rental_price_per_day: e.target.value})} className="w-full rounded px-3 py-2 shadow-md" />
+            <input
+              type="number"
+              required
+              min="0.01"
+              step="0.01"
+              value={formData.rental_price_per_day}
+              onChange={e => setFormData({...formData, rental_price_per_day: e.target.value})}
+              className="w-full rounded px-3 py-2 shadow-md"
+            />
           </div>
 
           {!isEditMode && (
@@ -152,8 +171,12 @@ const AdminMangaForm = () => {
                   Delete Manga
                 </button>
               )}
-              <button type="submit" className="bg-brand-primary text-brand-light px-6 py-2 rounded font-bold hover:bg-brand-primary transition">
-                {isEditMode ? 'Save Changes' : 'Create Manga'}
+              <button
+                type="submit"
+                disabled={isSubmitting}
+                className={`text-brand-light px-6 py-2 rounded font-bold transition ${isSubmitting ? 'bg-brand-primary opacity-70 cursor-not-allowed' : 'bg-brand-primary hover:bg-brand-primary'}`}
+              >
+                {isSubmitting ? 'Saving...' : (isEditMode ? 'Save Changes' : 'Create Manga')}
               </button>
             </div>
           </div>

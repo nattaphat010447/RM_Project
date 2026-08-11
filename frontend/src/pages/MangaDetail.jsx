@@ -1,35 +1,32 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
+import { authFetch } from '../api';
 
 const API_URL = import.meta.env.VITE_API_BASE_URL;
 
 const MangaDetail = () => {
   const navigate = useNavigate();
   const { id } = useParams();
-  
+
   const [manga, setManga] = useState(null);
   const [loading, setLoading] = useState(true);
-  
+
   const [isAdded, setIsAdded] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [copyId, setCopyId] = useState('');
   const [rentalDays, setRentalDays] = useState(7);
 
   const getImageUrl = (url) => {
     if (!url) return 'https://via.placeholder.com/150x220?text=No+Cover';
-    
     if (url.startsWith('http')) return url;
-
     if (url.startsWith('/images/') || url.startsWith('images/')) {
       return url.startsWith('/') ? url : `/${url}`;
     }
-
     const baseUrl = API_URL ? API_URL.replace(/\/$/, '') : 'http://localhost:8000';
-    
     if (url.startsWith('/media/') || url.startsWith('media/')) {
       const cleanPath = url.startsWith('/') ? url : `/${url}`;
       return `${baseUrl}${cleanPath}`;
     }
-
     return `${baseUrl}/media/${url}`;
   };
 
@@ -42,9 +39,7 @@ const MangaDetail = () => {
       .then(data => {
         setManga(data);
         setLoading(false);
-        
         const availableCopies = data.copies?.filter(c => c.status === 'AVAILABLE') || [];
-        
         if (availableCopies.length > 0) {
           setCopyId(availableCopies[0].id);
         }
@@ -57,23 +52,25 @@ const MangaDetail = () => {
 
   const handleAddToCart = async () => {
     const token = localStorage.getItem('access_token');
-    
     if (!token) {
       navigate('/signin');
       return;
     }
 
+    const days = parseInt(rentalDays, 10);
+    if (!days || days < 1) {
+      alert("Please enter a valid number of rental days (minimum 1).");
+      return;
+    }
+
+    if (isSubmitting) return;
+    setIsSubmitting(true);
+
     try {
-      const response = await fetch(`${API_URL}/api/cart/add/${id}/`, {
+      const response = await authFetch(`${API_URL}/api/cart/add/${id}/`, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
-        body: JSON.stringify({ 
-          rent_days: rentalDays,
-          copy_id: copyId
-        })
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ rent_days: days, copy_id: copyId })
       });
 
       const data = await response.json();
@@ -87,6 +84,8 @@ const MangaDetail = () => {
     } catch (error) {
       console.error("Error adding to cart:", error);
       alert("System error. Please try again.");
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -104,17 +103,17 @@ const MangaDetail = () => {
   return (
     <div className="min-h-screen bg-brand-light pt-10 px-4 pb-12">
       <div className="max-w-4xl mx-auto">
-        
+
         {isAdded && (
           <div className="bg-brand-light text-brand-primary px-6 py-4 rounded-lg mb-6 font-semibold shadow-sm transition-all">
-            Added "{manga.title}" (Copy: {manga.copies.find(c => c.id.toString() === copyId.toString())?.serial_no}) to the cart for {rentalDays} days successfully.
+            Added "{manga.title}" (Copy: {manga.copies.find(c => c.id.toString() === copyId.toString())?.serial_no}) to the cart for {parseInt(rentalDays, 10)} days successfully.
           </div>
         )}
 
         <div className="bg-brand-light rounded-xl p-6 md:p-10 relative shadow-md flex flex-col md:flex-row gap-10">
-          
-          <button 
-            onClick={() => navigate(-1)} 
+
+          <button
+            onClick={() => navigate(-1)}
             className="absolute top-6 left-6 w-10 h-10 bg-brand-light hover:bg-brand-light border border-brand-secondary rounded-full flex items-center justify-center transition duration-200"
           >
             <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-brand-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -123,31 +122,31 @@ const MangaDetail = () => {
           </button>
 
           <div className="w-full md:w-2/5 mt-14 md:mt-0 flex justify-center items-start">
-            <img 
-              src={getImageUrl(manga.cover_image_url)} 
-              alt={manga.title}  
+            <img
+              src={getImageUrl(manga.cover_image_url)}
+              alt={manga.title}
               className="w-full max-w-sm h-auto object-cover rounded-lg shadow-md"
             />
           </div>
 
           <div className="w-full md:w-3/5 flex flex-col pt-2 md:pt-4">
             <h1 className="text-3xl font-bold text-brand-primary mb-4">{manga.title}</h1>
-            
+
             <div className="space-y-2 text-brand-primary mb-6">
               <p><span className="font-medium text-brand-primary w-24 inline-block">Author:</span> {manga.author}</p>
               <p><span className="font-medium text-brand-primary w-24 inline-block">Category:</span> {manga.genre}</p>
               <p className="pt-2">
-                <span className="font-medium text-brand-primary">Rental Price:</span> 
+                <span className="font-medium text-brand-primary">Rental Price:</span>
                 <span className="font-bold text-lg text-brand-primary ml-2">{manga.rental_price_per_day} THB/day</span>
               </p>
             </div>
 
             <div className="space-y-5 mb-8 flex-grow">
-              
+
               <div>
                 <label className="block text-brand-primary font-medium mb-2">Select copy to rent</label>
                 <div className="relative">
-                  <select 
+                  <select
                     value={copyId}
                     onChange={(e) => setCopyId(e.target.value)}
                     disabled={isOutOfStock}
@@ -171,8 +170,8 @@ const MangaDetail = () => {
 
               <div>
                 <label className="block text-brand-primary font-medium mb-2">Number of rental days</label>
-                <input 
-                  type="number" 
+                <input
+                  type="number"
                   min="1"
                   value={rentalDays}
                   onChange={(e) => setRentalDays(e.target.value)}
@@ -182,17 +181,17 @@ const MangaDetail = () => {
               </div>
             </div>
 
-            <button 
+            <button
               onClick={handleAddToCart}
-              disabled={isOutOfStock}
-              className={`w-full font-bold text-lg py-4 rounded-lg transition duration-200 shadow-sm ${isOutOfStock ? 'bg-brand-light text-brand-primary cursor-not-allowed' : 'bg-brand-secondary hover:bg-brand-primary text-brand-light'}`}
+              disabled={isOutOfStock || isSubmitting}
+              className={`w-full font-bold text-lg py-4 rounded-lg transition duration-200 shadow-sm ${(isOutOfStock || isSubmitting) ? 'bg-brand-light text-brand-primary cursor-not-allowed' : 'bg-brand-secondary hover:bg-brand-primary text-brand-light'}`}
             >
-              {isOutOfStock ? 'Out of Stock' : 'Add to Cart'}
+              {isOutOfStock ? 'Out of Stock' : isSubmitting ? 'Adding...' : 'Add to Cart'}
             </button>
-            
+
           </div>
         </div>
-        
+
       </div>
     </div>
   );

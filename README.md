@@ -18,6 +18,7 @@
 * **Backend:** Python, Django, Django REST Framework (DRF)
 * **Database:** MySQL 8.0
 * **Authentication:** JSON Web Tokens (SimpleJWT)
+* **Recommendation Engine:** PyTorch, Graph Neural Network (MBCGCN)
 * **Infrastructure:** Docker, Docker Compose
 
 ## Prerequisites
@@ -40,10 +41,6 @@ MYSQL_PASSWORD=manga_password_secret
 MYSQL_HOST=db_mysql
 MYSQL_PORT=3306
 
-# MongoDB
-MONGO_ROOT_USERNAME=mongoadmin
-MONGO_ROOT_PASSWORD=mongosecret_password
-
 # Django
 SECRET_KEY=your_django_super_secret_key
 DEBUG=True
@@ -51,6 +48,8 @@ DEBUG=True
 # Backend API URL
 VITE_API_BASE_URL=http://localhost:8000
 ```
+
+**Note:** The MongoDB configuration has been removed as it's not currently used by the application.
 
 ## Installation & Setup
 

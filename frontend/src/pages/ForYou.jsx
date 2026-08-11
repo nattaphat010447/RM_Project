@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
+import { authFetch } from '../api';
 
 const API_URL = import.meta.env.VITE_API_BASE_URL;
 
@@ -45,12 +46,9 @@ const ForYou = () => {
         }
 
         // ยิง API ไปที่ระบบ MBRS ของเรา
-        const response = await fetch(`${API_URL}/api/recommendations/`, {
+        const response = await authFetch(`${API_URL}/api/recommendations/`, {
           method: 'GET',
-          headers: {
-            'Authorization': `Bearer ${token}`,
-            'Content-Type': 'application/json'
-          }
+          headers: { 'Content-Type': 'application/json' }
         });
 
         if (!response.ok) {

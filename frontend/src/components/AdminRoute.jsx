@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Navigate } from 'react-router-dom';
+import { authFetch } from '../api';
 
 const AdminRoute = ({ children }) => {
   const [isAdmin, setIsAdmin] = useState(null);
@@ -8,18 +9,15 @@ const AdminRoute = ({ children }) => {
   useEffect(() => {
     const checkAdminStatus = async () => {
       const token = localStorage.getItem('access_token');
-      
+
       if (!token) {
         setIsAdmin(false);
         return;
       }
 
       try {
-        const response = await fetch(`${API_URL}/api/me/`, {
-          headers: {
-            'Authorization': `Bearer ${token}`,
-            'Content-Type': 'application/json'
-          }
+        const response = await authFetch(`${API_URL}/api/me/`, {
+          headers: { 'Content-Type': 'application/json' }
         });
 
         if (response.ok) {
@@ -55,7 +53,6 @@ const AdminRoute = ({ children }) => {
   }
 
   if (!isAdmin) {
-    // alert("Access Denied");
     localStorage.removeItem('access_token');
     localStorage.removeItem('refresh_token');
     localStorage.removeItem('user_role');

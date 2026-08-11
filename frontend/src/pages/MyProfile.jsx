@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { authFetch } from '../api';
 
 const MyProfile = () => {
   const navigate = useNavigate();
@@ -22,9 +23,7 @@ const MyProfile = () => {
       return;
     }
 
-    fetch(`${API_URL}/api/users/profile/`, {
-      headers: { 'Authorization': `Bearer ${token}` }
-    })
+    authFetch(`${API_URL}/api/users/profile/`)
       .then(res => {
         if (res.status === 401) {
           localStorage.removeItem('access_token');
@@ -70,12 +69,9 @@ const MyProfile = () => {
     }
 
     try {
-      const response = await fetch(`${API_URL}/api/users/profile/`, {
+      const response = await authFetch(`${API_URL}/api/users/profile/`, {
         method: 'PUT',
-        headers: { 
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload)
       });
 
