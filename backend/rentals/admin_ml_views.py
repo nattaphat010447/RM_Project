@@ -99,8 +99,16 @@ def ab_test_metrics(request):
 @permission_classes([IsAuthenticated, IsAdminRole])
 def trigger_model_retrain(request):
     """
-    Trigger model retraining in background
+    Trigger model retraining in background.
+
+    Query params:
+        model: 'v1' (default, 2 behaviors) or 'v2' (3 behaviors)
     """
+    model_version = request.query_params.get('model', 'v1')
+
+    if model_version not in ['v1', 'v2']:
+        return Response({"error": "model ต้องเป็น 'v1' หรือ 'v2'"}, status=400)
+
     # Check if there's already a training in progress
     running = ModelTrainingLog.objects.filter(status='RUNNING').exists()
     if running:
@@ -108,9 +116,11 @@ def trigger_model_retrain(request):
             "error": "มีการเทรนโมเดลอยู่แล้ว กรุณารอให้เสร็จก่อน"
         }, status=400)
 
+    model_name = 'MB-CGCN' if model_version == 'v1' else 'MB-CGCN-v2'
+
     # Create training log
     log = ModelTrainingLog.objects.create(
-        model_name='MB-CGCN',
+        model_name=model_name,
         status='PENDING'
     )
 
@@ -119,7 +129,11 @@ def trigger_model_retrain(request):
         import os
         import sys
         project_root = os.path.dirname(os.path.dirname(os.path.dirname(__file__)))
-        script_path = os.path.join(project_root, 'ml_model', 'scripts', 'retrain_model.py')
+
+        if model_version == 'v1':
+            script_path = os.path.join(project_root, 'ml_model', 'scripts', 'retrain_model.py')
+        else:
+            script_path = os.path.join(project_root, 'ml_model', 'scripts', 'retrain_model_v2.py')
 
         try:
             result = subprocess.run(
@@ -152,9 +166,10 @@ def trigger_model_retrain(request):
     thread.start()
 
     return Response({
-        "message": "เริ่มการเทรนโมเดลแล้ว",
+        "message": f"เริ่มการเทรนโมเดล {model_name} แล้ว",
         "log_id": log.id,
-        "status": "PENDING"
+        "status": "PENDING",
+        "model_version": model_version
     }, status=202)
 
 

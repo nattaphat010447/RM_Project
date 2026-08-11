@@ -6,7 +6,8 @@ from .views import (
     popular_mangas, admin_orders, approve_order, reject_order,
     return_item, fine_item, admin_users, admin_user_detail,
     admin_add_manga, admin_manage_manga, search_customers, manual_checkout,
-    submit_manga_review, my_profile, RecommendationView, user_preferences
+    submit_manga_review, my_profile, RecommendationView, user_preferences,
+    log_behavior, behavior_log_stats
 )
 
 from .admin_ml_views import ab_test_variants, ab_test_metrics, trigger_model_retrain, model_training_status
@@ -42,6 +43,10 @@ urlpatterns = [
 
     path('recommendations/', RecommendationView.as_view(), name='manga-recommendations'),
     path('preferences/', user_preferences, name='user-preferences'),
+
+    # Behavior logging (Phase 3)
+    path('behaviors/log/', log_behavior, name='log-behavior'),
+    path('admin/behaviors/stats/', behavior_log_stats, name='behavior-stats'),
 
     # A/B Testing endpoints
     path('admin/ab-test/variants/', ab_test_variants, name='ab-test-variants'),

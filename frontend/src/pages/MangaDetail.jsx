@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useNavigate, useParams, useLocation } from 'react-router-dom';
 import { authFetch } from '../api';
 
 const API_URL = import.meta.env.VITE_API_BASE_URL;
@@ -7,6 +7,7 @@ const API_URL = import.meta.env.VITE_API_BASE_URL;
 const MangaDetail = () => {
   const navigate = useNavigate();
   const { id } = useParams();
+  const location = useLocation();
 
   const [manga, setManga] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -15,6 +16,28 @@ const MangaDetail = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [copyId, setCopyId] = useState('');
   const [rentalDays, setRentalDays] = useState(7);
+
+  // Track CLICK behavior
+  const logBehavior = async (eventType, additionalData = {}) => {
+    const token = localStorage.getItem('access_token');
+    if (!token) return; // Only track for logged-in users
+
+    try {
+      await authFetch(`${API_URL}/api/behaviors/log/`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          manga_id: id,
+          event_type: eventType,
+          source: location.state?.source || 'DIRECT',
+          ...additionalData
+        })
+      });
+    } catch (error) {
+      // Silent fail — don't block user experience
+      console.debug('Behavior log failed:', error);
+    }
+  };
 
   const getImageUrl = (url) => {
     if (!url) return 'https://via.placeholder.com/150x220?text=No+Cover';
@@ -43,6 +66,9 @@ const MangaDetail = () => {
         if (availableCopies.length > 0) {
           setCopyId(availableCopies[0].id);
         }
+
+        // Log CLICK behavior (non-blocking)
+        logBehavior('CLICK');
       })
       .catch(error => {
         console.error("Error fetching manga detail: ", error);
@@ -78,6 +104,9 @@ const MangaDetail = () => {
       if (response.ok) {
         setIsAdded(true);
         setTimeout(() => setIsAdded(false), 3000);
+
+        // Log ADD_CART behavior (non-blocking)
+        logBehavior('ADD_CART', { rent_days: days });
       } else {
         alert(data.error || "Failed to add to cart");
       }

@@ -146,6 +146,43 @@ class UserPreference(models.Model):
     def __str__(self):
         return f"{self.user.username} prefers {self.manga.title} (#{self.order})"
 
+class UserBehaviorLog(models.Model):
+    """
+    Tracks user behaviors for 3-behavior MB-CGCN model training.
+    Behaviors: CLICK (view manga detail) → ADD_CART → RENT
+    """
+    class EventType(models.TextChoices):
+        CLICK    = 'CLICK',    'Viewed Manga Detail'
+        ADD_CART = 'ADD_CART', 'Added to Cart'
+        RENT     = 'RENT',     'Rented'
+
+    class Source(models.TextChoices):
+        BROWSE         = 'BROWSE',         'Browse/Home'
+        SEARCH         = 'SEARCH',         'Search'
+        RECOMMENDATION = 'RECOMMENDATION', 'For You Page'
+        PROFILE        = 'PROFILE',        'Profile/History'
+        DIRECT         = 'DIRECT',         'Direct Link'
+
+    user       = models.ForeignKey(User, on_delete=models.CASCADE, related_name='behavior_logs')
+    manga      = models.ForeignKey(Manga, on_delete=models.CASCADE, related_name='behavior_logs')
+    event_type = models.CharField(max_length=20, choices=EventType.choices)
+    source     = models.CharField(max_length=20, choices=Source.choices, default=Source.DIRECT)
+    session_id   = models.CharField(max_length=100, blank=True, null=True)
+    duration_sec = models.PositiveIntegerField(blank=True, null=True)
+    position     = models.PositiveSmallIntegerField(blank=True, null=True)
+    created_at   = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        indexes = [
+            models.Index(fields=['user', 'event_type']),
+            models.Index(fields=['manga', 'event_type']),
+            models.Index(fields=['created_at']),
+        ]
+
+    def __str__(self):
+        return f"{self.user.username} - {self.event_type} - {self.manga.title}"
+
+
 class ABTestVariant(models.Model):
     """
     A/B Testing variants for recommendation algorithms

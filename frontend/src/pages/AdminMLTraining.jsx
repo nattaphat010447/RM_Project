@@ -46,11 +46,12 @@ const AdminMLTraining = () => {
     }
   };
 
-  const handleRetrain = async () => {
-    if (!confirm('ยืนยันการเทรนโมเดลใหม่? กระบวนการนี้อาจใช้เวลา 10-30 นาที')) return;
+  const handleRetrain = async (modelVersion = 'v1') => {
+    const modelName = modelVersion === 'v1' ? 'MB-CGCN (2 behaviors)' : 'MB-CGCN-v2 (3 behaviors)';
+    if (!confirm(`ยืนยันการเทรน ${modelName}? กระบวนการนี้อาจใช้เวลา 10-30 นาที`)) return;
 
     try {
-      const response = await authFetch(`${API_URL}/api/admin/ml/retrain/`, {
+      const response = await authFetch(`${API_URL}/api/admin/ml/retrain/?model=${modelVersion}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' }
       });
@@ -116,6 +117,8 @@ const AdminMLTraining = () => {
   }
 
   const latestLog = logs[0];
+  const latestV1 = logs.find(log => log.model_name === 'MB-CGCN');
+  const latestV2 = logs.find(log => log.model_name === 'MB-CGCN-v2');
 
   return (
     <div className="min-h-screen bg-slate-900 text-slate-100 py-8 px-4">
@@ -188,7 +191,7 @@ const AdminMLTraining = () => {
                   )}
                 </div>
                 <button
-                  onClick={handleRetrain}
+                  onClick={() => handleRetrain('v1')}
                   className="bg-cyan-500 hover:bg-cyan-600 text-slate-900 font-bold px-6 py-3 rounded-lg transition shadow-lg"
                 >
                   🚀 Retrain Model Now
@@ -203,7 +206,7 @@ const AdminMLTraining = () => {
                   <p className="text-slate-400 mt-1">No training in progress</p>
                 </div>
                 <button
-                  onClick={handleRetrain}
+                  onClick={() => handleRetrain('v1')}
                   disabled={isTraining}
                   className={`font-bold px-6 py-3 rounded-lg transition shadow-lg ${
                     isTraining
@@ -214,6 +217,135 @@ const AdminMLTraining = () => {
                   🚀 Retrain Model Now
                 </button>
               </div>
+            </div>
+          )}
+        </div>
+
+        {/* Model Comparison Table */}
+        <h2 className="text-2xl font-black text-slate-100 mb-4">Model Comparison</h2>
+        <div className="bg-slate-800 rounded-xl border border-slate-700 overflow-hidden mb-8">
+          <div className="overflow-x-auto">
+            <table className="w-full">
+              <thead className="bg-slate-700/50">
+                <tr>
+                  <th className="px-6 py-4 text-left text-xs font-bold text-slate-300 uppercase">Model</th>
+                  <th className="px-6 py-4 text-center text-xs font-bold text-slate-300 uppercase">Behaviors</th>
+                  <th className="px-6 py-4 text-center text-xs font-bold text-slate-300 uppercase">Data Source</th>
+                  <th className="px-6 py-4 text-center text-xs font-bold text-slate-300 uppercase">Status</th>
+                  <th className="px-6 py-4 text-center text-xs font-bold text-slate-300 uppercase">Recall@10</th>
+                  <th className="px-6 py-4 text-center text-xs font-bold text-slate-300 uppercase">NDCG@10</th>
+                  <th className="px-6 py-4 text-center text-xs font-bold text-slate-300 uppercase">Trained At</th>
+                  <th className="px-6 py-4 text-center text-xs font-bold text-slate-300 uppercase">Action</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-700">
+                {/* MB-CGCN v1 (2 behaviors) */}
+                <tr className="hover:bg-slate-700/30 transition">
+                  <td className="px-6 py-4">
+                    <div>
+                      <span className="font-bold text-cyan-400">MB-CGCN</span>
+                      <span className="ml-2 text-xs text-slate-500">(Primary)</span>
+                    </div>
+                  </td>
+                  <td className="px-6 py-4 text-center text-sm text-slate-300">
+                    CART → RENT
+                  </td>
+                  <td className="px-6 py-4 text-center text-sm text-slate-300">
+                    MAL Dataset + Web
+                  </td>
+                  <td className="px-6 py-4 text-center">
+                    {latestV1 ? getStatusBadge(latestV1.status) : <span className="text-slate-500 text-xs">Not trained</span>}
+                  </td>
+                  <td className="px-6 py-4 text-center">
+                    {latestV1?.final_recall_at_10 ? (
+                      <span className="font-bold text-cyan-400">{(latestV1.final_recall_at_10 * 100).toFixed(2)}%</span>
+                    ) : (
+                      <span className="text-slate-500">-</span>
+                    )}
+                  </td>
+                  <td className="px-6 py-4 text-center">
+                    {latestV1?.final_ndcg_at_10 ? (
+                      <span className="font-bold text-cyan-400">{(latestV1.final_ndcg_at_10 * 100).toFixed(2)}%</span>
+                    ) : (
+                      <span className="text-slate-500">-</span>
+                    )}
+                  </td>
+                  <td className="px-6 py-4 text-center text-sm text-slate-300">
+                    {latestV1 ? formatDate(latestV1.completed_at) : '-'}
+                  </td>
+                  <td className="px-6 py-4 text-center">
+                    <button
+                      onClick={() => handleRetrain('v1')}
+                      disabled={isTraining}
+                      className={`text-xs font-bold px-3 py-1.5 rounded-lg transition ${
+                        isTraining
+                          ? 'bg-slate-600 text-slate-400 cursor-not-allowed'
+                          : 'bg-cyan-500 hover:bg-cyan-600 text-slate-900'
+                      }`}
+                    >
+                      Retrain
+                    </button>
+                  </td>
+                </tr>
+
+                {/* MB-CGCN v2 (3 behaviors) */}
+                <tr className="hover:bg-slate-700/30 transition">
+                  <td className="px-6 py-4">
+                    <div>
+                      <span className="font-bold text-purple-400">MB-CGCN-v2</span>
+                      <span className="ml-2 text-xs text-slate-500">(Secondary)</span>
+                    </div>
+                  </td>
+                  <td className="px-6 py-4 text-center text-sm text-slate-300">
+                    CLICK → CART → RENT
+                  </td>
+                  <td className="px-6 py-4 text-center text-sm text-slate-300">
+                    Web Only (3 behaviors)
+                  </td>
+                  <td className="px-6 py-4 text-center">
+                    {latestV2 ? getStatusBadge(latestV2.status) : <span className="text-slate-500 text-xs">Not trained</span>}
+                  </td>
+                  <td className="px-6 py-4 text-center">
+                    {latestV2?.final_recall_at_10 ? (
+                      <span className="font-bold text-purple-400">{(latestV2.final_recall_at_10 * 100).toFixed(2)}%</span>
+                    ) : (
+                      <span className="text-slate-500">-</span>
+                    )}
+                  </td>
+                  <td className="px-6 py-4 text-center">
+                    {latestV2?.final_ndcg_at_10 ? (
+                      <span className="font-bold text-purple-400">{(latestV2.final_ndcg_at_10 * 100).toFixed(2)}%</span>
+                    ) : (
+                      <span className="text-slate-500">-</span>
+                    )}
+                  </td>
+                  <td className="px-6 py-4 text-center text-sm text-slate-300">
+                    {latestV2 ? formatDate(latestV2.completed_at) : '-'}
+                  </td>
+                  <td className="px-6 py-4 text-center">
+                    <button
+                      onClick={() => handleRetrain('v2')}
+                      disabled={isTraining}
+                      className={`text-xs font-bold px-3 py-1.5 rounded-lg transition ${
+                        isTraining
+                          ? 'bg-slate-600 text-slate-400 cursor-not-allowed'
+                          : 'bg-purple-500 hover:bg-purple-600 text-white'
+                      }`}
+                    >
+                      Retrain
+                    </button>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          {/* Info banner for v2 */}
+          {!latestV2 && (
+            <div className="bg-blue-500/10 border-t border-blue-500/30 p-4">
+              <p className="text-sm text-blue-300">
+                ℹ️ <strong>MB-CGCN-v2</strong> ต้องการข้อมูล CLICK behavior จากเว็บอย่างน้อย 50+ interactions ก่อนจึงจะเทรนได้
+              </p>
             </div>
           )}
         </div>
@@ -233,6 +365,7 @@ const AdminMLTraining = () => {
                   <th className="px-6 py-4 text-center text-xs font-bold text-slate-300 uppercase">Users/Items</th>
                   <th className="px-6 py-4 text-center text-xs font-bold text-slate-300 uppercase">Recall@10</th>
                   <th className="px-6 py-4 text-center text-xs font-bold text-slate-300 uppercase">NDCG@10</th>
+                  <th className="px-6 py-4 text-center text-xs font-bold text-slate-300 uppercase">Weights</th>
                   <th className="px-6 py-4 text-center text-xs font-bold text-slate-300 uppercase">Details</th>
                 </tr>
               </thead>
@@ -263,6 +396,19 @@ const AdminMLTraining = () => {
                         <span className="font-bold text-cyan-400">{(log.final_ndcg_at_10 * 100).toFixed(2)}%</span>
                       ) : (
                         <span className="text-slate-500">-</span>
+                      )}
+                    </td>
+                    <td className="px-6 py-4 text-center">
+                      {log.metadata?.learned_weights ? (
+                        <div className="text-xs text-slate-300 font-mono">
+                          <div>C: {(log.metadata.learned_weights.click * 100).toFixed(1)}%</div>
+                          <div>Ca: {(log.metadata.learned_weights.cart * 100).toFixed(1)}%</div>
+                          <div>R: {(log.metadata.learned_weights.rent * 100).toFixed(1)}%</div>
+                        </div>
+                      ) : log.model_name?.includes('v2') ? (
+                        <span className="text-slate-500 text-xs">Fixed</span>
+                      ) : (
+                        <span className="text-slate-500 text-xs">-</span>
                       )}
                     </td>
                     <td className="px-6 py-4 text-center">

@@ -13,7 +13,7 @@ from django.utils.dateformat import format
 from rest_framework.views import APIView
 from .recommender import RecommenderService
 
-from .models import Manga, MangaCopy, Cart, CartItem, RentalOrder, RentalOrderItem, FineLog, MangaReview, UserPreference, ABTestVariant, ABTestEvent, ModelTrainingLog
+from .models import Manga, MangaCopy, Cart, CartItem, RentalOrder, RentalOrderItem, FineLog, MangaReview, UserPreference, ABTestVariant, ABTestEvent, ModelTrainingLog, UserBehaviorLog
 from .serializers import AdminUserSerializer, MangaSerializer, UserRegistrationSerializer, CartItemSerializer, RentalOrderSerializer, UserProfileSerializer
 
 from .permissions import IsAdminRole
@@ -131,6 +131,15 @@ def checkout_cart(request):
                 copy.save()
 
             cart.items.filter(id__in=[item.id for item in items]).delete()
+
+            # Auto-log RENT behavior for 3-behavior model training
+            for item in items:
+                UserBehaviorLog.objects.create(
+                    user=user,
+                    manga=item.manga_copy.manga,
+                    event_type=UserBehaviorLog.EventType.RENT,
+                    source=UserBehaviorLog.Source.DIRECT,
+                )
 
         return Response({"message": "Rental request confirmed! Please wait for admin approval.", "order_id": order.id}, status=201)
     except Exception as e:
@@ -779,3 +788,88 @@ def user_preferences(request):
             "message": "บันทึกความชอบสำเร็จ!",
             "manga_ids": manga_ids
         }, status=201)
+
+
+# ============================================
+# User Behavior Logging (Phase 3)
+# ============================================
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def log_behavior(request):
+    """
+    Log user behavior for 3-behavior MB-CGCN model training.
+    Frontend fires this non-blocking on CLICK and ADD_CART events.
+    RENT is auto-logged by checkout_cart.
+    """
+    manga_id   = request.data.get('manga_id')
+    event_type = request.data.get('event_type')
+    source     = request.data.get('source', 'DIRECT')
+    session_id   = request.data.get('session_id')
+    duration_sec = request.data.get('duration_sec')
+    position     = request.data.get('position')
+
+    if not manga_id or not event_type:
+        return Response({"error": "manga_id และ event_type จำเป็น"}, status=400)
+
+    valid_events = [e.value for e in UserBehaviorLog.EventType]
+    if event_type not in valid_events:
+        return Response({"error": f"event_type ต้องเป็น {valid_events}"}, status=400)
+
+    # RENT is only logged by server-side checkout, not frontend
+    if event_type == UserBehaviorLog.EventType.RENT:
+        return Response({"error": "RENT event ถูก log อัตโนมัติโดย server"}, status=400)
+
+    manga = get_object_or_404(Manga, id=manga_id, is_active=True)
+
+    valid_sources = [s.value for s in UserBehaviorLog.Source]
+    if source not in valid_sources:
+        source = UserBehaviorLog.Source.DIRECT
+
+    UserBehaviorLog.objects.create(
+        user=request.user,
+        manga=manga,
+        event_type=event_type,
+        source=source,
+        session_id=session_id,
+        duration_sec=duration_sec if isinstance(duration_sec, int) else None,
+        position=position if isinstance(position, int) else None,
+    )
+
+    return Response({"ok": True}, status=201)
+
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated, IsAdminRole])
+def behavior_log_stats(request):
+    """
+    Summary stats for admin — how many behavior logs per type.
+    Used in AdminMLTraining to show data readiness for v2 model.
+    """
+    from django.db.models import Count
+
+    stats = (
+        UserBehaviorLog.objects
+        .values('event_type')
+        .annotate(count=Count('id'))
+        .order_by('event_type')
+    )
+
+    counts = {row['event_type']: row['count'] for row in stats}
+
+    unique_users_with_click = (
+        UserBehaviorLog.objects
+        .filter(event_type='CLICK')
+        .values('user')
+        .distinct()
+        .count()
+    )
+
+    return Response({
+        'click_count':    counts.get('CLICK',    0),
+        'add_cart_count': counts.get('ADD_CART', 0),
+        'rent_count':     counts.get('RENT',     0),
+        'unique_users_with_click': unique_users_with_click,
+        'ready_for_v2': unique_users_with_click >= 50,
+    })
+
