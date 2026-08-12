@@ -13,6 +13,7 @@ import Popular from './pages/Popular';
 import ForYou from './pages/ForYou';
 import Search from './pages/Search';
 import MyProfile from './pages/MyProfile';
+import Onboarding from './pages/Onboarding';
 
 import AdminRoute from './components/AdminRoute';
 import AdminDashboard from './pages/AdminDashboard';
@@ -23,6 +24,8 @@ import AdminMangas from './pages/AdminMangas';
 import AdminMangaDetail from './pages/AdminMangaDetail';
 import AdminMangaForm from './pages/AdminMangaForm';
 import AdminLostHistory from './pages/AdminLostHistory';
+import AdminABTesting from './pages/AdminABTesting';
+import AdminMLTraining from './pages/AdminMLTraining';
 
 function App() {
   return (
@@ -38,6 +41,8 @@ function App() {
         <Route path="/orders" element={<Orders />} />
         <Route path="/popular" element={<Popular />} />
         <Route path="/foryou" element={<ForYou />} />
+        <Route path="/for-you" element={<ForYou />} />
+        <Route path="/onboarding" element={<Onboarding />} />
         <Route path="/search" element={<Search />} />
         
         <Route 
@@ -117,6 +122,22 @@ function App() {
           element={
             <AdminRoute>
               <AdminLostHistory />
+            </AdminRoute>
+          }
+        />
+        <Route
+          path="/admin/ab-testing"
+          element={
+            <AdminRoute>
+              <AdminABTesting />
+            </AdminRoute>
+          }
+        />
+        <Route
+          path="/admin/ml-training"
+          element={
+            <AdminRoute>
+              <AdminMLTraining />
             </AdminRoute>
           }
         />

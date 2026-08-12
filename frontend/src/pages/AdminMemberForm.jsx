@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
+import { authFetch } from '../api';
 
 const AdminMemberForm = () => {
   const { id } = useParams();
@@ -21,10 +22,7 @@ const AdminMemberForm = () => {
 
   useEffect(() => {
     if (isEditMode) {
-      const token = localStorage.getItem('access_token');
-      fetch(`${API_URL}/api/admin/users/${id}/`, {
-        headers: { 'Authorization': `Bearer ${token}` }
-      })
+      authFetch(`${API_URL}/api/admin/users/${id}/`)
         .then(res => res.json())
         .then(data => {
           setFormData({
@@ -71,12 +69,9 @@ const AdminMemberForm = () => {
       const method = isEditMode ? 'PUT' : 'POST';
       const url = isEditMode ? `${API_URL}/api/admin/users/${id}/` : `${API_URL}/api/admin/users/`;
 
-      const response = await fetch(url, {
+      const response = await authFetch(url, {
         method: method,
-        headers: { 
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload)
       });
 

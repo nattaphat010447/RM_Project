@@ -1,39 +1,24 @@
-version: '3.8'
-
 services:
-  db_mysql:
-    image: mysql:8.0
-    container_name: manga_mysql
+  db_postgres:
+    image: postgres:15-alpine
+    container_name: manga_postgres
     restart: always
     environment:
-      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
-      MYSQL_DATABASE: ${MYSQL_DATABASE}
-      MYSQL_USER: ${MYSQL_USER}
-      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
     ports:
-      - "3307:3306"
+      - "5433:5432"
     volumes:
-      - mysql_data:/var/lib/mysql
+      - postgres_data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u$$MYSQL_USER", "-p$$MYSQL_PASSWORD"]
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
       interval: 5s
       timeout: 5s
       retries: 5
 
-  db_mongo:
-    image: mongo:6.0
-    container_name: manga_mongo
-    restart: always
-    environment:
-      MONGO_INITDB_ROOT_USERNAME: ${MONGO_ROOT_USERNAME}
-      MONGO_INITDB_ROOT_PASSWORD: ${MONGO_ROOT_PASSWORD}
-    ports:
-      - "27017:27017"
-    volumes:
-      - mongo_data:/data/db
-
   backend:
-    build: 
+    build:
       context: ./backend
       dockerfile: Dockerfile
     env_file:
@@ -46,16 +31,13 @@ services:
     ports:
       - "8000:8000"
     depends_on:
-      db_mysql:
+      db_postgres:
         condition: service_healthy
-      db_mongo:
-        condition: service_started
     environment:
-      - DB_HOST=db_mysql
-      - MONGO_HOST=db_mongo
-      - DB_NAME=${MYSQL_DATABASE}
-      - DB_USER=${MYSQL_USER}
-      - DB_PASSWORD=${MYSQL_PASSWORD}
+      - POSTGRES_HOST=db_postgres
+      - POSTGRES_DB=${POSTGRES_DB}
+      - POSTGRES_USER=${POSTGRES_USER}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
 
   frontend:
     build:
@@ -76,5 +58,4 @@ services:
       - backend
 
 volumes:
-  mysql_data:
-  mongo_data:
+  postgres_data:

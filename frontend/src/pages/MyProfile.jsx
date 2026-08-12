@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
+import { authFetch } from '../api';
 
 const MyProfile = () => {
   const navigate = useNavigate();
@@ -22,9 +23,7 @@ const MyProfile = () => {
       return;
     }
 
-    fetch(`${API_URL}/api/users/profile/`, {
-      headers: { 'Authorization': `Bearer ${token}` }
-    })
+    authFetch(`${API_URL}/api/users/profile/`)
       .then(res => {
         if (res.status === 401) {
           localStorage.removeItem('access_token');
@@ -70,12 +69,9 @@ const MyProfile = () => {
     }
 
     try {
-      const response = await fetch(`${API_URL}/api/users/profile/`, {
+      const response = await authFetch(`${API_URL}/api/users/profile/`, {
         method: 'PUT',
-        headers: { 
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload)
       });
 
@@ -174,6 +170,18 @@ const MyProfile = () => {
             <button type="submit" className="w-full bg-brand-primary hover:bg-brand-primary text-brand-light font-black text-lg py-3.5 rounded-xl shadow-md transition duration-200 transform hover:-translate-y-0.5">
               Save Profile
             </button>
+          </div>
+
+          <div className="pt-4">
+            <Link
+              to="/onboarding"
+              className="block w-full text-center bg-blue-600 hover:bg-blue-700 text-white font-bold text-lg py-3.5 rounded-xl shadow-md transition duration-200"
+            >
+              🎯 ปรับความชอบมังงะ (Recalibrate)
+            </Link>
+            <p className="text-xs text-gray-500 text-center mt-2">
+              เลือก 4 เรื่องที่คุณชอบเพื่อรับคำแนะนำที่ตรงใจมากขึ้น
+            </p>
           </div>
 
         </form>

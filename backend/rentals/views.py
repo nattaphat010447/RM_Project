@@ -8,13 +8,18 @@ from django.db import transaction
 from django.utils import timezone
 from datetime import timedelta
 from django.db.models import Count, Q
-from decimal import Decimal
+from decimal import Decimal, InvalidOperation
 from django.utils.dateformat import format
+from rest_framework.views import APIView
+from .recommender import RecommenderService
 
-from .models import Manga, MangaCopy, Cart, CartItem, RentalOrder, RentalOrderItem, FineLog, MangaReview
+from .models import Manga, MangaCopy, Cart, CartItem, RentalOrder, RentalOrderItem, FineLog, MangaReview, UserPreference, ABTestVariant, ABTestEvent, ModelTrainingLog, UserBehaviorLog
 from .serializers import AdminUserSerializer, MangaSerializer, UserRegistrationSerializer, CartItemSerializer, RentalOrderSerializer, UserProfileSerializer
 
 from .permissions import IsAdminRole
+from .ab_testing import ABTestManager
+import subprocess
+import threading
 
 User = get_user_model()
 
@@ -35,21 +40,30 @@ class UserRegistrationAPIView(generics.CreateAPIView):
 @permission_classes([IsAuthenticated])
 def add_to_cart(request, manga_id):
     user = request.user
-    
+
+    try:
+        rent_days = int(request.data.get('rent_days', 7))
+    except (TypeError, ValueError):
+        return Response({"error": "rent_days must be a valid integer."}, status=400)
+    if rent_days < 1:
+        return Response({"error": "rent_days must be at least 1."}, status=400)
+
     cart, created = Cart.objects.get_or_create(user=user)
     manga = get_object_or_404(Manga, id=manga_id)
-    
-    available_copy = MangaCopy.objects.filter(manga=manga, status=MangaCopy.Status.AVAILABLE).first()
-    
-    if not available_copy:
-        return Response({"error": "Sorry, no copies are currently available for rent."}, status=400)
-    
-    if CartItem.objects.filter(cart=cart, manga_copy=available_copy).exists():
-        return Response({"error": "This item is already in your cart."}, status=400)
 
-    rent_days = request.data.get('rent_days', 7)
-    CartItem.objects.create(cart=cart, manga_copy=available_copy, rent_days=rent_days)
-    
+    with transaction.atomic():
+        available_copy = MangaCopy.objects.select_for_update().filter(
+            manga=manga, status=MangaCopy.Status.AVAILABLE
+        ).first()
+
+        if not available_copy:
+            return Response({"error": "Sorry, no copies are currently available for rent."}, status=400)
+
+        if CartItem.objects.filter(cart=cart, manga_copy=available_copy).exists():
+            return Response({"error": "This item is already in your cart."}, status=400)
+
+        CartItem.objects.create(cart=cart, manga_copy=available_copy, rent_days=rent_days)
+
     return Response({"message": f"'{manga.title}' added to cart successfully!"}, status=201)
 
 @api_view(['GET'])
@@ -73,15 +87,31 @@ def remove_from_cart(request, item_id):
 def checkout_cart(request):
     user = request.user
     cart = get_object_or_404(Cart, user=user)
-    items = cart.items.all()
+    items = list(cart.items.all())
 
-    if not items.exists():
+    if not items:
         return Response({"error": "Your cart is empty."}, status=400)
-
-    total_fee = sum([item.manga_copy.manga.rental_price_per_day * item.rent_days for item in items])
 
     try:
         with transaction.atomic():
+            copy_ids = [item.manga_copy_id for item in items]
+            locked_copies = {
+                c.id: c for c in MangaCopy.objects.select_for_update().filter(id__in=copy_ids)
+            }
+
+            unavailable_titles = []
+            for item in items:
+                copy = locked_copies.get(item.manga_copy_id)
+                if not copy or copy.status != MangaCopy.Status.AVAILABLE:
+                    unavailable_titles.append(item.manga_copy.manga.title)
+
+            if unavailable_titles:
+                return Response({
+                    "error": f"Sorry, these items are no longer available: {', '.join(unavailable_titles)}. Please remove them from your cart and try again."
+                }, status=409)
+
+            total_fee = sum(item.manga_copy.manga.rental_price_per_day * item.rent_days for item in items)
+
             order = RentalOrder.objects.create(
                 user=user,
                 total_rent_fee=total_fee,
@@ -89,17 +119,27 @@ def checkout_cart(request):
             )
 
             for item in items:
+                copy = locked_copies[item.manga_copy_id]
                 RentalOrderItem.objects.create(
                     order=order,
-                    manga_copy=item.manga_copy,
-                    rent_price_per_day=item.manga_copy.manga.rental_price_per_day,
+                    manga_copy=copy,
+                    rent_price_per_day=copy.manga.rental_price_per_day,
                     rent_days=item.rent_days,
                     item_status=RentalOrderItem.ItemStatus.REQUESTED
                 )
-                item.manga_copy.status = MangaCopy.Status.RESERVED
-                item.manga_copy.save()
+                copy.status = MangaCopy.Status.RESERVED
+                copy.save()
 
-            items.delete()
+            cart.items.filter(id__in=[item.id for item in items]).delete()
+
+            # Auto-log RENT behavior for 3-behavior model training
+            for item in items:
+                UserBehaviorLog.objects.create(
+                    user=user,
+                    manga=item.manga_copy.manga,
+                    event_type=UserBehaviorLog.EventType.RENT,
+                    source=UserBehaviorLog.Source.DIRECT,
+                )
 
         return Response({"message": "Rental request confirmed! Please wait for admin approval.", "order_id": order.id}, status=201)
     except Exception as e:
@@ -155,8 +195,13 @@ def popular_mangas(request):
 @permission_classes([IsAuthenticated])
 def submit_manga_review(request, manga_id):
     rating = request.data.get('rating')
-    
-    if not rating or not (1 <= int(rating) <= 5):
+
+    try:
+        rating = int(rating)
+    except (TypeError, ValueError):
+        return Response({"error": "คะแนนต้องอยู่ระหว่าง 1 ถึง 5"}, status=400)
+
+    if not (1 <= rating <= 5):
         return Response({"error": "คะแนนต้องอยู่ระหว่าง 1 ถึง 5"}, status=400)
 
     has_returned = RentalOrderItem.objects.filter(
@@ -238,25 +283,38 @@ def reject_order(request, order_id):
 @api_view(['POST'])
 @permission_classes([IsAdminRole])
 def checkout_order(request, order_id):
-    order = get_object_or_404(RentalOrder, id=order_id)
-    if order.status != RentalOrder.Status.APPROVED:
-        return Response({"error": "Order must be approved first."}, status=400)
-    
     with transaction.atomic():
+        order = get_object_or_404(RentalOrder.objects.select_for_update(), id=order_id)
+        if order.status != RentalOrder.Status.APPROVED:
+            return Response({"error": "Order must be approved first."}, status=400)
+
+        items = list(order.items.select_related('manga_copy').all())
+        copy_ids = [item.manga_copy_id for item in items]
+        locked_copies = {
+            c.id: c for c in MangaCopy.objects.select_for_update().filter(id__in=copy_ids)
+        }
+
+        not_reserved = [c for c in locked_copies.values() if c.status != MangaCopy.Status.RESERVED]
+        if not_reserved:
+            return Response({
+                "error": "Some copies in this order are no longer reserved and cannot be checked out."
+            }, status=409)
+
         order.status = RentalOrder.Status.CHECKED_OUT
         order.checked_out_at = timezone.now()
-        
-        for item in order.items.all():
+
+        for item in items:
             item.item_status = RentalOrderItem.ItemStatus.CHECKED_OUT
             item.rental_date = timezone.now()
             item.due_at = timezone.now() + timedelta(days=item.rent_days)
             item.save()
-            
-            item.manga_copy.status = MangaCopy.Status.RENTED
-            item.manga_copy.save()
-            
+
+            copy = locked_copies[item.manga_copy_id]
+            copy.status = MangaCopy.Status.RENTED
+            copy.save()
+
         order.save()
-            
+
     return Response({"message": "ทำรายการรับหนังสือสำเร็จ!"})
 
 @api_view(['POST'])
@@ -291,7 +349,16 @@ def fine_item(request, order_id, item_id):
         return Response({"error": "Item is not checked out."}, status=400)
 
     fine_type = request.data.get('fine_type', 'LATE')
-    fine_amount = request.data.get('fine_amount', 0)
+    if fine_type not in ('LATE', 'DAMAGE', 'LOST'):
+        return Response({"error": "Invalid fine_type."}, status=400)
+
+    try:
+        fine_amount = Decimal(str(request.data.get('fine_amount', 0)))
+    except (InvalidOperation, TypeError, ValueError):
+        return Response({"error": "fine_amount must be a valid number."}, status=400)
+
+    if fine_amount < 0:
+        return Response({"error": "fine_amount cannot be negative."}, status=400)
 
     with transaction.atomic():
         if fine_type == 'LOST':
@@ -308,22 +375,22 @@ def fine_item(request, order_id, item_id):
         item.save()
         item.manga_copy.save()
 
-        if Decimal(fine_amount) > 0:
+        if fine_amount > 0:
             FineLog.objects.create(
                 order_item=item,
                 user=item.order.user,
                 fine_type=fine_type,
-                amount=Decimal(fine_amount)
+                amount=fine_amount
             )
 
         order = item.order
-        order.total_fine += Decimal(fine_amount)
-        
+        order.total_fine += fine_amount
+
         active_items = order.items.filter(item_status=RentalOrderItem.ItemStatus.CHECKED_OUT)
         if not active_items.exists():
             order.status = RentalOrder.Status.RETURNED
             order.returned_at = timezone.now()
-            
+
         order.save()
 
     return Response({"message": f"บันทึกค่าปรับ {fine_amount} บาท และรับคืนสำเร็จ!"})
@@ -464,15 +531,26 @@ def manual_checkout(request):
     data = request.data
     user_id = data.get('user_id')
     copy_id = data.get('copy_id')
-    rent_days = int(data.get('rent_days', 7))
+
+    try:
+        rent_days = int(data.get('rent_days', 7))
+    except (TypeError, ValueError):
+        return Response({"error": "rent_days must be a valid integer."}, status=400)
+    if rent_days < 1:
+        return Response({"error": "rent_days must be at least 1."}, status=400)
 
     user = get_object_or_404(User, id=user_id)
-    copy = get_object_or_404(MangaCopy, id=copy_id, status=MangaCopy.Status.AVAILABLE)
-
-    total_fee = copy.manga.rental_price_per_day * rent_days
 
     try:
         with transaction.atomic():
+            copy = get_object_or_404(
+                MangaCopy.objects.select_for_update(), id=copy_id
+            )
+            if copy.status != MangaCopy.Status.AVAILABLE:
+                return Response({"error": "This copy is no longer available."}, status=409)
+
+            total_fee = copy.manga.rental_price_per_day * rent_days
+
             order = RentalOrder.objects.create(
                 user=user,
                 total_rent_fee=total_fee,
@@ -485,11 +563,11 @@ def manual_checkout(request):
             RentalOrderItem.objects.create(
                 order=order,
                 manga_copy=copy,
-                rent_price_per_day=...,
+                rent_price_per_day=copy.manga.rental_price_per_day,
                 rent_days=rent_days,
                 item_status='CHECKED_OUT',
                 rental_date=timezone.now(),
-                due_at = timezone.now() + timedelta(days=int(rent_days)) 
+                due_at=timezone.now() + timedelta(days=rent_days)
             )
 
             copy.status = MangaCopy.Status.RENTED
@@ -544,3 +622,254 @@ def my_profile(request):
             serializer.save()
             return Response({"message": "อัปเดตข้อมูลโปรไฟล์สำเร็จ!"})
         return Response(serializer.errors, status=400)
+
+class RecommendationView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        username = request.user.username
+        service = RecommenderService()
+
+        # Check if user has preferences (cold-start solution)
+        user_prefs = UserPreference.objects.filter(user=request.user).select_related('manga')
+        preference_mbrs_ids = [pref.manga.mbrs_id for pref in user_prefs if pref.manga.mbrs_id is not None]
+
+        # Get recommendations with explanations
+        rec_with_explanations = service.get_recommendations_with_explanations(
+            username=username,
+            preference_mbrs_ids=preference_mbrs_ids if preference_mbrs_ids else None,
+            top_k=10
+        )
+
+        if not rec_with_explanations:
+            # Fallback: try item-based from rental history
+            past_rentals = RentalOrderItem.objects.filter(
+                order__user=request.user
+            ).values_list('manga_copy__manga__mbrs_id', flat=True).distinct()
+
+            valid_past_ids = [m_id for m_id in past_rentals if m_id is not None]
+
+            if valid_past_ids:
+                recommended_ids = service.get_item_based_recommendations(valid_past_ids)
+                rec_with_explanations = [(rid, 'rental_history', valid_past_ids[:3]) for rid in recommended_ids]
+
+        if not rec_with_explanations:
+            # Final fallback: popular manga
+            queryset = Manga.objects.filter(is_active=True).order_by('-created_at')[:10]
+            serializer = MangaSerializer(queryset, many=True, context={'request': request})
+            return Response({
+                'recommendations': serializer.data,
+                'explanation_type': 'popular',
+                'explanation': 'มังงะยอดนิยมและเรื่องใหม่ล่าสุด'
+            })
+
+        # Map mbrs_id to Manga objects
+        mbrs_ids = [rec[0] for rec in rec_with_explanations]
+        all_matches = Manga.objects.filter(mbrs_id__in=mbrs_ids, is_active=True)
+
+        unique_mangas = {}
+        for m in all_matches:
+            if m.mbrs_id not in unique_mangas:
+                unique_mangas[m.mbrs_id] = m
+
+        sorted_mangas = []
+        explanations = []
+
+        for mbrs_id, explanation_type, source_ids in rec_with_explanations:
+            if mbrs_id in unique_mangas:
+                manga = unique_mangas[mbrs_id]
+                sorted_mangas.append(manga)
+
+                # Generate explanation text
+                if explanation_type == 'user_history':
+                    explanation = 'แนะนำเฉพาะสำหรับคุณจากประวัติการเช่า'
+                elif explanation_type == 'preferences':
+                    # Find manga titles from source_ids
+                    source_mangas = Manga.objects.filter(mbrs_id__in=source_ids[:2], is_active=True)[:2]
+                    if source_mangas:
+                        titles = ', '.join([m.title for m in source_mangas])
+                        explanation = f'แนะนำเพราะคุณชอบ {titles}'
+                    else:
+                        explanation = 'แนะนำตามความชอบของคุณ'
+                elif explanation_type == 'rental_history':
+                    source_mangas = Manga.objects.filter(mbrs_id__in=source_ids[:2], is_active=True)[:2]
+                    if source_mangas:
+                        titles = ', '.join([m.title for m in source_mangas])
+                        explanation = f'คล้ายกับเรื่องที่คุณเคยเช่า: {titles}'
+                    else:
+                        explanation = 'แนะนำตามประวัติการเช่าของคุณ'
+                else:
+                    explanation = 'แนะนำสำหรับคุณ'
+
+                explanations.append(explanation)
+
+        # Fill with popular if less than 10
+        queryset = sorted_mangas[:10]
+        if len(queryset) < 10:
+            needed = 10 - len(queryset)
+            existing_ids = [m.id for m in queryset]
+            filler_mangas = list(Manga.objects.filter(is_active=True)
+                                 .exclude(id__in=existing_ids)
+                                 .order_by('-created_at')[:needed])
+            queryset.extend(filler_mangas)
+            explanations.extend(['มังงะยอดนิยม'] * needed)
+
+        serializer = MangaSerializer(queryset, many=True, context={'request': request})
+
+        # Add explanations to response
+        recommendations_with_explanations = []
+        for manga_data, explanation in zip(serializer.data, explanations):
+            manga_data['explanation'] = explanation
+            recommendations_with_explanations.append(manga_data)
+
+        return Response({
+            'recommendations': recommendations_with_explanations,
+            'has_preferences': len(preference_mbrs_ids) > 0
+        })
+
+@api_view(['GET', 'POST'])
+@permission_classes([IsAuthenticated])
+def user_preferences(request):
+    """
+    GET: Retrieve user's selected manga preferences (for cold-start)
+    POST: Update user's manga preferences (select 4 manga)
+    """
+    user = request.user
+
+    if request.method == 'GET':
+        preferences = UserPreference.objects.filter(user=user).select_related('manga')
+        data = []
+        for pref in preferences:
+            data.append({
+                'id': pref.id,
+                'manga_id': pref.manga.id,
+                'manga_title': pref.manga.title,
+                'manga_cover': request.build_absolute_uri(pref.manga.cover_image_url.url) if pref.manga.cover_image_url else None,
+                'order': pref.order,
+                'created_at': pref.created_at,
+            })
+        return Response({
+            'preferences': data,
+            'count': len(data),
+            'has_preferences': len(data) > 0
+        })
+
+    elif request.method == 'POST':
+        manga_ids = request.data.get('manga_ids', [])
+
+        if not manga_ids or not isinstance(manga_ids, list):
+            return Response({"error": "กรุณาระบุ manga_ids เป็น array"}, status=400)
+
+        if len(manga_ids) < 4:
+            return Response({"error": "กรุณาเลือกมังงะอย่างน้อย 4 เรื่อง"}, status=400)
+
+        if len(manga_ids) > 4:
+            return Response({"error": "เลือกได้สูงสุด 4 เรื่องเท่านั้น"}, status=400)
+
+        # Check all manga exist
+        mangas = Manga.objects.filter(id__in=manga_ids, is_active=True)
+        if mangas.count() != len(manga_ids):
+            return Response({"error": "มีมังงะบางเรื่องไม่พบในระบบ"}, status=400)
+
+        with transaction.atomic():
+            # Clear existing preferences
+            UserPreference.objects.filter(user=user).delete()
+
+            # Create new preferences
+            for order, manga_id in enumerate(manga_ids, start=1):
+                manga = mangas.get(id=manga_id)
+                UserPreference.objects.create(
+                    user=user,
+                    manga=manga,
+                    order=order
+                )
+
+        return Response({
+            "message": "บันทึกความชอบสำเร็จ!",
+            "manga_ids": manga_ids
+        }, status=201)
+
+
+# ============================================
+# User Behavior Logging (Phase 3)
+# ============================================
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def log_behavior(request):
+    """
+    Log user behavior for 3-behavior MB-CGCN model training.
+    Frontend fires this non-blocking on CLICK and ADD_CART events.
+    RENT is auto-logged by checkout_cart.
+    """
+    manga_id   = request.data.get('manga_id')
+    event_type = request.data.get('event_type')
+    source     = request.data.get('source', 'DIRECT')
+    session_id   = request.data.get('session_id')
+    duration_sec = request.data.get('duration_sec')
+    position     = request.data.get('position')
+
+    if not manga_id or not event_type:
+        return Response({"error": "manga_id และ event_type จำเป็น"}, status=400)
+
+    valid_events = [e.value for e in UserBehaviorLog.EventType]
+    if event_type not in valid_events:
+        return Response({"error": f"event_type ต้องเป็น {valid_events}"}, status=400)
+
+    # RENT is only logged by server-side checkout, not frontend
+    if event_type == UserBehaviorLog.EventType.RENT:
+        return Response({"error": "RENT event ถูก log อัตโนมัติโดย server"}, status=400)
+
+    manga = get_object_or_404(Manga, id=manga_id, is_active=True)
+
+    valid_sources = [s.value for s in UserBehaviorLog.Source]
+    if source not in valid_sources:
+        source = UserBehaviorLog.Source.DIRECT
+
+    UserBehaviorLog.objects.create(
+        user=request.user,
+        manga=manga,
+        event_type=event_type,
+        source=source,
+        session_id=session_id,
+        duration_sec=duration_sec if isinstance(duration_sec, int) else None,
+        position=position if isinstance(position, int) else None,
+    )
+
+    return Response({"ok": True}, status=201)
+
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated, IsAdminRole])
+def behavior_log_stats(request):
+    """
+    Summary stats for admin — how many behavior logs per type.
+    Used in AdminMLTraining to show data readiness for v2 model.
+    """
+    from django.db.models import Count
+
+    stats = (
+        UserBehaviorLog.objects
+        .values('event_type')
+        .annotate(count=Count('id'))
+        .order_by('event_type')
+    )
+
+    counts = {row['event_type']: row['count'] for row in stats}
+
+    unique_users_with_click = (
+        UserBehaviorLog.objects
+        .filter(event_type='CLICK')
+        .values('user')
+        .distinct()
+        .count()
+    )
+
+    return Response({
+        'click_count':    counts.get('CLICK',    0),
+        'add_cart_count': counts.get('ADD_CART', 0),
+        'rent_count':     counts.get('RENT',     0),
+        'unique_users_with_click': unique_users_with_click,
+        'ready_for_v2': unique_users_with_click >= 50,
+    })
+

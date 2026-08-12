@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
+import { authFetch } from '../api';
 
 const AdminMembers = () => {
   const [members, setMembers] = useState([]);
@@ -9,9 +10,7 @@ const AdminMembers = () => {
 
   const fetchMembers = () => {
     const token = localStorage.getItem('access_token');
-    fetch(`${API_URL}/api/admin/users/`, {
-      headers: { 'Authorization': `Bearer ${token}` }
-    })
+    authFetch(`${API_URL}/api/admin/users/`)
       .then(res => res.json())
       .then(data => {
         setMembers(data);
@@ -27,9 +26,8 @@ const AdminMembers = () => {
     
     const token = localStorage.getItem('access_token');
     try {
-      const response = await fetch(`${API_URL}/api/admin/users/${id}/`, {
+      const response = await authFetch(`${API_URL}/api/admin/users/${id}/`, {
         method: 'DELETE',
-        headers: { 'Authorization': `Bearer ${token}` }
       });
       if (response.ok) {
         alert("Member removed successfully");

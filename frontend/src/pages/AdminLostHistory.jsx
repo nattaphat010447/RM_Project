@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { authFetch } from '../api';
 
 const API_URL = import.meta.env.VITE_API_BASE_URL;
 
@@ -19,12 +20,9 @@ const AdminHistory = () => {
       return;
     }
 
-    fetch(`${API_URL}/api/admin/history/`, {
-      headers: { 'Authorization': `Bearer ${token}` }
-    })
+    authFetch(`${API_URL}/api/admin/history/`)
       .then(res => {
         if (res.status === 401) {
-          localStorage.removeItem('access_token');
           window.location.href = '/signin';
           throw new Error('Unauthorized');
         }

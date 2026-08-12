@@ -9,6 +9,8 @@ const AdminDashboard = () => {
     { title: 'Member Management', path: '/admin/members' },
     { title: 'Manga Management & In-Store Rental', path: '/admin/mangas' },
     { title: 'Rental History', path: '/admin/history' },
+    { title: '🧪 A/B Testing Dashboard', path: '/admin/ab-testing' },
+    { title: '🤖 ML Model Training', path: '/admin/ml-training' },
   ];
 
   return (
