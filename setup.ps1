@@ -131,7 +131,7 @@ if (-not (Test-Path $envPath)) {
     Write-Success "Created .env with a generated SECRET_KEY"
     Write-Warn "Review .env and change POSTGRES_PASSWORD before deploying to production."
 } else {
-    Write-Success ".env already exists — keeping current values"
+    Write-Success ".env already exists -- keeping current values"
 }
 
 # Apply port overrides
@@ -175,7 +175,7 @@ $upArgs = @("up", "-d")
 if (-not $NoBuild) { $upArgs += "--build" }
 Invoke-Compose $upArgs
 
-if ($LASTEXITCODE -ne 0) { Write-Fail "docker compose up failed — see output above." }
+if ($LASTEXITCODE -ne 0) { Write-Fail "docker compose up failed -- see output above." }
 Write-Success "Containers started"
 
 # ==========================================
@@ -221,7 +221,7 @@ if (-not $SkipSeed) {
     if ($LASTEXITCODE -eq 0) {
         Write-Success "Sample data inserted"
     } else {
-        Write-Warn "Seeding skipped or already done — continuing."
+        Write-Warn "Seeding skipped or already done -- continuing."
     }
 } else {
     Write-Warn "Skipped sample data seeding (-SkipSeed)"
@@ -251,7 +251,7 @@ if (-not $SkipSuperuser) {
                   [System.Runtime.InteropServices.Marshal]::SecureStringToBSTR($adminPass1))
         $p2 = [System.Runtime.InteropServices.Marshal]::PtrToStringAuto(
                   [System.Runtime.InteropServices.Marshal]::SecureStringToBSTR($adminPass2))
-        if ($p1 -ne $p2) { Write-Warn "Passwords do not match — try again." }
+        if ($p1 -ne $p2) { Write-Warn "Passwords do not match -- try again." }
         if ($p1.Length -lt 8) { Write-Warn "Password must be at least 8 characters."; $p1 = "" }
     } while ($p1 -ne $p2 -or $p1.Length -lt 8)
 
