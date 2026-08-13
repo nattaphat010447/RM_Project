@@ -200,6 +200,31 @@ if ($healthy) {
 }
 
 # ==========================================
+# 5b. Wait for backend to be ready
+# ==========================================
+Write-Step "Waiting for backend to be ready..."
+
+$maxWaitBackend = 60
+$elapsed = 0
+$backendReady = $false
+while ($elapsed -lt $maxWaitBackend) {
+    $bStatus = docker inspect --format='{{.State.Status}}' manga_backend 2>$null
+    if ($bStatus -eq "running") {
+        # Also verify manage.py is accessible
+        $check = Invoke-Compose @("exec", "-T", "backend", "python", "-c", "import sys; sys.exit(0)") 2>$null
+        if ($LASTEXITCODE -eq 0) { $backendReady = $true; break }
+    }
+    Start-Sleep -Seconds 3
+    $elapsed += 3
+}
+
+if ($backendReady) {
+    Write-Success "Backend is ready"
+} else {
+    Write-Warn "Backend readiness check timed out -- attempting migrations anyway..."
+}
+
+# ==========================================
 # 6. Run migrations
 # ==========================================
 Write-Step "Running database migrations..."
