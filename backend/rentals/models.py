@@ -11,6 +11,12 @@ class User(AbstractUser):
     address = models.TextField(blank=True, null=True)
     dob = models.DateField(blank=True, null=True)
 
+    def save(self, *args, **kwargs):
+        # Keep role in sync: is_superuser/is_staff always → ADMIN
+        if self.is_superuser or self.is_staff:
+            self.role = self.Role.ADMIN
+        super().save(*args, **kwargs)
+
     def __str__(self):
         return self.username
 
