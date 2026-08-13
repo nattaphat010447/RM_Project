@@ -49,6 +49,7 @@ services:
     volumes:
       - ./frontend:/app
       - /app/node_modules
+      - /app/.vite
     ports:
       - "${FRONTEND_PORT:-3000}:3000"
     environment:
