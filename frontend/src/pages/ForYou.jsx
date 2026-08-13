@@ -39,14 +39,14 @@ const ForYou = () => {
       try {
         const token = localStorage.getItem('access_token');
         
-        // ถ้าไม่มี Token (ยังไม่ได้ Login) ให้เตือนผู้ใช้
+        // No token: user is not logged in
         if (!token) {
-           setError("กรุณาเข้าสู่ระบบเพื่อดูมังงะแนะนำเฉพาะคุณ");
+           setError("Please log in to see your personalized recommendations.");
            setLoading(false);
            return;
         }
 
-        // ยิง API ไปที่ระบบ MBRS ของเรา
+        // Fetch recommendations from the API
         const response = await authFetch(`${API_URL}/api/recommendations/`, {
           method: 'GET',
           headers: { 'Content-Type': 'application/json' }
@@ -62,7 +62,7 @@ const ForYou = () => {
         setLoading(false);
       } catch (err) {
         console.error("Error fetching recommendations:", err);
-        setError("ไม่สามารถโหลดข้อมูลแนะนำได้ในขณะนี้ กรุณาลองใหม่อีกครั้ง");
+        setError("Unable to load recommendations. Please try again.");
         setLoading(false);
       }
     };
@@ -97,22 +97,22 @@ const ForYou = () => {
 
       {!hasPreferences && (
         <div className="max-w-2xl mx-auto mb-8 p-6 bg-blue-50 border-2 border-blue-200 rounded-xl">
-          <h3 className="text-lg font-semibold text-blue-800 mb-2">🎯 ยังไม่ได้ตั้งค่าความชอบ</h3>
+          <h3 className="text-lg font-semibold text-blue-800 mb-2">Set Up Your Preferences</h3>
           <p className="text-blue-700 mb-4">
-            เลือก 4 มังงะที่คุณชอบเพื่อรับคำแนะนำที่ตรงใจมากขึ้น!
+            Select 4 manga you enjoy to get tailored recommendations.
           </p>
           <Link
             to="/onboarding"
             className="inline-block bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-6 rounded-lg transition"
           >
-            เลือกมังงะที่ชอบ
+            Choose Your Preferences
           </Link>
         </div>
       )}
 
       {mangas.length === 0 ? (
         <div className="text-center text-brand-primary mt-10 text-lg p-8 border-2 border-dashed border-brand-secondary rounded-xl max-w-2xl mx-auto">
-          ยังไม่มีข้อมูลแนะนำสำหรับคุณ <br/> ลองเช่าหรือหยิบมังงะลงตะกร้าดูก่อนสิ!
+          No recommendations yet. <br/> Try renting or adding manga to your cart first!
         </div>
       ) : (
         <div className="max-w-6xl mx-auto grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-8">

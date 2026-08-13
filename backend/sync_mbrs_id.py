@@ -9,7 +9,7 @@ django.setup()
 from rentals.models import Manga
 
 def clean_title(title):
-    noise_words = ['เล่ม', 'vol.', 'vol', '19115', 'v.', 'ตอนที่', 'series']
+    noise_words = ['vol', 'vol.', 'v.', '19115', 'series']
     cleaned = title.lower()
     for word in noise_words:
         cleaned = cleaned.split(word)[0]
@@ -19,7 +19,7 @@ def run_sync():
     csv_path = os.path.join('rentals', 'ml_models', 'Anime.csv')
     
     if not os.path.exists(csv_path):
-        print(f"ไม่พบไฟล์ {csv_path}")
+        print(f"File not found: {csv_path}")
         return
 
     df_anime = pd.read_csv(csv_path)

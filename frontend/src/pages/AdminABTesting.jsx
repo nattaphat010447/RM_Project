@@ -46,7 +46,7 @@ const AdminABTesting = () => {
       setMetrics(metricsData.metrics || []);
     } catch (err) {
       console.error(err);
-      alert('ไม่สามารถโหลดข้อมูลได้');
+      alert('Failed to load data.');
     } finally {
       setLoading(false);
     }
@@ -94,20 +94,20 @@ const AdminABTesting = () => {
       const data = await response.json();
 
       if (response.ok) {
-        alert(data.message || 'บันทึกสำเร็จ');
+        alert(data.message || 'Saved successfully.');
         setShowModal(false);
         fetchData();
       } else {
-        alert(data.error || 'เกิดข้อผิดพลาด');
+        alert(data.error || 'An error occurred.');
       }
     } catch (err) {
       console.error(err);
-      alert('ระบบขัดข้อง');
+      alert('System error. Please try again.');
     }
   };
 
   const handleDelete = async (variantId) => {
-    if (!confirm('ยืนยันการลบ variant นี้?')) return;
+    if (!confirm('Confirm delete this variant?')) return;
 
     try {
       const response = await authFetch(`${API_URL}/api/admin/ab-test/variants/?id=${variantId}`, {
@@ -117,14 +117,14 @@ const AdminABTesting = () => {
       const data = await response.json();
 
       if (response.ok) {
-        alert(data.message || 'ลบสำเร็จ');
+        alert(data.message || 'Deleted successfully.');
         fetchData();
       } else {
-        alert(data.error || 'เกิดข้อผิดพลาด');
+        alert(data.error || 'An error occurred.');
       }
     } catch (err) {
       console.error(err);
-      alert('ระบบขัดข้อง');
+      alert('System error. Please try again.');
     }
   };
 

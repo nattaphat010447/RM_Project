@@ -60,7 +60,7 @@ class RecommenderService:
         return cls._instance
 
     def _init_service(self):
-        print("ระบบกำลังเริ่มต้น Recommender Service")
+        print("Initializing Recommender Service")
 
         # Try loading from ml_model/ folder first (new structure)
         project_root = os.path.dirname(os.path.dirname(os.path.dirname(__file__)))
@@ -70,13 +70,13 @@ class RecommenderService:
             base_path = ml_model_path
             weight_path = os.path.join(base_path, 'weights', 'mbcgcn_manga_weights.pth')
             data_path = os.path.join(base_path, 'data', 'mbcgcn_graph_data.pt')
-            print(f"โหลดโมเดลจาก ml_model/ folder")
+            print(f"Loading model from ml_model/ folder")
         else:
             # Fallback to old location
             base_path = os.path.join(os.path.dirname(__file__), 'ml_models')
             weight_path = os.path.join(base_path, 'mbcgcn_model_weights.pth')
             data_path = os.path.join(base_path, 'mbcgcn_graph_data.pt')
-            print(f"โหลดโมเดลจาก backend/rentals/ml_models/ (legacy)")
+            print(f"Loading model from backend/rentals/ml_models/ (legacy)")
 
         self.device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
         
@@ -92,7 +92,7 @@ class RecommenderService:
         self.model.load_state_dict(torch.load(weight_path, map_location=self.device))
         self.model.to(self.device)
         self.model.eval()
-        print(f"ดำเนินการโหลดโมเดลเสร็จสิ้นบนอุปกรณ์ {self.device}")
+        print(f"Model loaded successfully on device {self.device}")
 
     def get_recommendations(self, username, top_k=10):
         if username not in self.user_mapping:

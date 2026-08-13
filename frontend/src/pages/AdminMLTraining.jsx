@@ -48,7 +48,7 @@ const AdminMLTraining = () => {
 
   const handleRetrain = async (modelVersion = 'v1') => {
     const modelName = modelVersion === 'v1' ? 'MB-CGCN (2 behaviors)' : 'MB-CGCN-v2 (3 behaviors)';
-    if (!confirm(`ยืนยันการเทรน ${modelName}? กระบวนการนี้อาจใช้เวลา 10-30 นาที`)) return;
+    if (!confirm(`Confirm training ${modelName}? This may take 10-30 minutes.`)) return;
 
     try {
       const response = await authFetch(`${API_URL}/api/admin/ml/retrain/?model=${modelVersion}`, {
@@ -59,15 +59,15 @@ const AdminMLTraining = () => {
       const data = await response.json();
 
       if (response.ok) {
-        alert(data.message || 'เริ่มการเทรนโมเดลแล้ว');
+        alert(data.message || 'Training started.');
         setAutoRefresh(true);
         fetchStatus();
       } else {
-        alert(data.error || 'เกิดข้อผิดพลาด');
+        alert(data.error || 'An error occurred.');
       }
     } catch (err) {
       console.error(err);
-      alert('ระบบขัดข้อง');
+      alert('System error. Please try again.');
     }
   };
 
@@ -76,11 +76,11 @@ const AdminMLTraining = () => {
       case 'PENDING':
         return <span className="inline-block px-3 py-1 bg-yellow-500/20 text-yellow-400 rounded-full text-xs font-bold">⏳ Pending</span>;
       case 'RUNNING':
-        return <span className="inline-block px-3 py-1 bg-blue-500/20 text-blue-400 rounded-full text-xs font-bold animate-pulse">🔄 Running</span>;
+        return <span className="inline-block px-3 py-1 bg-blue-500/20 text-blue-400 rounded-full text-xs font-bold animate-pulse">Running</span>;
       case 'COMPLETED':
-        return <span className="inline-block px-3 py-1 bg-green-500/20 text-green-400 rounded-full text-xs font-bold">✅ Completed</span>;
+        return <span className="inline-block px-3 py-1 bg-green-500/20 text-green-400 rounded-full text-xs font-bold">Completed</span>;
       case 'FAILED':
-        return <span className="inline-block px-3 py-1 bg-red-500/20 text-red-400 rounded-full text-xs font-bold">❌ Failed</span>;
+        return <span className="inline-block px-3 py-1 bg-red-500/20 text-red-400 rounded-full text-xs font-bold">Failed</span>;
       default:
         return <span className="inline-block px-3 py-1 bg-slate-600 text-slate-400 rounded-full text-xs font-bold">{status}</span>;
     }
@@ -127,7 +127,7 @@ const AdminMLTraining = () => {
         {/* Header */}
         <div className="flex items-center justify-between mb-8">
           <div>
-            <h1 className="text-3xl font-black text-cyan-400">🤖 Model Training</h1>
+            <h1 className="text-3xl font-black text-cyan-400">Model Training</h1>
             <p className="text-slate-400 mt-1">Retrain MB-CGCN recommendation model</p>
           </div>
           <div className="flex gap-3">
@@ -141,7 +141,7 @@ const AdminMLTraining = () => {
               onClick={() => fetchStatus()}
               className="bg-slate-700 hover:bg-slate-600 text-white px-4 py-2 rounded-lg transition"
             >
-              🔄 Refresh
+              Refresh
             </button>
           </div>
         </div>
@@ -167,7 +167,7 @@ const AdminMLTraining = () => {
                 <div className="animate-spin rounded-full h-12 w-12 border-t-4 border-blue-400"></div>
                 <div>
                   <h3 className="text-xl font-bold text-blue-400">Training in Progress...</h3>
-                  <p className="text-slate-400 mt-1">กรุณารอสักครู่ อาจใช้เวลา 10-30 นาที</p>
+                  <p className="text-slate-400 mt-1">Please wait. This may take 10-30 minutes.</p>
                 </div>
               </div>
             </div>
@@ -175,7 +175,7 @@ const AdminMLTraining = () => {
             <div className="bg-green-500/10 border-2 border-green-500 rounded-xl p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <h3 className="text-xl font-bold text-green-400">✅ Latest Training Completed</h3>
+                  <h3 className="text-xl font-bold text-green-400">Latest Training Completed</h3>
                   <p className="text-slate-400 mt-1">Completed: {formatDate(latestLog.completed_at)}</p>
                   {latestLog.final_recall_at_10 && (
                     <div className="mt-3 flex gap-6">
@@ -194,7 +194,7 @@ const AdminMLTraining = () => {
                   onClick={() => handleRetrain('v1')}
                   className="bg-cyan-500 hover:bg-cyan-600 text-slate-900 font-bold px-6 py-3 rounded-lg transition shadow-lg"
                 >
-                  🚀 Retrain Model Now
+                  Retrain Model Now
                 </button>
               </div>
             </div>
@@ -214,7 +214,7 @@ const AdminMLTraining = () => {
                       : 'bg-cyan-500 hover:bg-cyan-600 text-slate-900'
                   }`}
                 >
-                  🚀 Retrain Model Now
+                  Retrain Model Now
                 </button>
               </div>
             </div>
@@ -344,7 +344,7 @@ const AdminMLTraining = () => {
           {!latestV2 && (
             <div className="bg-blue-500/10 border-t border-blue-500/30 p-4">
               <p className="text-sm text-blue-300">
-                ℹ️ <strong>MB-CGCN-v2</strong> ต้องการข้อมูล CLICK behavior จากเว็บอย่างน้อย 50+ interactions ก่อนจึงจะเทรนได้
+                <strong>MB-CGCN-v2</strong> requires at least 50+ CLICK interactions from the web before training.
               </p>
             </div>
           )}
@@ -432,13 +432,13 @@ const AdminMLTraining = () => {
 
         {/* Info Card */}
         <div className="mt-8 bg-slate-800/50 border border-slate-700 rounded-xl p-6">
-          <h3 className="text-lg font-bold text-slate-100 mb-3">📖 How It Works</h3>
+          <h3 className="text-lg font-bold text-slate-100 mb-3">How It Works</h3>
           <ul className="space-y-2 text-sm text-slate-400">
-            <li>• เทรนโมเดล MB-CGCN จากข้อมูล Cart และ Rental ล่าสุด</li>
-            <li>• ใช้เวลาประมาณ 10-30 นาที ขึ้นอยู่กับจำนวนข้อมูล</li>
-            <li>• โมเดลจะถูก reload อัตโนมัติเมื่อเทรนเสร็จ</li>
-            <li>• Recall@10 และ NDCG@10 คือตัววัดความแม่นยำของโมเดล (ยิ่งสูงยิ่งดี)</li>
-            <li>• แนะนำให้เทรนใหม่ทุก 1-2 สัปดาห์ หรือเมื่อมีข้อมูลใหม่จำนวนมาก</li>
+            <li>• Trains MB-CGCN from the latest Cart and Rental data.</li>
+            <li>• Takes approximately 10-30 minutes depending on data size.</li>
+            <li>• The model reloads automatically after training completes.</li>
+            <li>• Recall@10 and NDCG@10 measure model accuracy (higher is better).</li>
+            <li>• Recommended to retrain every 1-2 weeks or when significant new data is available.</li>
           </ul>
         </div>
 

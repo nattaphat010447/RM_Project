@@ -199,10 +199,10 @@ def submit_manga_review(request, manga_id):
     try:
         rating = int(rating)
     except (TypeError, ValueError):
-        return Response({"error": "คะแนนต้องอยู่ระหว่าง 1 ถึง 5"}, status=400)
+        return Response({"error": "Rating must be between 1 and 5"}, status=400)
 
     if not (1 <= rating <= 5):
-        return Response({"error": "คะแนนต้องอยู่ระหว่าง 1 ถึง 5"}, status=400)
+        return Response({"error": "Rating must be between 1 and 5"}, status=400)
 
     has_returned = RentalOrderItem.objects.filter(
         order__user=request.user,
@@ -211,7 +211,7 @@ def submit_manga_review(request, manga_id):
     ).exists()
 
     if not has_returned:
-        return Response({"error": "คุณสามารถให้คะแนนได้เฉพาะมังงะที่คืนแล้วเท่านั้น"}, status=403)
+        return Response({"error": "You can only rate manga you have returned"}, status=403)
 
     review, created = MangaReview.objects.update_or_create(
         user=request.user,
@@ -220,7 +220,7 @@ def submit_manga_review(request, manga_id):
     )
 
     return Response({
-        "message": "ให้คะแนนสำเร็จ!", 
+        "message": "Rating submitted successfully.", 
         "rating": review.rating
     })
 
@@ -259,7 +259,7 @@ def approve_order(request, order_id):
         item.item_status = RentalOrderItem.ItemStatus.APPROVED
         item.save()
         
-    return Response({"message": "อนุมัติคำขอสำเร็จ!"})
+    return Response({"message": "Order approved successfully."})
 
 @api_view(['POST'])
 @permission_classes([IsAdminRole])
@@ -278,7 +278,7 @@ def reject_order(request, order_id):
             item.manga_copy.status = MangaCopy.Status.AVAILABLE
             item.manga_copy.save()
             
-    return Response({"message": "ปฏิเสธคำขอสำเร็จ"})
+    return Response({"message": "Order rejected."})
 
 @api_view(['POST'])
 @permission_classes([IsAdminRole])
@@ -315,7 +315,7 @@ def checkout_order(request, order_id):
 
         order.save()
 
-    return Response({"message": "ทำรายการรับหนังสือสำเร็จ!"})
+    return Response({"message": "Checked out successfully."})
 
 @api_view(['POST'])
 @permission_classes([IsAdminRole])
@@ -339,7 +339,7 @@ def return_item(request, order_id, item_id):
             order.returned_at = timezone.now()
             order.save()
 
-    return Response({"message": "รับคืนหนังสือเรียบร้อย นำกลับขึ้นชั้นวางแล้ว!"})
+    return Response({"message": "Item returned and shelved successfully."})
 
 @api_view(['POST'])
 @permission_classes([IsAdminRole])
@@ -393,7 +393,7 @@ def fine_item(request, order_id, item_id):
 
         order.save()
 
-    return Response({"message": f"บันทึกค่าปรับ {fine_amount} บาท และรับคืนสำเร็จ!"})
+    return Response({"message": f"Fine of {fine_amount} THB recorded and item returned."})
 
 @api_view(['GET', 'POST'])
 @permission_classes([IsAdminRole])
@@ -423,10 +423,10 @@ def admin_users(request):
             
             Cart.objects.get_or_create(user=user)
 
-            return Response({"message": "สร้างสมาชิกสำเร็จ", "id": user.id}, status=201)
+            return Response({"message": "Member created successfully.", "id": user.id}, status=201)
             
         except Exception as e:
-            return Response({"error": f"ไม่สามารถสร้างสมาชิกได้: {str(e)}"}, status=400)
+            return Response({"error": f"Failed to create member: {str(e)}"}, status=400)
 
 
 @api_view(['GET', 'PUT', 'DELETE'])
@@ -456,12 +456,12 @@ def admin_user_detail(request, user_id):
             user.set_password(password)
 
         user.save()
-        return Response({"message": "อัปเดตข้อมูลสำเร็จ"})
+        return Response({"message": "Updated successfully."})
 
     elif request.method == 'DELETE':
         user.is_active = False
         user.save()
-        return Response({"message": "ลบสมาชิกออกจากระบบสำเร็จ (Soft Delete)"})
+        return Response({"message": "Member deactivated successfully."})
 
 @api_view(['POST'])
 @permission_classes([IsAdminRole])
@@ -506,7 +506,7 @@ def admin_manage_manga(request, manga_id):
         manga.is_active = False
         manga.save()
         
-        return Response({"message": "ลบหนังสือและสำเนาทั้งหมดสำเร็จ"})
+        return Response({"message": "Manga and all copies removed successfully."})
 
 @api_view(['GET'])
 @permission_classes([IsAdminRole])
@@ -573,7 +573,7 @@ def manual_checkout(request):
             copy.status = MangaCopy.Status.RENTED
             copy.save()
 
-        return Response({"message": "ทำรายการเช่าหน้าร้านสำเร็จ!"}, status=201)
+        return Response({"message": "In-store rental recorded successfully."}, status=201)
     except Exception as e:
         return Response({"error": f"DB Error: {str(e)}"}, status=400)
 
@@ -620,7 +620,7 @@ def my_profile(request):
         serializer = UserProfileSerializer(user, data=request.data, partial=True)
         if serializer.is_valid():
             serializer.save()
-            return Response({"message": "อัปเดตข้อมูลโปรไฟล์สำเร็จ!"})
+            return Response({"message": "Profile updated successfully."})
         return Response(serializer.errors, status=400)
 
 class RecommendationView(APIView):
@@ -660,7 +660,7 @@ class RecommendationView(APIView):
             return Response({
                 'recommendations': serializer.data,
                 'explanation_type': 'popular',
-                'explanation': 'มังงะยอดนิยมและเรื่องใหม่ล่าสุด'
+                'explanation': 'Popular and latest manga'
             })
 
         # Map mbrs_id to Manga objects
@@ -682,24 +682,24 @@ class RecommendationView(APIView):
 
                 # Generate explanation text
                 if explanation_type == 'user_history':
-                    explanation = 'แนะนำเฉพาะสำหรับคุณจากประวัติการเช่า'
+                    explanation = 'Recommended based on your rental history'
                 elif explanation_type == 'preferences':
                     # Find manga titles from source_ids
                     source_mangas = Manga.objects.filter(mbrs_id__in=source_ids[:2], is_active=True)[:2]
                     if source_mangas:
                         titles = ', '.join([m.title for m in source_mangas])
-                        explanation = f'แนะนำเพราะคุณชอบ {titles}'
+                        explanation = f'Recommended because you liked {titles}'
                     else:
-                        explanation = 'แนะนำตามความชอบของคุณ'
+                        explanation = 'Recommended based on your preferences'
                 elif explanation_type == 'rental_history':
                     source_mangas = Manga.objects.filter(mbrs_id__in=source_ids[:2], is_active=True)[:2]
                     if source_mangas:
                         titles = ', '.join([m.title for m in source_mangas])
-                        explanation = f'คล้ายกับเรื่องที่คุณเคยเช่า: {titles}'
+                        explanation = f'Similar to manga you have rented: {titles}'
                     else:
-                        explanation = 'แนะนำตามประวัติการเช่าของคุณ'
+                        explanation = 'Recommended based on your rental history'
                 else:
-                    explanation = 'แนะนำสำหรับคุณ'
+                    explanation = 'Recommended for you'
 
                 explanations.append(explanation)
 
@@ -712,7 +712,7 @@ class RecommendationView(APIView):
                                  .exclude(id__in=existing_ids)
                                  .order_by('-created_at')[:needed])
             queryset.extend(filler_mangas)
-            explanations.extend(['มังงะยอดนิยม'] * needed)
+            explanations.extend(['Popular manga'] * needed)
 
         serializer = MangaSerializer(queryset, many=True, context={'request': request})
 
@@ -758,18 +758,18 @@ def user_preferences(request):
         manga_ids = request.data.get('manga_ids', [])
 
         if not manga_ids or not isinstance(manga_ids, list):
-            return Response({"error": "กรุณาระบุ manga_ids เป็น array"}, status=400)
+            return Response({"error": "manga_ids must be a list."}, status=400)
 
         if len(manga_ids) < 4:
-            return Response({"error": "กรุณาเลือกมังงะอย่างน้อย 4 เรื่อง"}, status=400)
+            return Response({"error": "Please select exactly 4 manga."}, status=400)
 
         if len(manga_ids) > 4:
-            return Response({"error": "เลือกได้สูงสุด 4 เรื่องเท่านั้น"}, status=400)
+            return Response({"error": "You can select at most 4 manga."}, status=400)
 
         # Check all manga exist
         mangas = Manga.objects.filter(id__in=manga_ids, is_active=True)
         if mangas.count() != len(manga_ids):
-            return Response({"error": "มีมังงะบางเรื่องไม่พบในระบบ"}, status=400)
+            return Response({"error": "One or more manga were not found."}, status=400)
 
         with transaction.atomic():
             # Clear existing preferences
@@ -785,7 +785,7 @@ def user_preferences(request):
                 )
 
         return Response({
-            "message": "บันทึกความชอบสำเร็จ!",
+            "message": "Preferences saved successfully.",
             "manga_ids": manga_ids
         }, status=201)
 
@@ -810,15 +810,15 @@ def log_behavior(request):
     position     = request.data.get('position')
 
     if not manga_id or not event_type:
-        return Response({"error": "manga_id และ event_type จำเป็น"}, status=400)
+        return Response({"error": "manga_id and event_type are required."}, status=400)
 
     valid_events = [e.value for e in UserBehaviorLog.EventType]
     if event_type not in valid_events:
-        return Response({"error": f"event_type ต้องเป็น {valid_events}"}, status=400)
+        return Response({"error": f"event_type must be one of {valid_events}"}, status=400)
 
     # RENT is only logged by server-side checkout, not frontend
     if event_type == UserBehaviorLog.EventType.RENT:
-        return Response({"error": "RENT event ถูก log อัตโนมัติโดย server"}, status=400)
+        return Response({"error": "RENT events are logged automatically by the server."}, status=400)
 
     manga = get_object_or_404(Manga, id=manga_id, is_active=True)
 

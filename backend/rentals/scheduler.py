@@ -23,7 +23,7 @@ def update_lost_items_task():
             count += 1
 
         if count > 0:
-            print(f"[Scheduler] อัปเดตหนังสือสูญหายสำเร็จ {count} รายการ", flush=True)
+            print(f"[Scheduler] Marked {count} overdue item(s) as LOST", flush=True)
             
     except Exception as e:
         print(f"[Scheduler] Error: {str(e)}", flush=True)
@@ -36,4 +36,4 @@ def start_scheduler():
     
     scheduler.start()
     
-    print("[Scheduler] ระบบตั้งเวลาอัตโนมัติเริ่มทำงานแล้ว...", flush=True)
+    print("[Scheduler] Scheduler started.", flush=True)

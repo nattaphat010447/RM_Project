@@ -52,14 +52,14 @@ const Onboarding = () => {
       if (selectedMangas.length < 4) {
         setSelectedMangas([...selectedMangas, mangaId]);
       } else {
-        alert('คุณเลือกได้สูงสุด 4 เรื่องเท่านั้น');
+        alert('You can select up to 4 manga.');
       }
     }
   };
 
   const handleSubmit = async () => {
     if (selectedMangas.length !== 4) {
-      alert('กรุณาเลือกมังงะครบ 4 เรื่อง');
+      alert('Please select exactly 4 manga.');
       return;
     }
 
@@ -75,14 +75,14 @@ const Onboarding = () => {
       const data = await response.json();
 
       if (response.ok) {
-        alert(data.message || 'บันทึกความชอบสำเร็จ!');
+        alert(data.message || 'Preferences saved successfully.');
         navigate('/for-you');
       } else {
-        alert(data.error || 'เกิดข้อผิดพลาด');
+        alert(data.error || 'An error occurred.');
       }
     } catch (err) {
       console.error(err);
-      alert('ระบบขัดข้อง');
+      alert('System error. Please try again.');
     } finally {
       setSaving(false);
     }
@@ -98,7 +98,7 @@ const Onboarding = () => {
       <div className="min-h-screen flex justify-center items-center bg-slate-900 text-white">
         <div className="text-center">
           <div className="animate-spin rounded-full h-16 w-16 border-t-4 border-cyan-400 mx-auto mb-4"></div>
-          <p className="text-lg font-bold">กำลังโหลดมังงะ...</p>
+          <p className="text-lg font-bold">Loading manga...</p>
         </div>
       </div>
     );
@@ -111,14 +111,14 @@ const Onboarding = () => {
         {/* Header */}
         <div className="text-center mb-10">
           <h1 className="text-4xl font-black text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-blue-500 mb-3">
-            {existingPreferences.length > 0 ? '🔄 ปรับความชอบใหม่' : '🎯 เลือกมังงะที่คุณชอบ'}
+            {existingPreferences.length > 0 ? 'Recalibrate Preferences' : 'Choose Your Favourite Manga'}
           </h1>
           <p className="text-slate-400 text-lg">
-            เลือก <span className="text-cyan-400 font-bold">4 เรื่อง</span> เพื่อรับคำแนะนำที่ตรงใจ
+            Select <span className="text-cyan-400 font-bold">4 manga</span> to receive tailored recommendations
           </p>
           <div className="mt-4 inline-block bg-slate-800 border border-slate-700 rounded-lg px-6 py-3">
             <p className="text-sm text-slate-300">
-              เลือกแล้ว: <span className="text-2xl font-black text-cyan-400">{selectedMangas.length}</span> / 4
+              Selected: <span className="text-2xl font-black text-cyan-400">{selectedMangas.length}</span> / 4
             </p>
           </div>
         </div>
@@ -127,7 +127,7 @@ const Onboarding = () => {
         <div className="mb-8">
           <input
             type="text"
-            placeholder="🔍 ค้นหามังงะ..."
+            placeholder="Search manga..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             className="w-full bg-slate-800 border-2 border-slate-700 text-slate-100 rounded-xl px-6 py-4 text-lg focus:outline-none focus:border-cyan-400 transition"
@@ -191,7 +191,7 @@ const Onboarding = () => {
                   : 'bg-slate-700 text-slate-500 cursor-not-allowed'
               }`}
             >
-              {saving ? '🔄 กำลังบันทึก...' : selectedMangas.length === 4 ? '✅ บันทึกความชอบ' : `⚠️ เลือกอีก ${4 - selectedMangas.length} เรื่อง`}
+              {saving ? 'Saving...' : selectedMangas.length === 4 ? 'Save Preferences' : `Select ${4 - selectedMangas.length} more`}
             </button>
           </div>
         </div>

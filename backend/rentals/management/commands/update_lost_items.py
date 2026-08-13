@@ -4,7 +4,7 @@ from datetime import timedelta
 from rentals.models import RentalOrderItem, MangaCopy
 
 class Command(BaseCommand):
-    help = 'สแกนหาหนังสือที่เลยกำหนดคืน 90 วันและเปลี่ยนสถานะเป็น LOST'
+    help = 'Scan items overdue by 90+ days and mark them as LOST'
 
     def handle(self, *args, **kwargs):
         ninety_days_ago = timezone.now() - timedelta(days=90)
@@ -27,6 +27,6 @@ class Command(BaseCommand):
             self.stdout.write(self.style.WARNING(f'Marked as LOST: Order {item.order.id} - Copy {copy.serial_no}'))
 
         if count > 0:
-            self.stdout.write(self.style.SUCCESS(f'อัปเดตสถานะหนังสือสูญหายสำเร็จจำนวน {count} รายการ'))
+            self.stdout.write(self.style.SUCCESS(f'Marked {count} overdue item(s) as LOST'))
         else:
-            self.stdout.write(self.style.SUCCESS('ไม่มีหนังสือที่ค้างคืนเกิน 90 วัน'))
+            self.stdout.write(self.style.SUCCESS('No items overdue by more than 90 days'))

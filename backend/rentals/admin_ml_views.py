@@ -46,7 +46,7 @@ def ab_test_variants(request):
         is_active = request.data.get('is_active', True)
 
         if not name or not algorithm:
-            return Response({"error": "name และ algorithm จำเป็น"}, status=400)
+            return Response({"error": "name and algorithm are required."}, status=400)
 
         try:
             variant = ABTestVariant.objects.create(
@@ -57,7 +57,7 @@ def ab_test_variants(request):
                 is_active=is_active
             )
             return Response({
-                "message": "สร้าง variant สำเร็จ",
+                "message": "Variant created.",
                 "id": variant.id
             }, status=201)
         except Exception as e:
@@ -66,7 +66,7 @@ def ab_test_variants(request):
     elif request.method == 'PUT':
         variant_id = request.data.get('id')
         if not variant_id:
-            return Response({"error": "กรุณาระบุ id"}, status=400)
+            return Response({"error": "id is required."}, status=400)
 
         variant = get_object_or_404(ABTestVariant, id=variant_id)
 
@@ -77,17 +77,17 @@ def ab_test_variants(request):
         variant.is_active = request.data.get('is_active', variant.is_active)
         variant.save()
 
-        return Response({"message": "อัพเดท variant สำเร็จ"})
+        return Response({"message": "Variant updated."})
 
     elif request.method == 'DELETE':
         variant_id = request.query_params.get('id')
         if not variant_id:
-            return Response({"error": "กรุณาระบุ id"}, status=400)
+            return Response({"error": "id is required."}, status=400)
 
         variant = get_object_or_404(ABTestVariant, id=variant_id)
         variant.delete()
 
-        return Response({"message": "ลบ variant สำเร็จ"})
+        return Response({"message": "Variant deleted."})
 
 
 @api_view(['GET'])
@@ -116,13 +116,13 @@ def trigger_model_retrain(request):
     model_version = request.query_params.get('model', 'v1')
 
     if model_version not in ['v1', 'v2']:
-        return Response({"error": "model ต้องเป็น 'v1' หรือ 'v2'"}, status=400)
+        return Response({"error": "model must be 'v1' or 'v2'."}, status=400)
 
     # Check if there's already a training in progress
     running = ModelTrainingLog.objects.filter(status='RUNNING').exists()
     if running:
         return Response({
-            "error": "มีการเทรนโมเดลอยู่แล้ว กรุณารอให้เสร็จก่อน"
+            "error": "A training job is already running. Please wait."
         }, status=400)
 
     model_name = 'MB-CGCN' if model_version == 'v1' else 'MB-CGCN-v2'
@@ -175,7 +175,7 @@ def trigger_model_retrain(request):
     thread.start()
 
     return Response({
-        "message": f"เริ่มการเทรนโมเดล {model_name} แล้ว",
+        "message": f"Training started for {model_name}.",
         "log_id": log.id,
         "status": "PENDING",
         "model_version": model_version
