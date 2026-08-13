@@ -20,10 +20,13 @@
     Skip inserting sample manga data
 
 .PARAMETER SkipSuperuser
-    Skip the interactive admin user creation step
+    Skip the admin user creation step
 
 .PARAMETER NoBuild
     Skip the --build flag (use existing images if available)
+
+.PARAMETER CleanVolumes
+    Remove existing Docker volumes before starting (use when re-cloning or resetting)
 
 .EXAMPLE
     .\setup.ps1
@@ -32,7 +35,7 @@
     .\setup.ps1 -BackendPort 8080 -FrontendPort 3001
 
 .EXAMPLE
-    .\setup.ps1 -SkipSeed -SkipSuperuser
+    .\setup.ps1 -CleanVolumes   # fresh reset, wipes database volume
 #>
 
 param(
@@ -41,34 +44,21 @@ param(
     [int]$PostgresPort = 5433,
     [switch]$SkipSeed,
     [switch]$SkipSuperuser,
-    [switch]$NoBuild
+    [switch]$NoBuild,
+    [switch]$CleanVolumes
 )
 
 $ErrorActionPreference = 'Stop'
 $scriptRoot = Split-Path -Parent $MyInvocation.MyCommand.Path
 Set-Location $scriptRoot
 
-function Write-Step {
-    param([string]$Message)
-    Write-Host ""
-    Write-Host "==> $Message" -ForegroundColor Cyan
-}
-
-function Write-Success {
-    param([string]$Message)
-    Write-Host "[OK] $Message" -ForegroundColor Green
-}
-
-function Write-Warn {
-    param([string]$Message)
-    Write-Host "[!] $Message" -ForegroundColor Yellow
-}
-
-function Write-ErrorAndExit {
-    param([string]$Message)
-    Write-Host "[X] $Message" -ForegroundColor Red
-    exit 1
-}
+# ==========================================
+# Helpers
+# ==========================================
+function Write-Step   { param([string]$m); Write-Host ""; Write-Host "==> $m" -ForegroundColor Cyan }
+function Write-Success { param([string]$m); Write-Host "[OK] $m" -ForegroundColor Green }
+function Write-Warn   { param([string]$m); Write-Host "[!] $m" -ForegroundColor Yellow }
+function Write-Fail   { param([string]$m); Write-Host "[X] $m" -ForegroundColor Red; exit 1 }
 
 function New-RandomSecretKey {
     $chars = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#%^&*(-_=+)'
@@ -77,157 +67,153 @@ function New-RandomSecretKey {
     -join ($bytes | ForEach-Object { $chars[$_ % $chars.Length] })
 }
 
-# ==========================================
-# 1. Check prerequisites
-# ==========================================
-Write-Step "Checking prerequisites..."
-
-if (-not (Get-Command docker -ErrorAction SilentlyContinue)) {
-    Write-ErrorAndExit "Docker is not installed or not on PATH. Install Docker Desktop: https://www.docker.com/products/docker-desktop/"
-}
-
-try {
-    docker info > $null 2>&1
-    if ($LASTEXITCODE -ne 0) {
-        Write-ErrorAndExit "Docker is installed but not running. Please start Docker Desktop and try again."
-    }
-} catch {
-    Write-ErrorAndExit "Could not reach the Docker daemon. Please start Docker Desktop and try again."
-}
-
-$composeCmd = $null
-if (Get-Command "docker-compose" -ErrorAction SilentlyContinue) {
-    $composeCmd = "docker-compose"
-} else {
-    docker compose version > $null 2>&1
-    if ($LASTEXITCODE -eq 0) {
-        $composeCmd = "docker compose"
-    }
-}
-if (-not $composeCmd) {
-    Write-ErrorAndExit "Docker Compose was not found. Install Docker Desktop (includes Compose) and try again."
-}
-
-Write-Success "Docker is installed and running ($composeCmd)"
-
-# ==========================================
-# 2. Create .env if missing
-# ==========================================
-Write-Step "Checking environment configuration..."
-
-$envPath = Join-Path $scriptRoot ".env"
-$envExamplePath = Join-Path $scriptRoot ".env.example"
-
-if (-not (Test-Path $envPath)) {
-    if (-not (Test-Path $envExamplePath)) {
-        Write-ErrorAndExit ".env.example not found. Cannot create .env automatically."
-    }
-
-    Copy-Item $envExamplePath $envPath
-    Write-Success "Created .env from .env.example"
-
-    # Auto-generate a random SECRET_KEY instead of leaving the placeholder
-    $secretKey = New-RandomSecretKey
-    (Get-Content $envPath) -replace 'SECRET_KEY=.*', "SECRET_KEY=$secretKey" | Set-Content $envPath
-    Write-Success "Generated a random SECRET_KEY"
-
-    Write-Warn "Review .env and adjust POSTGRES_PASSWORD before using this in production."
-} else {
-    Write-Success ".env already exists, keeping current values"
-}
-
-# Apply port overrides to .env (append/replace BACKEND_PORT, FRONTEND_PORT, POSTGRES_HOST_PORT)
 function Set-EnvValue {
     param([string]$Path, [string]$Key, [string]$Value)
-
     $content = Get-Content $Path -ErrorAction SilentlyContinue
     if ($null -eq $content) { $content = @() }
-
-    $pattern = "^$Key="
-    if ($content -match $pattern) {
-        $content = $content -replace "$pattern.*", "$Key=$Value"
+    if ($content -match "^$Key=") {
+        $content = $content -replace "^$Key=.*", "$Key=$Value"
     } else {
         $content += "$Key=$Value"
     }
     Set-Content -Path $Path -Value $content
 }
 
-Set-EnvValue -Path $envPath -Key "BACKEND_PORT" -Value $BackendPort
-Set-EnvValue -Path $envPath -Key "FRONTEND_PORT" -Value $FrontendPort
-Set-EnvValue -Path $envPath -Key "POSTGRES_HOST_PORT" -Value $PostgresPort
-Set-EnvValue -Path $envPath -Key "VITE_API_BASE_URL" -Value "http://localhost:$BackendPort"
-
-Write-Success "Ports configured -> backend:$BackendPort frontend:$FrontendPort postgres:$PostgresPort"
+function Invoke-Compose {
+    param([string[]]$CmdArgs)
+    if ($script:useNewCompose) {
+        & docker compose @CmdArgs
+    } else {
+        & docker-compose @CmdArgs
+    }
+}
 
 # ==========================================
-# 3. Build and start containers
+# 1. Check prerequisites
 # ==========================================
-Write-Step "Building and starting containers (this may take a few minutes on first run)..."
+Write-Step "Checking prerequisites..."
+
+if (-not (Get-Command docker -ErrorAction SilentlyContinue)) {
+    Write-Fail "Docker not found. Install Docker Desktop: https://www.docker.com/products/docker-desktop/"
+}
+
+docker info 2>&1 | Out-Null
+if ($LASTEXITCODE -ne 0) {
+    Write-Fail "Docker is not running. Please start Docker Desktop and try again."
+}
+
+$script:useNewCompose = $false
+docker compose version 2>&1 | Out-Null
+if ($LASTEXITCODE -eq 0) {
+    $script:useNewCompose = $true
+} elseif (-not (Get-Command "docker-compose" -ErrorAction SilentlyContinue)) {
+    Write-Fail "Docker Compose not found. Install Docker Desktop and try again."
+}
+
+$composeLabel = if ($script:useNewCompose) { "docker compose" } else { "docker-compose" }
+Write-Success "Docker is running ($composeLabel)"
+
+# ==========================================
+# 2. Configure .env
+# ==========================================
+Write-Step "Checking environment configuration..."
+
+$envPath     = Join-Path $scriptRoot ".env"
+$envExample  = Join-Path $scriptRoot ".env.example"
+
+if (-not (Test-Path $envPath)) {
+    if (-not (Test-Path $envExample)) {
+        Write-Fail ".env.example not found. Cannot create .env automatically."
+    }
+    Copy-Item $envExample $envPath
+    $secretKey = New-RandomSecretKey
+    (Get-Content $envPath) -replace 'SECRET_KEY=.*', "SECRET_KEY=$secretKey" | Set-Content $envPath
+    Write-Success "Created .env with a generated SECRET_KEY"
+    Write-Warn "Review .env and change POSTGRES_PASSWORD before deploying to production."
+} else {
+    Write-Success ".env already exists — keeping current values"
+}
+
+# Apply port overrides
+Set-EnvValue $envPath "BACKEND_PORT"      $BackendPort
+Set-EnvValue $envPath "FRONTEND_PORT"     $FrontendPort
+Set-EnvValue $envPath "POSTGRES_HOST_PORT" $PostgresPort
+Set-EnvValue $envPath "VITE_API_BASE_URL" "http://localhost:$BackendPort"
+
+Write-Success "Ports set -> backend:$BackendPort  frontend:$FrontendPort  postgres:$PostgresPort"
+
+# ==========================================
+# 3. Handle stale volumes (optional)
+# ==========================================
+
+# Auto-detect existing postgres volume even if -CleanVolumes wasn't passed
+$volumeName = (Split-Path -Leaf $scriptRoot).ToLower() + "_postgres_data"
+$volumeExists = docker volume ls --quiet | Where-Object { $_ -eq $volumeName }
+
+if (-not $CleanVolumes -and $volumeExists) {
+    Write-Warn "Existing database volume '$volumeName' detected."
+    Write-Warn "If your .env password differs from the original setup, the container will fail to authenticate."
+    Write-Host ""
+    $answer = Read-Host "  Remove the old volume for a clean start? (y/N)"
+    if ($answer -match '^[Yy]') {
+        $CleanVolumes = $true
+    }
+}
+
+if ($CleanVolumes) {
+    Write-Step "Removing existing containers and volumes..."
+    Invoke-Compose @("down", "--volumes", "--remove-orphans")
+    Write-Success "Old containers and volumes removed"
+}
+
+# ==========================================
+# 4. Build and start containers
+# ==========================================
+Write-Step "Building and starting containers (first run may take a few minutes)..."
 
 $upArgs = @("up", "-d")
 if (-not $NoBuild) { $upArgs += "--build" }
+Invoke-Compose $upArgs
 
-if ($composeCmd -eq "docker-compose") {
-    & docker-compose @upArgs
-} else {
-    & docker compose @upArgs
-}
-
-if ($LASTEXITCODE -ne 0) {
-    Write-ErrorAndExit "docker compose up failed. Check the output above for details."
-}
-
+if ($LASTEXITCODE -ne 0) { Write-Fail "docker compose up failed — see output above." }
 Write-Success "Containers started"
 
 # ==========================================
-# 4. Wait for the database to be healthy
+# 5. Wait for database to be healthy
 # ==========================================
 Write-Step "Waiting for the database to become healthy..."
 
-$maxWaitSeconds = 60
+$maxWait = 90
 $elapsed = 0
 $healthy = $false
-
-while ($elapsed -lt $maxWaitSeconds) {
+while ($elapsed -lt $maxWait) {
     $status = docker inspect --format='{{.State.Health.Status}}' manga_postgres 2>$null
-    if ($status -eq "healthy") {
-        $healthy = $true
-        break
-    }
-    Start-Sleep -Seconds 2
-    $elapsed += 2
+    if ($status -eq "healthy") { $healthy = $true; break }
+    Start-Sleep -Seconds 3
+    $elapsed += 3
 }
 
 if ($healthy) {
     Write-Success "Database is healthy"
 } else {
-    Write-Warn "Database health check timed out after ${maxWaitSeconds}s, continuing anyway..."
+    Write-Fail "Database did not become healthy after ${maxWait}s. Run 'docker compose logs db_postgres' to investigate."
 }
 
 # ==========================================
-# 5. Run migrations
+# 6. Run migrations
 # ==========================================
 Write-Step "Running database migrations..."
 
-function Invoke-Compose {
-    param([string[]]$Args)
-    if ($composeCmd -eq "docker-compose") {
-        & docker-compose @Args
-    } else {
-        & docker compose @Args
-    }
-}
-
 Invoke-Compose @("exec", "-T", "backend", "python", "manage.py", "makemigrations")
-if ($LASTEXITCODE -ne 0) { Write-ErrorAndExit "makemigrations failed" }
+if ($LASTEXITCODE -ne 0) { Write-Fail "makemigrations failed" }
 
 Invoke-Compose @("exec", "-T", "backend", "python", "manage.py", "migrate")
-if ($LASTEXITCODE -ne 0) { Write-ErrorAndExit "migrate failed" }
+if ($LASTEXITCODE -ne 0) { Write-Fail "migrate failed" }
 
 Write-Success "Migrations applied"
 
 # ==========================================
-# 6. Seed sample data (optional)
+# 7. Seed sample data (optional)
 # ==========================================
 if (-not $SkipSeed) {
     Write-Step "Inserting sample manga data..."
@@ -235,50 +221,77 @@ if (-not $SkipSeed) {
     if ($LASTEXITCODE -eq 0) {
         Write-Success "Sample data inserted"
     } else {
-        Write-Warn "Seeding failed or data already exists, continuing anyway..."
+        Write-Warn "Seeding skipped or already done — continuing."
     }
 } else {
     Write-Warn "Skipped sample data seeding (-SkipSeed)"
 }
 
 # ==========================================
-# 7. Create admin user (optional, interactive)
+# 8. Create admin user (prompt in PowerShell,
+#    pass via env vars + --noinput to avoid
+#    TTY issues with docker exec)
 # ==========================================
 if (-not $SkipSuperuser) {
-    Write-Step "Create an admin (superuser) account"
-    Write-Host "You will be prompted for a username, email, and password." -ForegroundColor Gray
+    Write-Step "Create an admin account"
+    Write-Host "  Enter credentials for the admin user." -ForegroundColor Gray
+    Write-Host ""
 
-    if ($composeCmd -eq "docker-compose") {
-        & docker-compose exec backend python manage.py createsuperuser
-    } else {
-        & docker compose exec backend python manage.py createsuperuser
-    }
+    do {
+        $adminUser = Read-Host "  Username"
+    } while ([string]::IsNullOrWhiteSpace($adminUser))
 
-    if ($LASTEXITCODE -ne 0) {
-        Write-Warn "Superuser creation was skipped or failed. You can create one later with:"
-        Write-Host "    $composeCmd exec backend python manage.py createsuperuser" -ForegroundColor Gray
+    $adminEmail = Read-Host "  Email (optional, press Enter to skip)"
+    if ([string]::IsNullOrWhiteSpace($adminEmail)) { $adminEmail = "" }
+
+    do {
+        $adminPass1 = Read-Host "  Password" -AsSecureString
+        $adminPass2 = Read-Host "  Confirm password" -AsSecureString
+        $p1 = [System.Runtime.InteropServices.Marshal]::PtrToStringAuto(
+                  [System.Runtime.InteropServices.Marshal]::SecureStringToBSTR($adminPass1))
+        $p2 = [System.Runtime.InteropServices.Marshal]::PtrToStringAuto(
+                  [System.Runtime.InteropServices.Marshal]::SecureStringToBSTR($adminPass2))
+        if ($p1 -ne $p2) { Write-Warn "Passwords do not match — try again." }
+        if ($p1.Length -lt 8) { Write-Warn "Password must be at least 8 characters."; $p1 = "" }
+    } while ($p1 -ne $p2 -or $p1.Length -lt 8)
+
+    # Use DJANGO_SUPERUSER_* env vars + --noinput to avoid TTY requirement
+    $createArgs = @(
+        "exec", "-T",
+        "-e", "DJANGO_SUPERUSER_USERNAME=$adminUser",
+        "-e", "DJANGO_SUPERUSER_EMAIL=$adminEmail",
+        "-e", "DJANGO_SUPERUSER_PASSWORD=$p1",
+        "backend",
+        "python", "manage.py", "createsuperuser", "--noinput"
+    )
+    Invoke-Compose $createArgs
+
+    if ($LASTEXITCODE -eq 0) {
+        Write-Success "Admin user '$adminUser' created"
     } else {
-        Write-Success "Admin user created"
+        Write-Warn "Admin creation failed (user may already exist). Create manually:"
+        Write-Host "    $composeLabel exec backend python manage.py createsuperuser" -ForegroundColor Gray
     }
 } else {
     Write-Warn "Skipped admin user creation (-SkipSuperuser)"
 }
 
 # ==========================================
-# 8. Done — print links
+# 9. Done
 # ==========================================
 Write-Host ""
 Write-Host "==========================================" -ForegroundColor Green
 Write-Host " Setup complete!" -ForegroundColor Green
 Write-Host "==========================================" -ForegroundColor Green
 Write-Host ""
-Write-Host " Frontend (React UI):     http://localhost:$FrontendPort" -ForegroundColor White
-Write-Host " Backend API (Django):    http://localhost:$BackendPort/api/" -ForegroundColor White
-Write-Host " Django Admin Panel:      http://localhost:$BackendPort/admin/" -ForegroundColor White
+Write-Host "  Frontend (React UI):   http://localhost:$FrontendPort" -ForegroundColor White
+Write-Host "  Backend API:           http://localhost:$BackendPort/api/" -ForegroundColor White
+Write-Host "  Django Admin Panel:    http://localhost:$BackendPort/admin/" -ForegroundColor White
 Write-Host ""
 Write-Host "Useful commands:" -ForegroundColor Cyan
-Write-Host "  Stop everything:        $composeCmd down"
-Write-Host "  View logs:              $composeCmd logs -f"
-Write-Host "  Restart backend only:   $composeCmd restart backend"
-Write-Host "  Create admin later:     $composeCmd exec backend python manage.py createsuperuser"
+Write-Host "  Stop all:              $composeLabel down"
+Write-Host "  Stop + wipe DB:        $composeLabel down --volumes"
+Write-Host "  View logs:             $composeLabel logs -f"
+Write-Host "  Restart backend:       $composeLabel restart backend"
+Write-Host "  Create admin later:    $composeLabel exec backend python manage.py createsuperuser"
 Write-Host ""
