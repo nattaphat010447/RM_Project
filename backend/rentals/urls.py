@@ -7,7 +7,7 @@ from .views import (
     return_item, fine_item, admin_users, admin_user_detail,
     admin_add_manga, admin_manage_manga, search_customers, manual_checkout,
     submit_manga_review, my_profile, RecommendationView, user_preferences,
-    log_behavior, behavior_log_stats
+    log_behavior, behavior_log_stats, health_check
 )
 
 from .admin_ml_views import ab_test_variants, ab_test_metrics, trigger_model_retrain, model_training_status
@@ -55,4 +55,7 @@ urlpatterns = [
     # Model training endpoints
     path('admin/ml/retrain/', trigger_model_retrain, name='trigger-retrain'),
     path('admin/ml/status/', model_training_status, name='training-status'),
+
+    # Health check
+    path('health/', health_check, name='health-check'),
 ]

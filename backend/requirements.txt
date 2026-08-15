@@ -11,3 +11,5 @@ pandas
 torch
 torch_geometric
 thefuzz
+gunicorn
+whitenoise
