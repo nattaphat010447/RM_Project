@@ -873,3 +873,9 @@ def behavior_log_stats(request):
         'ready_for_v2': unique_users_with_click >= 50,
     })
 
+
+@api_view(['GET'])
+def health_check(request):
+    """Simple health check endpoint for Railway healthchecks."""
+    return Response({"status": "ok"})
+
