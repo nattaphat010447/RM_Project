@@ -29,15 +29,25 @@ const SignIn = () => {
           headers: { 'Authorization': `Bearer ${data.access}` }
         });
         const profile = await profileRes.json();
-        
+
         localStorage.setItem('user_role', profile.role);
 
         if (profile.role === 'ADMIN') {
           navigate('/admin/dashboard');
         } else {
-          navigate('/');
+          // Check if user has preferences (for new users)
+          const prefsRes = await fetch(`${API_URL}/api/preferences/`, {
+            headers: { 'Authorization': `Bearer ${data.access}` }
+          });
+          const prefsData = await prefsRes.json();
+
+          if (!prefsData.has_preferences) {
+            navigate('/onboarding');
+          } else {
+            navigate('/');
+          }
         }
-        window.location.reload(); 
+        window.location.reload();
       } else {
         alert("Invalid credentials");
       }
