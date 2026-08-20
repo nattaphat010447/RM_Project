@@ -20,6 +20,9 @@ from .permissions import IsAdminRole
 from .ab_testing import ABTestManager
 import subprocess
 import threading
+import logging
+
+logger = logging.getLogger(__name__)
 
 User = get_user_model()
 
@@ -52,15 +55,19 @@ def add_to_cart(request, manga_id):
     manga = get_object_or_404(Manga, id=manga_id)
 
     with transaction.atomic():
+        # Check by manga, not by a specific copy - the same manga must not
+        # be added twice even though it's tracked in the cart by copy id
+        # (adding to cart doesn't reserve a copy, so a second call could
+        # otherwise pick a different available copy of the same manga).
+        if CartItem.objects.filter(cart=cart, manga_copy__manga=manga).exists():
+            return Response({"error": "This item is already in your cart."}, status=400)
+
         available_copy = MangaCopy.objects.select_for_update().filter(
             manga=manga, status=MangaCopy.Status.AVAILABLE
-        ).first()
+        ).order_by('id').first()
 
         if not available_copy:
             return Response({"error": "Sorry, no copies are currently available for rent."}, status=400)
-
-        if CartItem.objects.filter(cart=cart, manga_copy=available_copy).exists():
-            return Response({"error": "This item is already in your cart."}, status=400)
 
         CartItem.objects.create(cart=cart, manga_copy=available_copy, rent_days=rent_days)
 
@@ -143,50 +150,90 @@ def checkout_cart(request):
 
         return Response({"message": "Rental request confirmed! Please wait for admin approval.", "order_id": order.id}, status=201)
     except Exception as e:
+        logger.exception("checkout_cart failed for user %s", user.id)
         return Response({"error": "System error during checkout."}, status=500)
+
+def _build_ratings_context(orders):
+    """
+    Build a {(user_id, manga_id): rating} map for every order/manga pair in
+    `orders` with a single query, so RentalOrderItemSerializer.get_user_rating
+    doesn't fire one MangaReview query per item.
+    """
+    user_ids = set()
+    manga_ids = set()
+    for order in orders:
+        user_ids.add(order.user_id)
+        for item in order.items.all():
+            manga_ids.add(item.manga_copy.manga_id)
+
+    if not user_ids or not manga_ids:
+        return {'ratings_by_user_manga': {}}
+
+    reviews = MangaReview.objects.filter(user_id__in=user_ids, manga_id__in=manga_ids)
+    ratings_map = {(r.user_id, r.manga_id): r.rating for r in reviews}
+    return {'ratings_by_user_manga': ratings_map}
+
 
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
 def my_orders(request):
-    orders = RentalOrder.objects.filter(user=request.user).order_by('-requested_at')
-    serializer = RentalOrderSerializer(orders, many=True)
+    orders = list(
+        RentalOrder.objects.filter(user=request.user)
+        .select_related('user')
+        .prefetch_related('items__manga_copy__manga')
+        .order_by('-requested_at')
+    )
+    serializer = RentalOrderSerializer(orders, many=True, context=_build_ratings_context(orders))
     return Response(serializer.data)
 
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])
 def cancel_order(request, order_id):
-    order = get_object_or_404(RentalOrder, id=order_id, user=request.user)
-    
-    if order.status != RentalOrder.Status.REQUESTED:
-        return Response({"error": "You can only cancel requested orders."}, status=400)
-    
     try:
         with transaction.atomic():
+            order = get_object_or_404(
+                RentalOrder.objects.select_for_update(), id=order_id, user=request.user
+            )
+
+            if order.status != RentalOrder.Status.REQUESTED:
+                return Response({"error": "You can only cancel requested orders."}, status=400)
+
             order.status = RentalOrder.Status.CANCELLED
             order.save()
-            
+
             for item in order.items.all():
                 item.item_status = RentalOrderItem.ItemStatus.CANCELLED
                 item.save()
-                
+
                 item.manga_copy.status = MangaCopy.Status.AVAILABLE
                 item.manga_copy.save()
-                
+
         return Response({"message": "Order cancelled successfully."}, status=200)
     except Exception as e:
+        logger.exception("cancel_order failed for order %s", order_id)
         return Response({"error": "System error during cancellation."}, status=500)
     
 @api_view(['GET'])
 def popular_mangas(request):
     last_week = timezone.now() - timedelta(days=7)
-    
+
+    # Only count rentals that were actually fulfilled, not requests that
+    # were later cancelled/rejected (rental_date is set at creation time,
+    # before approval, so it doesn't by itself mean the rental happened).
     popular = Manga.objects.annotate(
         rent_count=Count(
-            'copies__rentalorderitem', 
-            filter=Q(copies__rentalorderitem__rental_date__gte=last_week)
+            'copies__rentalorderitem',
+            filter=Q(
+                copies__rentalorderitem__rental_date__gte=last_week,
+                copies__rentalorderitem__item_status__in=[
+                    RentalOrderItem.ItemStatus.CHECKED_OUT,
+                    RentalOrderItem.ItemStatus.RETURNED,
+                    RentalOrderItem.ItemStatus.LOST,
+                ]
+            )
         )
     ).filter(rent_count__gt=0).order_by('-rent_count')[:10]
-    
+
     serializer = MangaSerializer(popular, many=True)
     return Response(serializer.data)
 
@@ -240,44 +287,50 @@ def get_user_profile(request):
 @api_view(['GET'])
 @permission_classes([IsAdminRole])
 def admin_orders(request):
-    orders = RentalOrder.objects.all().order_by('-requested_at')
-    serializer = RentalOrderSerializer(orders, many=True)
+    orders = list(
+        RentalOrder.objects.all()
+        .select_related('user')
+        .prefetch_related('items__manga_copy__manga')
+        .order_by('-requested_at')
+    )
+    serializer = RentalOrderSerializer(orders, many=True, context=_build_ratings_context(orders))
     return Response(serializer.data)
 
 @api_view(['POST'])
 @permission_classes([IsAdminRole])
 def approve_order(request, order_id):
-    order = get_object_or_404(RentalOrder, id=order_id)
-    if order.status != RentalOrder.Status.REQUESTED:
-        return Response({"error": "Order is not requested."}, status=400)
-    
-    order.status = RentalOrder.Status.APPROVED
-    order.approved_at = timezone.now()
-    order.save()
-    
-    for item in order.items.all():
-        item.item_status = RentalOrderItem.ItemStatus.APPROVED
-        item.save()
-        
+    with transaction.atomic():
+        order = get_object_or_404(RentalOrder.objects.select_for_update(), id=order_id)
+        if order.status != RentalOrder.Status.REQUESTED:
+            return Response({"error": "Order is not requested."}, status=400)
+
+        order.status = RentalOrder.Status.APPROVED
+        order.approved_at = timezone.now()
+        order.save()
+
+        for item in order.items.all():
+            item.item_status = RentalOrderItem.ItemStatus.APPROVED
+            item.save()
+
     return Response({"message": "Order approved successfully."})
 
 @api_view(['POST'])
 @permission_classes([IsAdminRole])
 def reject_order(request, order_id):
-    order = get_object_or_404(RentalOrder, id=order_id)
-    if order.status != RentalOrder.Status.REQUESTED:
-        return Response({"error": "Order is not requested."}, status=400)
-    
     with transaction.atomic():
+        order = get_object_or_404(RentalOrder.objects.select_for_update(), id=order_id)
+        if order.status != RentalOrder.Status.REQUESTED:
+            return Response({"error": "Order is not requested."}, status=400)
+
         order.status = RentalOrder.Status.REJECTED
         order.save()
-        
+
         for item in order.items.all():
             item.item_status = RentalOrderItem.ItemStatus.CANCELLED
             item.save()
             item.manga_copy.status = MangaCopy.Status.AVAILABLE
             item.manga_copy.save()
-            
+
     return Response({"message": "Order rejected."})
 
 @api_view(['POST'])
@@ -320,11 +373,14 @@ def checkout_order(request, order_id):
 @api_view(['POST'])
 @permission_classes([IsAdminRole])
 def return_item(request, order_id, item_id):
-    item = get_object_or_404(RentalOrderItem, id=item_id, order__id=order_id)
-    if item.item_status != RentalOrderItem.ItemStatus.CHECKED_OUT:
-        return Response({"error": "Item is not checked out."}, status=400)
-
     with transaction.atomic():
+        item = get_object_or_404(
+            RentalOrderItem.objects.select_for_update().select_related('manga_copy', 'order'),
+            id=item_id, order__id=order_id
+        )
+        if item.item_status != RentalOrderItem.ItemStatus.CHECKED_OUT:
+            return Response({"error": "Item is not checked out."}, status=400)
+
         item.item_status = RentalOrderItem.ItemStatus.RETURNED
         item.returned_at = timezone.now()
         item.save()
@@ -332,7 +388,7 @@ def return_item(request, order_id, item_id):
         item.manga_copy.status = MangaCopy.Status.AVAILABLE
         item.manga_copy.save()
 
-        order = item.order
+        order = RentalOrder.objects.select_for_update().get(id=item.order_id)
         active_items = order.items.filter(item_status=RentalOrderItem.ItemStatus.CHECKED_OUT)
         if not active_items.exists():
             order.status = RentalOrder.Status.RETURNED
@@ -344,10 +400,6 @@ def return_item(request, order_id, item_id):
 @api_view(['POST'])
 @permission_classes([IsAdminRole])
 def fine_item(request, order_id, item_id):
-    item = get_object_or_404(RentalOrderItem, id=item_id, order__id=order_id)
-    if item.item_status != RentalOrderItem.ItemStatus.CHECKED_OUT:
-        return Response({"error": "Item is not checked out."}, status=400)
-
     fine_type = request.data.get('fine_type', 'LATE')
     if fine_type not in ('LATE', 'DAMAGE', 'LOST'):
         return Response({"error": "Invalid fine_type."}, status=400)
@@ -361,6 +413,13 @@ def fine_item(request, order_id, item_id):
         return Response({"error": "fine_amount cannot be negative."}, status=400)
 
     with transaction.atomic():
+        item = get_object_or_404(
+            RentalOrderItem.objects.select_for_update().select_related('manga_copy', 'order'),
+            id=item_id, order__id=order_id
+        )
+        if item.item_status != RentalOrderItem.ItemStatus.CHECKED_OUT:
+            return Response({"error": "Item is not checked out."}, status=400)
+
         if fine_type == 'LOST':
             item.item_status = RentalOrderItem.ItemStatus.LOST
             item.manga_copy.status = MangaCopy.Status.LOST
@@ -383,7 +442,7 @@ def fine_item(request, order_id, item_id):
                 amount=fine_amount
             )
 
-        order = item.order
+        order = RentalOrder.objects.select_for_update().get(id=item.order_id)
         order.total_fine += fine_amount
 
         active_items = order.items.filter(item_status=RentalOrderItem.ItemStatus.CHECKED_OUT)
@@ -501,12 +560,23 @@ def admin_manage_manga(request, manga_id):
         return Response(serializer.errors, status=400)
         
     elif request.method == 'DELETE':
-        manga.copies.all().delete()
-        
+        # MangaCopy is RESTRICT-protected by RentalOrderItem, so any copy that
+        # has ever been part of an order can't be hard-deleted (that history
+        # must be preserved). Only copies with no rental history are safe to
+        # remove outright; copies with history are kept but taken out of
+        # circulation instead.
+        copies = manga.copies.all()
+        kept_ids = list(
+            copies.filter(rentalorderitem__isnull=False).values_list('id', flat=True).distinct()
+        )
+
+        copies.exclude(id__in=kept_ids).delete()
+        MangaCopy.objects.filter(id__in=kept_ids).update(status=MangaCopy.Status.MAINTENANCE)
+
         manga.is_active = False
         manga.save()
-        
-        return Response({"message": "Manga and all copies removed successfully."})
+
+        return Response({"message": "Manga removed successfully."})
 
 @api_view(['GET'])
 @permission_classes([IsAdminRole])
@@ -575,20 +645,23 @@ def manual_checkout(request):
 
         return Response({"message": "In-store rental recorded successfully."}, status=201)
     except Exception as e:
-        return Response({"error": f"DB Error: {str(e)}"}, status=400)
+        logger.exception("manual_checkout failed")
+        return Response({"error": "System error during manual checkout."}, status=400)
 
 @api_view(['GET'])
 @permission_classes([IsAdminRole])
 def admin_all_history(request):
     history_items = RentalOrderItem.objects.filter(
         item_status__in=['CHECKED_OUT', 'RETURNED', 'LOST']
-    ).order_by('-rental_date')
+    ).select_related('order__user', 'manga_copy__manga').order_by('-rental_date')
     
     data = []
     for item in history_items:
         display_status = item.item_status
         if item.item_status == 'RETURNED':
-            if item.returned_at and item.due_at and item.returned_at.date() > item.due_at.date():
+            # Compare full timestamps, not just calendar dates - a book due at
+            # 08:00 and returned at 23:00 the same day is still late.
+            if item.returned_at and item.due_at and item.returned_at > item.due_at:
                 display_status = 'LATE'
             else:
                 display_status = 'ON_TIME'

@@ -80,8 +80,17 @@ function Set-EnvValue {
 }
 
 function Invoke-Compose {
-    param([string[]]$CmdArgs)
-    if ($script:useNewCompose) {
+    param(
+        [string[]]$CmdArgs,
+        [string]$StdinInput = $null
+    )
+    if ($StdinInput -ne $null) {
+        if ($script:useNewCompose) {
+            $StdinInput | & docker compose @CmdArgs
+        } else {
+            $StdinInput | & docker-compose @CmdArgs
+        }
+    } elseif ($script:useNewCompose) {
         & docker compose @CmdArgs
     } else {
         & docker-compose @CmdArgs
@@ -146,8 +155,12 @@ Write-Success "Ports set -> backend:$BackendPort  frontend:$FrontendPort  postgr
 # 3. Handle stale volumes (optional)
 # ==========================================
 
-# Auto-detect existing postgres volume even if -CleanVolumes wasn't passed
-$volumeName = (Split-Path -Leaf $scriptRoot).ToLower() + "_postgres_data"
+# Auto-detect existing postgres volume even if -CleanVolumes wasn't passed.
+# docker-compose.yml pins a fixed top-level `name:`, so the resulting volume
+# name is always "<name>_postgres_data" regardless of what folder the repo
+# was cloned/extracted into (Compose's default project-name derivation from
+# the folder name would otherwise mismatch for names with spaces, parens, etc).
+$volumeName = "rm_project_postgres_data"
 $volumeExists = docker volume ls --quiet | Where-Object { $_ -eq $volumeName }
 
 if (-not $CleanVolumes -and $volumeExists) {
@@ -280,16 +293,32 @@ if (-not $SkipSuperuser) {
         if ($p1.Length -lt 8) { Write-Warn "Password must be at least 8 characters."; $p1 = "" }
     } while ($p1 -ne $p2 -or $p1.Length -lt 8)
 
-    # Use DJANGO_SUPERUSER_* env vars + --noinput to avoid TTY requirement
-    $createArgs = @(
-        "exec", "-T",
-        "-e", "DJANGO_SUPERUSER_USERNAME=$adminUser",
-        "-e", "DJANGO_SUPERUSER_EMAIL=$adminEmail",
-        "-e", "DJANGO_SUPERUSER_PASSWORD=$p1",
-        "backend",
-        "python", "manage.py", "createsuperuser", "--noinput"
-    )
-    Invoke-Compose $createArgs
+    # Pass credentials via stdin to a small Django shell script instead of
+    # `-e DJANGO_SUPERUSER_PASSWORD=...` / `--noinput`, since command-line
+    # arguments to a process (including a docker exec's own args) are briefly
+    # visible to anything that can list process command lines on this machine
+    # (Task Manager's "Command line" column, Get-CimInstance Win32_Process).
+    # Reading from stdin avoids putting the plaintext password on any
+    # process's argument list.
+    # Single-quoted here-string so PowerShell passes \n through literally to
+    # Python's str.split() instead of expanding it as a newline itself.
+    $pythonScript = @'
+import sys
+import django
+django.setup()
+from django.contrib.auth import get_user_model
+
+username, email, password = sys.stdin.read().split("\n", 2)
+User = get_user_model()
+if User.objects.filter(username=username).exists():
+    print("EXISTS")
+    sys.exit(1)
+User.objects.create_superuser(username=username, email=email or "", password=password)
+print("CREATED")
+'@
+
+    $stdinPayload = "$adminUser`n$adminEmail`n$p1"
+    Invoke-Compose -CmdArgs @("exec", "-T", "backend", "python", "manage.py", "shell", "-c", $pythonScript) -StdinInput $stdinPayload
 
     if ($LASTEXITCODE -eq 0) {
         Write-Success "Admin user '$adminUser' created"
@@ -297,6 +326,12 @@ if (-not $SkipSuperuser) {
         Write-Warn "Admin creation failed (user may already exist). Create manually:"
         Write-Host "    $composeLabel exec backend python manage.py createsuperuser" -ForegroundColor Gray
     }
+
+    # Best-effort: clear the plaintext password from memory now that it's no
+    # longer needed (PowerShell strings are still immutable/GC'd, so this is
+    # a hardening gesture, not a guarantee).
+    $p1 = $null
+    $stdinPayload = $null
 } else {
     Write-Warn "Skipped admin user creation (-SkipSuperuser)"
 }

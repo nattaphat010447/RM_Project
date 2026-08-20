@@ -4,13 +4,21 @@ import { useNavigate, Link } from 'react-router-dom';
 const AdminMangas = () => {
   const [mangas, setMangas] = useState([]);
   const [searchTerm, setSearchTerm] = useState('');
+  const [loadError, setLoadError] = useState(null);
   const navigate = useNavigate();
   const API_URL = import.meta.env.VITE_API_BASE_URL;
 
   useEffect(() => {
     fetch(`${API_URL}/api/mangas/`)
-      .then(res => res.json())
-      .then(data => setMangas(data));
+      .then(res => {
+        if (!res.ok) throw new Error('Failed to load manga list.');
+        return res.json();
+      })
+      .then(data => setMangas(data))
+      .catch(err => {
+        console.error(err);
+        setLoadError(err.message);
+      });
   }, [API_URL]);
 
   const getImageUrl = (url) => {
@@ -60,6 +68,10 @@ const AdminMangas = () => {
             + Add Manga
           </Link>
         </div>
+
+        {loadError && (
+          <p className="text-brand-primary font-bold mb-4">{loadError}</p>
+        )}
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {filteredMangas.map(manga => (

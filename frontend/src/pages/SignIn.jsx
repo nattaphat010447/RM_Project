@@ -28,26 +28,38 @@ const SignIn = () => {
         const profileRes = await fetch(`${API_URL}/api/me/`, {
           headers: { 'Authorization': `Bearer ${data.access}` }
         });
+
+        if (!profileRes.ok) {
+          alert("Login succeeded but couldn't load your profile. Please try again.");
+          return;
+        }
         const profile = await profileRes.json();
 
         localStorage.setItem('user_role', profile.role);
 
         if (profile.role === 'ADMIN') {
+          // Navbar re-reads localStorage on route change (see its
+          // useEffect keyed on `location`), so navigate() alone is enough -
+          // no reload() needed, and reload() would race/abort navigate()'s
+          // client-side route change anyway.
           navigate('/admin/dashboard');
-        } else {
-          // Check if user has preferences (for new users)
-          const prefsRes = await fetch(`${API_URL}/api/preferences/`, {
-            headers: { 'Authorization': `Bearer ${data.access}` }
-          });
-          const prefsData = await prefsRes.json();
-
-          if (!prefsData.has_preferences) {
-            navigate('/onboarding');
-          } else {
-            navigate('/');
-          }
+          return;
         }
-        window.location.reload();
+
+        // Check if user has preferences (for new users)
+        const prefsRes = await fetch(`${API_URL}/api/preferences/`, {
+          headers: { 'Authorization': `Bearer ${data.access}` }
+        });
+
+        if (!prefsRes.ok) {
+          // Can't confirm preference state - default to the safer path
+          // (home) rather than guessing has_preferences from a broken response.
+          navigate('/');
+          return;
+        }
+        const prefsData = await prefsRes.json();
+
+        navigate(prefsData.has_preferences ? '/' : '/onboarding');
       } else {
         alert("Invalid credentials");
       }

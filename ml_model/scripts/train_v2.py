@@ -114,14 +114,15 @@ def evaluate_model(model, edge_click, edge_cart, edge_rent, test_data, device, k
             u_emb = user_embed[user_idx]
             scores = torch.matmul(item_embed, u_emb)
 
-            # Top-K items
-            topk_items = torch.topk(scores, k).indices.cpu().tolist()
+            # Top-K items (cap k at catalog size to avoid a topk() crash on small catalogs)
+            effective_k = min(k, scores.size(0))
+            topk_items = torch.topk(scores, effective_k).indices.cpu().tolist()
 
             true_set = set(true_items)
             hits = len(set(topk_items) & true_set)
 
-            # Recall@K
-            recall = hits / min(len(true_set), k)
+            # Recall@K = hits / total relevant items (not capped at k)
+            recall = hits / len(true_set)
             recalls.append(recall)
 
             # NDCG@K
@@ -293,9 +294,18 @@ if __name__ == '__main__':
     parser.add_argument('--lr', type=float, default=0.001)
     parser.add_argument('--l2_reg', type=float, default=0.02)
     parser.add_argument('--device', type=str, default='cpu')
+    parser.add_argument('--data_path', type=str, default=None)
+    parser.add_argument('--output_path', type=str, default=None)
     args = parser.parse_args()
 
+    # Resolve defaults relative to this script's directory, not the caller's cwd
+    script_dir = os.path.dirname(os.path.abspath(__file__))
+    data_path = args.data_path or os.path.join(script_dir, '..', 'data', 'mbcgcn_v2_graph_data.pt')
+    output_path = args.output_path or os.path.join(script_dir, '..', 'weights', 'mbcgcn_v2_manga_weights.pth')
+
     train_v2(
+        data_path=data_path,
+        output_path=output_path,
         epochs=args.epochs,
         batch_size=args.batch_size,
         embed_dim=args.embed_dim,

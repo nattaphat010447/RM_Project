@@ -103,9 +103,16 @@ class RentalOrderItemSerializer(serializers.ModelSerializer):
         fields = ['id', 'manga_id', 'manga_title', 'serial_no', 'rent_price_per_day', 'rent_days', 'item_status', 'due_at', 'user_rating']
 
     def get_user_rating(self, obj):
-        user = obj.order.user
-        manga = obj.manga_copy.manga
-        review = MangaReview.objects.filter(user=user, manga=manga).first()
+        # ratings_by_user_manga is a {(user_id, manga_id): rating} dict built
+        # once per request by the view and passed in via context, so this
+        # avoids firing one MangaReview query per order item.
+        ratings_map = self.context.get('ratings_by_user_manga')
+        if ratings_map is not None:
+            return ratings_map.get((obj.order.user_id, obj.manga_copy.manga_id), 0)
+
+        review = MangaReview.objects.filter(
+            user=obj.order.user, manga=obj.manga_copy.manga
+        ).first()
         return review.rating if review else 0
 
 class RentalOrderSerializer(serializers.ModelSerializer):

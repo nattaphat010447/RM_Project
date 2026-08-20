@@ -40,7 +40,22 @@ def bpr_loss(user_emb, pos_item_emb, neg_item_emb, tau=0.05):
     return -torch.mean(torch.nn.functional.logsigmoid(pos_scores - neg_scores))
 
 
-def evaluate_metrics(model, edge_cart, edge_rent_train, edge_rent_test,
+def extract_raw_pairs(edge_index_bidirectional, num_users):
+    """
+    Extract raw (un-offset) user->item pairs from a bidirectional edge_index
+    built by prepare_data.py's to_bipartite_edge_index(). The tensor stores
+    forward (user->item+offset) edges in the first half and the mirrored
+    reverse (item+offset->user) edges in the second half - only the first
+    half is needed to recover the original interaction pairs.
+    """
+    half = edge_index_bidirectional.size(1) // 2
+    forward = edge_index_bidirectional[:, :half]
+    users = forward[0]
+    items = forward[1] - num_users
+    return users, items
+
+
+def evaluate_metrics(model, edge_cart, edge_rent_train, edge_rent_test, num_users,
                      ks=[10, 20], num_samples=1000, device='cpu'):
     """
     Evaluate model performance with Recall@K and NDCG@K
@@ -50,6 +65,7 @@ def evaluate_metrics(model, edge_cart, edge_rent_train, edge_rent_test,
         edge_cart: CART behavior edges
         edge_rent_train: RENT training edges
         edge_rent_test: RENT test edges
+        num_users: total number of users (needed to strip the item offset)
         ks: List of K values for evaluation
         num_samples: Number of users to sample for evaluation
         device: Device to run evaluation on
@@ -61,14 +77,19 @@ def evaluate_metrics(model, edge_cart, edge_rent_train, edge_rent_test,
     with torch.no_grad():
         final_u_emb, final_i_emb = model(edge_cart, edge_rent_train)
 
-        test_users = torch.unique(edge_rent_test[0])
+        train_users, train_items = extract_raw_pairs(edge_rent_train, num_users)
+        test_users_raw, test_items_raw = extract_raw_pairs(edge_rent_test, num_users)
+
+        test_users = torch.unique(test_users_raw)
         num_eval = min(num_samples, len(test_users))
-        eval_users = test_users[torch.randperm(len(test_users))[:num_eval]]
+        eval_users = test_users[torch.randperm(len(test_users), device=test_users.device)[:num_eval]]
 
         metrics = {f'Recall@{k}': 0.0 for k in ks}
         metrics.update({f'NDCG@{k}': 0.0 for k in ks})
 
         norm_i = F.normalize(final_i_emb, p=2, dim=1)
+        num_items = final_i_emb.size(0)
+        max_k = min(max(ks), num_items)
 
         for u in eval_users:
             u_idx = u.item()
@@ -78,22 +99,21 @@ def evaluate_metrics(model, edge_cart, edge_rent_train, edge_rent_test,
             scores = torch.matmul(norm_i, norm_u)
 
             # Exclude training items
-            train_items = edge_rent_train[1][edge_rent_train[0] == u]
-            scores[train_items] = -float('inf')
+            train_items_for_u = train_items[train_users == u]
+            scores[train_items_for_u] = -float('inf')
 
-            true_items = edge_rent_test[1][edge_rent_test[0] == u].tolist()
+            true_items = test_items_raw[test_users_raw == u].tolist()
             true_items_set = set(true_items)
             n_rel = len(true_items)
 
             if n_rel == 0:
                 continue
 
-            max_k = max(ks)
             _, top_indices = torch.topk(scores, max_k)
             top_indices = top_indices.tolist()
 
             for k in ks:
-                top_k = top_indices[:k]
+                top_k = top_indices[:min(k, max_k)]
                 hits = [1 if item in true_items_set else 0 for item in top_k]
 
                 recall = sum(hits) / n_rel
@@ -158,9 +178,14 @@ def train_mbcgcn(
 
     print(f"Num Users: {num_users}, Num Items: {num_items}")
 
+    # edge_index_rent_train/test are bidirectional bipartite graphs built by
+    # prepare_data.py (user->item+offset in the first half, item+offset->user
+    # mirrored in the second half). Recover the raw (unoffset) pairs once here.
+    rent_users_raw, rent_items_raw = extract_raw_pairs(edge_index_rent_train, num_users)
+
     # Calculate item popularity for negative sampling
     print("Calculating Item Popularity Distribution...")
-    item_counts = torch.bincount(edge_index_rent_train[1], minlength=num_items).float()
+    item_counts = torch.bincount(rent_items_raw, minlength=num_items).float()
     item_weights = torch.pow(item_counts + 1.0, 0.75)
     item_probs = item_weights / item_weights.sum()
     item_probs = item_probs.to(device)
@@ -179,7 +204,7 @@ def train_mbcgcn(
     optimizer = optim.Adam(model.parameters(), lr=lr)
     scheduler = optim.lr_scheduler.StepLR(optimizer, step_size=100, gamma=0.5)
 
-    num_interactions = edge_index_rent_train.size(1)
+    num_interactions = rent_users_raw.size(0)
 
     print(f"Training for {epochs} epochs...")
     print(f"Batch size: {batch_size}, L2 lambda: {l2_lambda}")
@@ -195,8 +220,8 @@ def train_mbcgcn(
         sample_size = min(batch_size, num_interactions)
         indices = torch.randperm(num_interactions, device=device)[:sample_size]
 
-        users = edge_index_rent_train[0, indices]
-        pos_items = edge_index_rent_train[1, indices]
+        users = rent_users_raw[indices]
+        pos_items = rent_items_raw[indices]
 
         # Negative sampling
         neg_items = torch.multinomial(item_probs, sample_size, replacement=True)
@@ -237,6 +262,7 @@ def train_mbcgcn(
                 edge_index_cart,
                 edge_index_rent_train,
                 edge_index_rent_test,
+                num_users,
                 device=device
             )
             print(f"   Results @10: Recall: {res['Recall@10']:.4f}, NDCG: {res['NDCG@10']:.4f}")
@@ -251,6 +277,7 @@ def train_mbcgcn(
         edge_index_cart,
         edge_index_rent_train,
         edge_index_rent_test,
+        num_users,
         device=device
     )
 
@@ -260,11 +287,13 @@ def train_mbcgcn(
     print(f"Model saved to '{output_path}'")
 
     # Return metrics for logging
+    # edge_index_cart/rent_train store edges bidirectionally, so divide by 2
+    # to report the real number of raw interactions.
     return {
         'num_users': num_users,
         'num_items': num_items,
-        'num_cart': edge_index_cart.size(1),
-        'num_rent': edge_index_rent_train.size(1),
+        'num_cart': edge_index_cart.size(1) // 2,
+        'num_rent': edge_index_rent_train.size(1) // 2,
         'epochs': epochs,
         'recall@10': final_metrics['Recall@10'],
         'ndcg@10': final_metrics['NDCG@10'],

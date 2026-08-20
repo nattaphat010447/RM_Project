@@ -30,6 +30,9 @@ const MyProfile = () => {
           window.location.href = '/signin';
           throw new Error('Unauthorized');
         }
+        if (!res.ok) {
+          throw new Error('Failed to load profile.');
+        }
         return res.json();
       })
       .then(data => {

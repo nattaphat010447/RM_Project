@@ -162,7 +162,21 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 # CORS SETTINGS
 # ==========================================
 
-CORS_ALLOW_ALL_ORIGINS = True
+# Safe by default: wide-open CORS is only convenient for local dev, so it
+# defaults to DEBUG's value unless CORS_ALLOW_ALL_ORIGINS is set explicitly
+# in .env. This keeps a production deploy (DEBUG=False) from silently
+# inheriting an open-CORS policy just because it reused these settings.
+cors_allow_all_env = os.environ.get('CORS_ALLOW_ALL_ORIGINS')
+if cors_allow_all_env is not None:
+    CORS_ALLOW_ALL_ORIGINS = cors_allow_all_env == 'True'
+else:
+    CORS_ALLOW_ALL_ORIGINS = DEBUG
+
+# Comma-separated list of allowed origins, used when CORS_ALLOW_ALL_ORIGINS
+# is False, e.g. CORS_ALLOWED_ORIGINS=https://example.com,https://app.example.com
+cors_allowed_origins_env = os.environ.get('CORS_ALLOWED_ORIGINS')
+CORS_ALLOWED_ORIGINS = cors_allowed_origins_env.split(',') if cors_allowed_origins_env else []
+
 # ==========================================
 # Static files
 # ==========================================

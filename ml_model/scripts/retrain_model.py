@@ -1,50 +1,84 @@
+"""
+Retrain wrapper for MB-CGCN v1 (2 behaviors: CART -> RENT) - called from Django admin.
+
+This script:
+1. Finds the PENDING ModelTrainingLog created by admin_ml_views.trigger_model_retrain()
+2. Runs prepare_data.prepare_graph_data() against the MAL-style CSV dataset
+3. Runs train.main() to train the model
+4. Updates ModelTrainingLog with results
+5. Reloads RecommenderService
+"""
 import os
 import sys
-import json
-import torch
+import django
 from datetime import datetime
 
-# Add project root to path
+# Setup Django
 project_root = os.path.dirname(os.path.dirname(os.path.dirname(__file__)))
-sys.path.insert(0, project_root)
-
-# Django setup
-os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'backend.rental_system.settings')
-import django
+backend_path = os.path.join(project_root, 'backend')
+sys.path.insert(0, backend_path)
+os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'core.settings')
 django.setup()
 
-from backend.rentals.models import ModelTrainingLog
+from rentals.models import ModelTrainingLog
+from rentals.recommender import RecommenderService
+
 
 def prepare_data():
-    """Prepare training data from database"""
-    from ml_model.scripts.prepare_data import export_interactions_from_db
+    """Prepare training data from the MAL-style CSV dataset."""
+    sys.path.insert(0, os.path.join(project_root, 'ml_model', 'scripts'))
+    from prepare_data import prepare_graph_data
 
-    print("📊 Preparing training data...")
-    cart_file = os.path.join(project_root, 'ml_model', 'data', 'cart_interactions.csv')
-    rent_file = os.path.join(project_root, 'ml_model', 'data', 'rent_interactions.csv')
+    data_dir = os.path.join(project_root, 'ml_model', 'data')
+    anime_csv_path = os.path.join(data_dir, 'Anime.csv')
+    review_csv_path = os.path.join(data_dir, 'User-AnimeReview.csv')
+    output_path = os.path.join(data_dir, 'mbcgcn_graph_data.pt')
 
-    export_interactions_from_db(cart_file, rent_file)
-    print("✅ Data prepared")
+    if not os.path.exists(anime_csv_path) or not os.path.exists(review_csv_path):
+        raise FileNotFoundError(
+            f"Missing dataset files. Expected both:\n"
+            f"  {anime_csv_path}\n  {review_csv_path}"
+        )
 
-    return cart_file, rent_file
+    print("Step 1: Preparing training data...")
+    prepare_graph_data(
+        anime_csv_path=anime_csv_path,
+        review_csv_path=review_csv_path,
+        output_path=output_path,
+    )
+    print("Data prepared")
 
-def train_model(log_id):
-    """Train the MB-CGCN model"""
-    from ml_model.scripts.train import main as train_main
 
-    log = ModelTrainingLog.objects.get(id=log_id)
+def reload_recommender_service():
+    """Force reload the recommender service with new weights."""
+    print("Reloading recommender service...")
+    RecommenderService._instance = None
+    RecommenderService()
+    print("Recommender service reloaded")
+
+
+def main():
+    print("=" * 60)
+    print("MB-CGCN v1 Model Retraining Script")
+    print("=" * 60)
+
+    log = ModelTrainingLog.objects.filter(model_name='MB-CGCN', status='PENDING').order_by('-created_at').first()
+    if not log:
+        print("No PENDING training log found")
+        sys.exit(1)
+
     log.status = 'RUNNING'
     log.started_at = datetime.now()
     log.save()
 
     try:
-        print("🚀 Starting model training...")
+        prepare_data()
 
-        # Run training script
-        cart_file, rent_file = prepare_data()
-        metrics = train_main()  # Returns final metrics
+        print("Step 2: Training MB-CGCN model...")
+        sys.path.insert(0, os.path.join(project_root, 'ml_model', 'scripts'))
+        from train import main as train_main
+        metrics = train_main()
 
-        # Update log with results
         log.status = 'COMPLETED'
         log.completed_at = datetime.now()
         log.num_users = metrics.get('num_users', 0)
@@ -56,56 +90,22 @@ def train_model(log_id):
         log.final_ndcg_at_10 = metrics.get('ndcg@10', 0)
         log.save()
 
-        print("✅ Training completed successfully!")
+        print("Training completed successfully!")
         print(f"   Recall@10: {log.final_recall_at_10}")
         print(f"   NDCG@10: {log.final_ndcg_at_10}")
 
-        # Reload model in recommender service
         reload_recommender_service()
 
-        return True
+        print("\nModel retrained and deployed successfully!")
 
     except Exception as e:
-        print(f"❌ Training failed: {str(e)}")
+        print(f"Training failed: {str(e)}")
         log.status = 'FAILED'
         log.error_message = str(e)
         log.completed_at = datetime.now()
         log.save()
-        return False
+        sys.exit(1)
 
-def reload_recommender_service():
-    """Force reload the recommender service with new weights"""
-    from backend.rentals.recommender import RecommenderService
-
-    print("🔄 Reloading recommender service...")
-
-    # Clear singleton instance
-    RecommenderService._instance = None
-
-    # Reinitialize
-    service = RecommenderService()
-
-    print("✅ Recommender service reloaded")
-
-def create_training_job():
-    """Create a new training job entry"""
-    log = ModelTrainingLog.objects.create(
-        model_name='MB-CGCN',
-        status='PENDING'
-    )
-    return log.id
 
 if __name__ == '__main__':
-    print("=" * 60)
-    print("🤖 MB-CGCN Model Retraining Script")
-    print("=" * 60)
-
-    log_id = create_training_job()
-    success = train_model(log_id)
-
-    if success:
-        print("\n🎉 Model retrained and deployed successfully!")
-    else:
-        print("\n⚠️ Training failed. Check logs for details.")
-
-    sys.exit(0 if success else 1)
+    main()

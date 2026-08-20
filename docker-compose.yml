@@ -1,3 +1,5 @@
+name: rm_project
+
 services:
   db_postgres:
     image: postgres:15-alpine
@@ -34,7 +36,7 @@ services:
       db_postgres:
         condition: service_healthy
     environment:
-      - POSTGRES_HOST=db_postgres
+      - POSTGRES_HOST=${POSTGRES_HOST:-db_postgres}
       - POSTGRES_DB=${POSTGRES_DB}
       - POSTGRES_USER=${POSTGRES_USER}
       - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}

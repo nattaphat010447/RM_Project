@@ -15,16 +15,25 @@ const AdminMangaForm = () => {
   const [currentImage, setCurrentImage] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
+  const [loadError, setLoadError] = useState(null);
+
   useEffect(() => {
     if (isEditMode) {
       fetch(`${API_URL}/api/mangas/${id}/`)
-        .then(res => res.json())
+        .then(res => {
+          if (!res.ok) throw new Error(res.status === 404 ? 'Manga not found.' : 'Failed to load manga.');
+          return res.json();
+        })
         .then(data => {
           setFormData({
             title: data.title, author: data.author || '', genre: data.genre || '',
             rental_price_per_day: data.rental_price_per_day, serial_numbers: ''
           });
           setCurrentImage(data.cover_image_url);
+        })
+        .catch(err => {
+          console.error(err);
+          setLoadError(err.message);
         });
     }
   }, [id, API_URL, isEditMode]);
@@ -52,11 +61,25 @@ const AdminMangaForm = () => {
     }
 
     if (!isEditMode && formData.serial_numbers) {
-      const serials = formData.serial_numbers
-        .split(',')
-        .map(s => s.trim())
-        .filter(s => s.length > 0);
+      const rawEntries = formData.serial_numbers.split(',').map(s => s.trim());
+      const serials = rawEntries.filter(s => s.length > 0);
       const unique = [...new Set(serials)];
+
+      const blankCount = rawEntries.length - serials.length;
+      const duplicateCount = serials.length - unique.length;
+      if (blankCount > 0 || duplicateCount > 0) {
+        const parts = [];
+        if (duplicateCount > 0) parts.push(`${duplicateCount} duplicate serial number(s)`);
+        if (blankCount > 0) parts.push(`${blankCount} empty entr${blankCount === 1 ? 'y' : 'ies'}`);
+        const proceed = window.confirm(
+          `${parts.join(' and ')} will be skipped, so only ${unique.length} copy(ies) will be created instead of ${rawEntries.length}. Continue?`
+        );
+        if (!proceed) {
+          setIsSubmitting(false);
+          return;
+        }
+      }
+
       dataToSend.append('serial_numbers', unique.join(','));
     }
 
@@ -109,6 +132,17 @@ const AdminMangaForm = () => {
     }
     return `${baseUrl}/media/${url}`;
   };
+
+  if (loadError) {
+    return (
+      <div className="min-h-screen bg-brand-light flex flex-col items-center justify-center gap-4">
+        <p className="text-brand-primary font-bold">{loadError}</p>
+        <button onClick={() => navigate('/admin/mangas')} className="border px-6 py-2 rounded font-bold hover:bg-brand-light">
+          Back to Mangas
+        </button>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-brand-light p-4 flex justify-center items-center">

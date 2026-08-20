@@ -62,21 +62,37 @@ class RecommenderService:
     def _init_service(self):
         print("Initializing Recommender Service")
 
-        # Try loading from ml_model/ folder first (new structure)
+        # Prefer the ml_model/ folder, but only if the actual weight+data
+        # files are present there - the folder itself is tracked in git
+        # (README, scripts) even on a fresh clone, while ml_model/weights/
+        # and ml_model/data/ are empty until someone runs training or
+        # copy_existing_models.py, since git doesn't track empty directories.
         project_root = os.path.dirname(os.path.dirname(os.path.dirname(__file__)))
         ml_model_path = os.path.join(project_root, 'ml_model')
 
-        if os.path.exists(ml_model_path):
-            base_path = ml_model_path
-            weight_path = os.path.join(base_path, 'weights', 'mbcgcn_manga_weights.pth')
-            data_path = os.path.join(base_path, 'data', 'mbcgcn_graph_data.pt')
-            print(f"Loading model from ml_model/ folder")
+        new_weight_path = os.path.join(ml_model_path, 'weights', 'mbcgcn_manga_weights.pth')
+        new_data_path = os.path.join(ml_model_path, 'data', 'mbcgcn_graph_data.pt')
+
+        legacy_base_path = os.path.join(os.path.dirname(__file__), 'ml_models')
+        legacy_weight_path = os.path.join(legacy_base_path, 'mbcgcn_model_weights.pth')
+        legacy_data_path = os.path.join(legacy_base_path, 'mbcgcn_graph_data.pt')
+
+        if os.path.exists(new_weight_path) and os.path.exists(new_data_path):
+            weight_path = new_weight_path
+            data_path = new_data_path
+            print("Loading model from ml_model/ folder")
+        elif os.path.exists(legacy_weight_path) and os.path.exists(legacy_data_path):
+            weight_path = legacy_weight_path
+            data_path = legacy_data_path
+            print("Loading model from backend/rentals/ml_models/ (legacy)")
         else:
-            # Fallback to old location
-            base_path = os.path.join(os.path.dirname(__file__), 'ml_models')
-            weight_path = os.path.join(base_path, 'mbcgcn_model_weights.pth')
-            data_path = os.path.join(base_path, 'mbcgcn_graph_data.pt')
-            print(f"Loading model from backend/rentals/ml_models/ (legacy)")
+            raise FileNotFoundError(
+                "No trained MB-CGCN model found. Expected weights+data in either:\n"
+                f"  {ml_model_path}/weights/ + {ml_model_path}/data/\n"
+                f"  {legacy_base_path}/\n"
+                "Run ml_model/scripts/train.py (after prepare_data.py) or "
+                "ml_model/scripts/copy_existing_models.py to populate one of these."
+            )
 
         self.device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
         
@@ -108,9 +124,10 @@ class RecommenderService:
             
             u_emb = final_u_emb[user_idx]
             scores = torch.matmul(final_i_emb, u_emb)
-            
-            top_indices = torch.topk(scores, top_k).indices.cpu().numpy()
-            
+
+            effective_k = min(top_k, scores.size(0))
+            top_indices = torch.topk(scores, effective_k).indices.cpu().numpy()
+
             recommended_ids = [self.rev_item_mapping[idx] for idx in top_indices]
             return recommended_ids
     
@@ -134,7 +151,8 @@ class RecommenderService:
             scores = torch.matmul(final_i_emb, pseudo_user_emb)
             scores[valid_item_idxs] = -float('inf')
 
-            top_indices = torch.topk(scores, top_k).indices.cpu().numpy()
+            effective_k = min(top_k, scores.size(0))
+            top_indices = torch.topk(scores, effective_k).indices.cpu().numpy()
             return [self.rev_item_mapping[idx] for idx in top_indices]
 
     def get_recommendations_with_explanations(self, username=None, preference_mbrs_ids=None, top_k=10):
@@ -160,7 +178,8 @@ class RecommenderService:
                 user_idx = self.user_mapping[username]
                 u_emb = final_u_emb[user_idx]
                 scores = torch.matmul(final_i_emb, u_emb)
-                top_indices = torch.topk(scores, top_k).indices.cpu().numpy()
+                effective_k = min(top_k, scores.size(0))
+                top_indices = torch.topk(scores, effective_k).indices.cpu().numpy()
 
                 results = []
                 for idx in top_indices:
@@ -178,7 +197,8 @@ class RecommenderService:
                     scores = torch.matmul(final_i_emb, pseudo_user_emb)
                     scores[valid_idxs] = -float('inf')
 
-                    top_indices = torch.topk(scores, top_k).indices.cpu().numpy()
+                    effective_k = min(top_k, scores.size(0))
+                    top_indices = torch.topk(scores, effective_k).indices.cpu().numpy()
 
                     results = []
                     for idx in top_indices:

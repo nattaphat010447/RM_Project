@@ -25,6 +25,13 @@ async function refreshAccessToken() {
 export async function authFetch(url, options = {}) {
   let token = localStorage.getItem('access_token');
 
+  if (!token) {
+    // No point round-tripping to the API with a literal "Bearer null" -
+    // there's no session to refresh, so go straight to sign-in.
+    window.location.href = '/signin';
+    return Promise.reject(new Error('Not authenticated'));
+  }
+
   const makeRequest = (t) =>
     fetch(url, {
       ...options,

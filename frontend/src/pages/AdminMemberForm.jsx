@@ -19,11 +19,15 @@ const AdminMemberForm = () => {
   });
 
   const [loading, setLoading] = useState(isEditMode);
+  const [loadError, setLoadError] = useState(null);
 
   useEffect(() => {
     if (isEditMode) {
       authFetch(`${API_URL}/api/admin/users/${id}/`)
-        .then(res => res.json())
+        .then(res => {
+          if (!res.ok) throw new Error(res.status === 404 ? 'Member not found.' : 'Failed to load member.');
+          return res.json();
+        })
         .then(data => {
           setFormData({
             username: data.username || '',
@@ -38,6 +42,7 @@ const AdminMemberForm = () => {
         })
         .catch(err => {
           console.error(err);
+          setLoadError(err.message);
           setLoading(false);
         });
     }
@@ -89,6 +94,17 @@ const AdminMemberForm = () => {
   };
 
   if (loading) return <div className="min-h-screen bg-brand-light flex items-center justify-center">Loading...</div>;
+
+  if (loadError) {
+    return (
+      <div className="min-h-screen bg-brand-light flex flex-col items-center justify-center gap-4">
+        <p className="text-brand-primary font-bold">{loadError}</p>
+        <button onClick={() => navigate('/admin/members')} className="border border-brand-secondary hover:bg-brand-light text-brand-primary font-bold py-2 px-6 rounded-lg transition">
+          Back to Members
+        </button>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-brand-light p-4 flex items-center justify-center">

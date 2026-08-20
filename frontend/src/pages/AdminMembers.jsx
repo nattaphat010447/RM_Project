@@ -9,14 +9,19 @@ const AdminMembers = () => {
   const API_URL = import.meta.env.VITE_API_BASE_URL;
 
   const fetchMembers = () => {
-    const token = localStorage.getItem('access_token');
     authFetch(`${API_URL}/api/admin/users/`)
-      .then(res => res.json())
+      .then(res => {
+        if (!res.ok) throw new Error('Failed to load members');
+        return res.json();
+      })
       .then(data => {
         setMembers(data);
         setLoading(false);
       })
-      .catch(err => console.error(err));
+      .catch(err => {
+        console.error(err);
+        setLoading(false);
+      });
   };
 
   useEffect(() => { fetchMembers(); }, []);

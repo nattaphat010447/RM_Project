@@ -12,9 +12,14 @@ class User(AbstractUser):
     dob = models.DateField(blank=True, null=True)
 
     def save(self, *args, **kwargs):
-        # Keep role in sync: is_superuser/is_staff always → ADMIN
+        # Keep role in sync with Django's own admin flags in both directions:
+        # granting is_superuser/is_staff promotes to ADMIN, and revoking both
+        # demotes back to CUSTOMER so a demoted staff member loses access to
+        # every IsAdminRole-gated endpoint immediately.
         if self.is_superuser or self.is_staff:
             self.role = self.Role.ADMIN
+        elif self.role == self.Role.ADMIN:
+            self.role = self.Role.CUSTOMER
         super().save(*args, **kwargs)
 
     def __str__(self):

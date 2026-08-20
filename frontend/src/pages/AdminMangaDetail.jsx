@@ -9,6 +9,7 @@ const AdminMangaDetail = () => {
   const navigate = useNavigate();
 
   const [manga, setManga] = useState(null);
+  const [loadError, setLoadError] = useState(null);
 
   const [searchUserQuery, setSearchUserQuery] = useState('');
   const [userResults, setUserResults] = useState([]);
@@ -21,13 +22,19 @@ const AdminMangaDetail = () => {
     if (id === 'new') return;
 
     fetch(`${API_URL}/api/mangas/${id}/`)
-      .then(res => res.json())
+      .then(res => {
+        if (!res.ok) throw new Error(res.status === 404 ? 'Manga not found.' : 'Failed to load manga.');
+        return res.json();
+      })
       .then(data => {
         setManga(data);
         const availableCopies = data.copies?.filter(c => c.status === 'AVAILABLE') || [];
         if (availableCopies.length > 0) setSelectedCopy(availableCopies[0].id);
       })
-      .catch(err => console.error(err));
+      .catch(err => {
+        console.error(err);
+        setLoadError(err.message);
+      });
   }, [id, API_URL]);
 
   const getImageUrl = (url) => {
@@ -91,6 +98,17 @@ const AdminMangaDetail = () => {
       setIsCheckingOut(false);
     }
   };
+
+  if (loadError) {
+    return (
+      <div className="min-h-screen bg-brand-light flex flex-col items-center justify-center gap-4">
+        <p className="text-brand-primary font-bold">{loadError}</p>
+        <button onClick={() => navigate('/admin/mangas')} className="text-brand-primary hover:text-brand-primary font-semibold underline">
+          Back to Mangas
+        </button>
+      </div>
+    );
+  }
 
   if (!manga) return <div className="min-h-screen bg-brand-light flex justify-center items-center">Loading...</div>;
 

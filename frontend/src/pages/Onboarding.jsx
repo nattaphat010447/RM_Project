@@ -20,10 +20,20 @@ const Onboarding = () => {
       return;
     }
 
+    // Guards against a slow response from a previous mount (e.g. dev
+    // StrictMode's double-invoke, or the user navigating away and back
+    // quickly) landing after this effect's own cleanup and clobbering
+    // state with stale data.
+    let isMounted = true;
+
     // Fetch existing preferences
     authFetch(`${API_URL}/api/preferences/`)
-      .then(res => res.json())
+      .then(res => {
+        if (!res.ok) throw new Error('Failed to load preferences');
+        return res.json();
+      })
       .then(data => {
+        if (!isMounted) return;
         if (data.has_preferences && data.preferences) {
           const prefIds = data.preferences.map(p => p.manga_id);
           setExistingPreferences(prefIds);
@@ -34,15 +44,23 @@ const Onboarding = () => {
 
     // Fetch all mangas
     fetch(`${API_URL}/api/mangas/`)
-      .then(res => res.json())
+      .then(res => {
+        if (!res.ok) throw new Error('Failed to load manga list');
+        return res.json();
+      })
       .then(data => {
+        if (!isMounted) return;
         setMangas(data);
         setLoading(false);
       })
       .catch(err => {
         console.error(err);
-        setLoading(false);
+        if (isMounted) setLoading(false);
       });
+
+    return () => {
+      isMounted = false;
+    };
   }, [API_URL, navigate]);
 
   const toggleManga = (mangaId) => {

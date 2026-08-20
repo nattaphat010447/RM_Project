@@ -19,10 +19,17 @@ const SignUp = () => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
+  const isValidPhone = (phone) => /^[0-9+\-\s]{9,15}$/.test(phone.trim());
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (formData.password !== formData.confirmPassword) {
       alert("Passwords do not match!");
+      return;
+    }
+
+    if (!isValidPhone(formData.phone)) {
+      alert("Please enter a valid phone number (9-15 digits).");
       return;
     }
 
@@ -81,7 +88,16 @@ const SignUp = () => {
             <div className="md:col-span-2 text-xs font-semibold text-brand-primary uppercase tracking-wide border-b border-brand-primary pb-2 mt-4">Personal Info</div>
             <input type="text" name="first_name" placeholder="First Name" onChange={handleChange} className="input-modern" />
             <input type="text" name="last_name" placeholder="Last Name" onChange={handleChange} className="input-modern" />
-            <input type="tel" name="phone" placeholder="Phone Number (e.g. 0812345678)" onChange={handleChange} className="input-modern" />
+            <input
+              type="tel"
+              name="phone"
+              placeholder="Phone Number (e.g. 0812345678)"
+              onChange={handleChange}
+              required
+              pattern="[0-9+\-\s]{9,15}"
+              title="Enter a valid phone number (9-15 digits, may include +, -, spaces)"
+              className="input-modern"
+            />
             <div className="flex flex-col">
               <label className="text-xs text-brand-primary ml-2 mb-1 font-medium">Date of Birth</label>
               <input type="date" name="dob" onChange={handleChange} className="input-modern" />

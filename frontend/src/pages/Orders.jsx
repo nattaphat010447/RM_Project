@@ -73,7 +73,10 @@ const Orders = () => {
     }
 
     authFetch(`${API_URL}/api/orders/`)
-      .then(res => res.json())
+      .then(res => {
+        if (!res.ok) throw new Error('Failed to load orders.');
+        return res.json();
+      })
       .then(data => {
         setOrders(data);
         setLoading(false);

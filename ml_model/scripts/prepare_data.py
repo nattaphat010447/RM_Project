@@ -54,11 +54,23 @@ def prepare_graph_data(
 
     print("Step 3: Extracting Behaviors & Train/Test Split...")
 
+    def to_bipartite_edge_index(user_idx_values, item_idx_values, num_users):
+        """
+        Build an undirected bipartite edge_index for a GCN that operates on
+        torch.cat([user_emb, item_emb]) (item nodes live at [num_users, num_users+num_items)).
+        Includes both user->item and item->user edges so message passing
+        updates both sides of the graph.
+        """
+        users = np.asarray(user_idx_values)
+        items = np.asarray(item_idx_values) + num_users
+        src = np.concatenate([users, items])
+        dst = np.concatenate([items, users])
+        return torch.tensor(np.array([src, dst]), dtype=torch.long)
+
     # CART behavior: "Plan to Watch"
     df_cart = df_interact[df_interact['status'] == 'Plan to Watch']
-    edge_index_cart = torch.tensor(
-        np.array([df_cart['user_idx'].values, df_cart['item_idx'].values]),
-        dtype=torch.long
+    edge_index_cart = to_bipartite_edge_index(
+        df_cart['user_idx'].values, df_cart['item_idx'].values, num_users
     )
 
     # RENT behavior: "Watching" + "Completed"
@@ -69,13 +81,11 @@ def prepare_graph_data(
         random_state=random_state
     )
 
-    edge_index_rent_train = torch.tensor(
-        np.array([df_rent_train['user_idx'].values, df_rent_train['item_idx'].values]),
-        dtype=torch.long
+    edge_index_rent_train = to_bipartite_edge_index(
+        df_rent_train['user_idx'].values, df_rent_train['item_idx'].values, num_users
     )
-    edge_index_rent_test = torch.tensor(
-        np.array([df_rent_test['user_idx'].values, df_rent_test['item_idx'].values]),
-        dtype=torch.long
+    edge_index_rent_test = to_bipartite_edge_index(
+        df_rent_test['user_idx'].values, df_rent_test['item_idx'].values, num_users
     )
 
     print("\nGraph Construction Complete! Shape of Edge Tensors:")

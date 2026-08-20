@@ -24,7 +24,7 @@ from collections import defaultdict
 project_root = os.path.dirname(os.path.dirname(os.path.dirname(__file__)))
 backend_path = os.path.join(project_root, 'backend')
 sys.path.insert(0, backend_path)
-os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'backend.settings')
+os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'core.settings')
 django.setup()
 
 from rentals.models import UserBehaviorLog, User, Manga
