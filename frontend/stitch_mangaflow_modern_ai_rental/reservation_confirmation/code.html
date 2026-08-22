@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Manga Discovery - Reservation Confirmation</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&amp;family=Inter:wght@500;600&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+          darkMode: "class",
+          theme: {
+            extend: {
+              "colors": {
+                      "on-primary-container": "#dac5ff",
+                      "on-tertiary-fixed-variant": "#46464f",
+                      "surface-dim": "#dad6ff",
+                      "error-container": "#ffdad6",
+                      "on-secondary": "#ffffff",
+                      "primary-container": "#6d28d9",
+                      "on-primary-fixed": "#250059",
+                      "on-primary-fixed-variant": "#5b00c5",
+                      "error": "#ba1a1a",
+                      "inverse-primary": "#d3bbff",
+                      "inverse-on-surface": "#f3eeff",
+                      "on-error-container": "#93000a",
+                      "surface-container-low": "#f6f2ff",
+                      "surface-bright": "#fcf8ff",
+                      "on-surface-variant": "#4a4455",
+                      "tertiary-fixed": "#e3e1ed",
+                      "background": "#fcf8ff",
+                      "surface-container": "#efebff",
+                      "on-error": "#ffffff",
+                      "tertiary-container": "#575761",
+                      "inverse-surface": "#2d2a5b",
+                      "on-tertiary": "#ffffff",
+                      "surface-container-lowest": "#ffffff",
+                      "on-secondary-fixed-variant": "#004c6e",
+                      "outline-variant": "#ccc3d7",
+                      "secondary-fixed": "#c9e6ff",
+                      "primary": "#5300b7",
+                      "on-tertiary-fixed": "#1a1b23",
+                      "outline": "#7b7486",
+                      "on-secondary-container": "#004666",
+                      "surface": "#fcf8ff",
+                      "surface-variant": "#e3dfff",
+                      "surface-container-high": "#e9e5ff",
+                      "surface-tint": "#7331df",
+                      "tertiary": "#3f4049",
+                      "surface-container-highest": "#e3dfff",
+                      "on-surface": "#181445",
+                      "on-background": "#181445",
+                      "primary-fixed-dim": "#d3bbff",
+                      "on-tertiary-container": "#cfcdd9",
+                      "primary-fixed": "#ebddff",
+                      "secondary": "#006591",
+                      "secondary-container": "#39b8fd",
+                      "on-primary": "#ffffff",
+                      "secondary-fixed-dim": "#89ceff",
+                      "on-secondary-fixed": "#001e2f",
+                      "tertiary-fixed-dim": "#c7c5d1",
+                      "success": "#059669",
+                      "on-success": "#ffffff",
+                      "success-container": "#d1fae5",
+                      "on-success-container": "#064e3b"
+              },
+              "borderRadius": {
+                      "DEFAULT": "0.25rem",
+                      "lg": "0.5rem",
+                      "xl": "0.75rem",
+                      "full": "9999px"
+              },
+              "spacing": {
+                      "xl": "64px",
+                      "gutter": "24px",
+                      "margin-mobile": "16px",
+                      "xs": "8px",
+                      "md": "24px",
+                      "base": "4px",
+                      "max-width": "1280px",
+                      "sm": "16px",
+                      "margin-desktop": "48px",
+                      "lg": "40px"
+              },
+              "fontFamily": {
+                      "headline-md": ["Plus Jakarta Sans"],
+                      "body-sm": ["Plus Jakarta Sans"],
+                      "label-sm": ["Inter"],
+                      "headline-xl-mobile": ["Plus Jakarta Sans"],
+                      "body-lg": ["Plus Jakarta Sans"],
+                      "label-md": ["Inter"],
+                      "headline-lg": ["Plus Jakarta Sans"],
+                      "body-md": ["Plus Jakarta Sans"],
+                      "headline-lg-mobile": ["Plus Jakarta Sans"],
+                      "headline-sm": ["Plus Jakarta Sans"],
+                      "headline-xl": ["Plus Jakarta Sans"]
+              },
+              "fontSize": {
+                      "headline-md": ["24px", {"lineHeight": "32px", "fontWeight": "700"}],
+                      "body-sm": ["14px", {"lineHeight": "20px", "fontWeight": "400"}],
+                      "label-sm": ["12px", {"lineHeight": "16px", "fontWeight": "500"}],
+                      "headline-xl-mobile": ["28px", {"lineHeight": "34px", "fontWeight": "800"}],
+                      "body-lg": ["18px", {"lineHeight": "28px", "fontWeight": "400"}],
+                      "label-md": ["14px", {"lineHeight": "16px", "letterSpacing": "0.05em", "fontWeight": "600"}],
+                      "headline-lg": ["32px", {"lineHeight": "40px", "letterSpacing": "-0.02em", "fontWeight": "700"}],
+                      "body-md": ["16px", {"lineHeight": "24px", "fontWeight": "400"}],
+                      "headline-lg-mobile": ["24px", {"lineHeight": "30px", "fontWeight": "700"}],
+                      "headline-sm": ["20px", {"lineHeight": "28px", "fontWeight": "600"}],
+                      "headline-xl": ["40px", {"lineHeight": "48px", "letterSpacing": "-0.02em", "fontWeight": "800"}]
+              }
+            }
+          }
+        }
+    </script>
+</head>
+<body class="bg-background text-on-background min-h-screen flex flex-col items-center justify-center p-gutter md:p-margin-desktop font-sans antialiased selection:bg-primary-container selection:text-on-primary-container">
+<!-- Note: TopNav and Footer are suppressed as this is a transactional success/confirmation screen -->
+<main class="w-full max-w-2xl mx-auto flex flex-col items-center animate-fade-in-up">
+<!-- Success Icon -->
+<div class="mb-sm relative">
+<div class="absolute inset-0 bg-success-container rounded-full scale-150 opacity-20 animate-pulse"></div>
+<div class="w-20 h-20 bg-success-container text-on-success-container rounded-full flex items-center justify-center relative shadow-[0px_12px_32px_rgba(30,27,75,0.12)] border-4 border-surface">
+<span class="material-symbols-outlined text-headline-xl font-bold" data-weight="fill" style="font-variation-settings: 'FILL' 1;">check_circle</span>
+</div>
+</div>
+<!-- Headline -->
+<h1 class="font-headline-xl-mobile md:font-headline-xl text-headline-xl-mobile md:text-headline-xl text-center text-on-surface mb-sm">Reservation Submitted!</h1>
+<p class="font-body-lg text-body-lg text-on-surface-variant text-center max-w-lg mb-lg">Your manga selection has been reserved successfully. Please review your pickup details below.</p>
+<!-- Reservation Details Card -->
+<div class="w-full bg-surface-container-lowest rounded-xl shadow-[0px_4px_20px_rgba(30,27,75,0.05)] border border-outline-variant/30 overflow-hidden mb-lg transition-transform hover:-translate-y-1 hover:shadow-[0px_12px_32px_rgba(30,27,75,0.12)] duration-300">
+<div class="p-gutter border-b border-outline-variant/30 bg-surface-container-low flex justify-between items-center">
+<div>
+<p class="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider mb-base">Reservation ID</p>
+<p class="font-headline-sm text-headline-sm text-on-surface">#RD-8842</p>
+</div>
+<div class="text-right">
+<p class="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider mb-base">Status</p>
+<span class="inline-flex items-center gap-xs px-2 py-1 rounded-full bg-success-container text-on-success-container font-label-sm text-label-sm">
+<span class="w-2 h-2 rounded-full bg-success"></span> Reserved
+                    </span>
+</div>
+</div>
+<div class="p-gutter flex flex-col md:flex-row justify-between gap-md border-b border-outline-variant/30">
+<div class="flex-1">
+<p class="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider mb-xs">Items Reserved</p>
+<p class="font-body-md text-body-md text-on-surface font-semibold flex items-center gap-xs">
+<span class="material-symbols-outlined text-on-surface-variant">menu_book</span> 3 Books
+                     </p>
+</div>
+<div class="flex-1 md:text-right">
+<p class="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider mb-xs">Estimated Fee</p>
+<p class="font-headline-sm text-headline-sm text-primary">฿90</p>
+</div>
+</div>
+<!-- Pickup Information / Step Indicator -->
+<div class="p-gutter bg-surface-bright">
+<h3 class="font-label-md text-label-md text-on-surface mb-md flex items-center gap-xs">
+<span class="material-symbols-outlined text-primary" data-weight="fill" style="font-variation-settings: 'FILL' 1;">storefront</span> 
+                    Pickup Information
+                </h3>
+<p class="font-body-sm text-body-sm text-on-surface-variant mb-md bg-surface-container p-sm rounded-lg border border-outline-variant/50">
+                    "Visit our store to collect your books. Payment will be processed at the counter."
+                </p>
+<div class="relative flex flex-col gap-sm">
+<!-- Vertical Line for steps -->
+<div class="absolute left-[11px] top-4 bottom-4 w-[2px] bg-outline-variant/30"></div>
+<div class="flex items-start gap-sm relative z-10">
+<div class="w-6 h-6 rounded-full bg-primary text-on-primary flex items-center justify-center font-label-sm text-label-sm flex-shrink-0 border-2 border-surface-bright mt-1">1</div>
+<div>
+<p class="font-label-md text-label-md text-on-surface">Reserved Online</p>
+<p class="font-body-sm text-body-sm text-on-surface-variant">Today, Just now</p>
+</div>
+</div>
+<div class="flex items-start gap-sm relative z-10 opacity-70">
+<div class="w-6 h-6 rounded-full bg-surface-container text-on-surface-variant flex items-center justify-center font-label-sm text-label-sm flex-shrink-0 border-2 border-surface-bright mt-1">2</div>
+<div>
+<p class="font-label-md text-label-md text-on-surface">Visit Store</p>
+<p class="font-body-sm text-body-sm text-on-surface-variant">Show Reservation ID at counter</p>
+</div>
+</div>
+<div class="flex items-start gap-sm relative z-10 opacity-70">
+<div class="w-6 h-6 rounded-full bg-surface-container text-on-surface-variant flex items-center justify-center font-label-sm text-label-sm flex-shrink-0 border-2 border-surface-bright mt-1">3</div>
+<div>
+<p class="font-label-md text-label-md text-on-surface">Pay &amp; Collect</p>
+<p class="font-body-sm text-body-sm text-on-surface-variant">Estimated ฿90 total</p>
+</div>
+</div>
+</div>
+</div>
+</div>
+<!-- CTAs -->
+<div class="flex flex-col sm:flex-row gap-sm w-full md:w-auto">
+<button class="px-md py-sm bg-primary text-on-primary rounded-lg font-label-md text-label-md hover:bg-primary/90 transition-colors shadow-sm flex items-center justify-center gap-xs">
+<span class="material-symbols-outlined">receipt_long</span>
+                View My Reservations
+            </button>
+<button class="px-md py-sm bg-transparent border border-outline text-on-surface rounded-lg font-label-md text-label-md hover:bg-surface-container transition-colors flex items-center justify-center gap-xs">
+<span class="material-symbols-outlined">explore</span>
+                Continue Browsing
+            </button>
+</div>
+</main>
+<style>
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        .animate-fade-in-up {
+            animation: fadeInUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        }
+    </style>
+</body></html>

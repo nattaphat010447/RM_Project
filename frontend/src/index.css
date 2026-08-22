@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Inter:wght@400;500;600&display=swap');
 
 @tailwind base;
 @tailwind components;
@@ -10,6 +10,36 @@
   --color-brand-secondary: #FAB95B;
   --color-brand-accent: #FAB95B;
   --color-brand-light: #FFFFFF;
+}
+
+/* Lumina design tokens (foundation only) */
+:root {
+  --lumina-primary: #5300B7;
+  --lumina-primary-light: #6D28D9;
+  --lumina-primary-soft: #EBDDFF;
+  --lumina-secondary: #006591;
+  --lumina-secondary-light: #39B8FD;
+  --lumina-surface: #FCF8FF;
+  --lumina-surface-alt: #F5F3FF;
+  --lumina-surface-card: #FFFFFF;
+  --lumina-text: #181445;
+  --lumina-text-muted: #4A4455;
+  --lumina-outline: #CCC3D7;
+
+  --status-available: #10B981;
+  --status-requested: #3B82F6;
+  --status-pending: #F59E0B;
+  --status-overdue: #EF4444;
+
+  --status-available-bg: rgba(16, 185, 129, 0.12);
+  --status-requested-bg: rgba(59, 130, 246, 0.12);
+  --status-pending-bg: rgba(245, 158, 11, 0.15);
+  --status-overdue-bg: rgba(239, 68, 68, 0.12);
+
+  --status-available-text: #047857;
+  --status-requested-text: #1D4ED8;
+  --status-pending-text: #B45309;
+  --status-overdue-text: #B91C1C;
 }
 
 /* Modern base styles */
@@ -104,11 +134,27 @@
   }
   
   .badge-success {
-    @apply bg-brand-light text-brand-primary text-xs font-semibold px-3 py-1 rounded-full;
+    @apply text-xs font-semibold px-3 py-1 rounded-full;
+    background-color: var(--status-available-bg);
+    color: var(--status-available-text);
   }
-  
+
   .badge-danger {
-    @apply bg-brand-light text-brand-primary text-xs font-semibold px-3 py-1 rounded-full;
+    @apply text-xs font-semibold px-3 py-1 rounded-full;
+    background-color: var(--status-overdue-bg);
+    color: var(--status-overdue-text);
+  }
+
+  .badge-info {
+    @apply text-xs font-semibold px-3 py-1 rounded-full;
+    background-color: var(--status-requested-bg);
+    color: var(--status-requested-text);
+  }
+
+  .badge-warning {
+    @apply text-xs font-semibold px-3 py-1 rounded-full;
+    background-color: var(--status-pending-bg);
+    color: var(--status-pending-text);
   }
   
   .section-header {

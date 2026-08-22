@@ -1,0 +1,391 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Manga Discovery</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&amp;family=Inter:wght@500;600&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "on-primary-container": "#dac5ff",
+                        "on-tertiary-fixed-variant": "#46464f",
+                        "surface-dim": "#dad6ff",
+                        "error-container": "#ffdad6",
+                        "on-secondary": "#ffffff",
+                        "primary-container": "#6d28d9",
+                        "on-primary-fixed": "#250059",
+                        "on-primary-fixed-variant": "#5b00c5",
+                        "error": "#ba1a1a",
+                        "inverse-primary": "#d3bbff",
+                        "inverse-on-surface": "#f3eeff",
+                        "on-error-container": "#93000a",
+                        "surface-container-low": "#f6f2ff",
+                        "surface-bright": "#fcf8ff",
+                        "on-surface-variant": "#4a4455",
+                        "tertiary-fixed": "#e3e1ed",
+                        "background": "#fcf8ff",
+                        "surface-container": "#efebff",
+                        "on-error": "#ffffff",
+                        "tertiary-container": "#575761",
+                        "inverse-surface": "#2d2a5b",
+                        "on-tertiary": "#ffffff",
+                        "surface-container-lowest": "#ffffff",
+                        "on-secondary-fixed-variant": "#004c6e",
+                        "outline-variant": "#ccc3d7",
+                        "secondary-fixed": "#c9e6ff",
+                        "primary": "#5300b7",
+                        "on-tertiary-fixed": "#1a1b23",
+                        "outline": "#7b7486",
+                        "on-secondary-container": "#004666",
+                        "surface": "#fcf8ff",
+                        "surface-variant": "#e3dfff",
+                        "surface-container-high": "#e9e5ff",
+                        "surface-tint": "#7331df",
+                        "tertiary": "#3f4049",
+                        "surface-container-highest": "#e3dfff",
+                        "on-surface": "#181445",
+                        "on-background": "#181445",
+                        "primary-fixed-dim": "#d3bbff",
+                        "on-tertiary-container": "#cfcdd9",
+                        "primary-fixed": "#ebddff",
+                        "secondary": "#006591",
+                        "secondary-container": "#39b8fd",
+                        "on-primary": "#ffffff",
+                        "secondary-fixed-dim": "#89ceff",
+                        "on-secondary-fixed": "#001e2f",
+                        "tertiary-fixed-dim": "#c7c5d1"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    "spacing": {
+                        "xl": "64px",
+                        "gutter": "24px",
+                        "margin-mobile": "16px",
+                        "xs": "8px",
+                        "md": "24px",
+                        "base": "4px",
+                        "max-width": "1280px",
+                        "sm": "16px",
+                        "margin-desktop": "48px",
+                        "lg": "40px"
+                    },
+                    "fontFamily": {
+                        "headline-md": ["Plus Jakarta Sans"],
+                        "body-sm": ["Plus Jakarta Sans"],
+                        "label-sm": ["Inter"],
+                        "headline-xl-mobile": ["Plus Jakarta Sans"],
+                        "body-lg": ["Plus Jakarta Sans"],
+                        "label-md": ["Inter"],
+                        "headline-lg": ["Plus Jakarta Sans"],
+                        "body-md": ["Plus Jakarta Sans"],
+                        "headline-lg-mobile": ["Plus Jakarta Sans"],
+                        "headline-sm": ["Plus Jakarta Sans"],
+                        "headline-xl": ["Plus Jakarta Sans"]
+                    },
+                    "fontSize": {
+                        "headline-md": ["24px", { "lineHeight": "32px", "fontWeight": "700" }],
+                        "body-sm": ["14px", { "lineHeight": "20px", "fontWeight": "400" }],
+                        "label-sm": ["12px", { "lineHeight": "16px", "fontWeight": "500" }],
+                        "headline-xl-mobile": ["28px", { "lineHeight": "34px", "fontWeight": "800" }],
+                        "body-lg": ["18px", { "lineHeight": "28px", "fontWeight": "400" }],
+                        "label-md": ["14px", { "lineHeight": "16px", "letterSpacing": "0.05em", "fontWeight": "600" }],
+                        "headline-lg": ["32px", { "lineHeight": "40px", "letterSpacing": "-0.02em", "fontWeight": "700" }],
+                        "body-md": ["16px", { "lineHeight": "24px", "fontWeight": "400" }],
+                        "headline-lg-mobile": ["24px", { "lineHeight": "30px", "fontWeight": "700" }],
+                        "headline-sm": ["20px", { "lineHeight": "28px", "fontWeight": "600" }],
+                        "headline-xl": ["40px", { "lineHeight": "48px", "letterSpacing": "-0.02em", "fontWeight": "800" }]
+                    }
+                },
+            },
+        }
+    </script>
+<style>
+        .manga-card-hover {
+            transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .manga-card-hover:hover {
+            transform: scale(1.02);
+            box-shadow: 0px 12px 32px rgba(83, 0, 183, 0.15); /* Primary Accent Tint */
+        }
+        .filter-checkbox:checked + div {
+            background-color: theme('colors.primary');
+            border-color: theme('colors.primary');
+        }
+        .filter-checkbox:checked + div svg {
+            display: block;
+        }
+        /* Hide scrollbar for clean horizontal scroll */
+        .no-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        .no-scrollbar {
+            -ms-overflow-style: none;  /* IE and Edge */
+            scrollbar-width: none;  /* Firefox */
+        }
+    </style>
+</head>
+<body class="bg-background text-on-background font-body-md antialiased pt-20">
+<!-- TopNavBar (From JSON) -->
+<nav class="fixed top-0 w-full z-50 bg-surface/80 dark:bg-surface/80 backdrop-blur-md shadow-[0px_4px_20px_rgba(30,27,75,0.05)]">
+<div class="flex justify-between items-center px-gutter max-w-max-width mx-auto h-20">
+<!-- Brand -->
+<div class="flex items-center gap-sm">
+<a class="font-headline-md text-headline-md font-bold text-primary dark:text-primary-fixed-dim" href="#">Manga Discovery</a>
+</div>
+<!-- Navigation Links (Desktop) -->
+<div class="hidden md:flex items-center gap-md font-label-md text-label-md">
+<a class="text-on-surface-variant dark:text-on-tertiary-container hover:text-primary transition-colors hover:text-primary dark:hover:text-primary-fixed-dim transition-all duration-200 scale-95 active:scale-90 transition-transform" href="#">Home</a>
+<!-- Discover is Active based on prompt intent -->
+<a class="text-primary dark:text-primary-fixed-dim border-b-2 border-primary dark:border-primary-fixed-dim pb-1 hover:text-primary dark:hover:text-primary-fixed-dim transition-all duration-200 scale-95 active:scale-90 transition-transform" href="#">Discover</a>
+<a class="text-on-surface-variant dark:text-on-tertiary-container hover:text-primary transition-colors hover:text-primary dark:hover:text-primary-fixed-dim transition-all duration-200 scale-95 active:scale-90 transition-transform" href="#">Popular</a>
+<a class="text-on-surface-variant dark:text-on-tertiary-container hover:text-primary transition-colors hover:text-primary dark:hover:text-primary-fixed-dim transition-all duration-200 scale-95 active:scale-90 transition-transform" href="#">Categories</a>
+</div>
+<!-- Search Bar (Right) & Icons -->
+<div class="flex items-center gap-sm">
+<!-- Inline Search -->
+<div class="hidden lg:flex relative">
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant text-sm" data-icon="search">search</span>
+<input class="pl-10 pr-4 py-2 w-64 bg-surface-container-low border border-outline-variant rounded-full text-body-sm font-body-sm focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-shadow" placeholder="Search manga, authors..." type="text"/>
+</div>
+<button aria-label="notifications" class="p-2 text-on-surface hover:text-primary transition-colors scale-95 active:scale-90 transition-transform">
+<span class="material-symbols-outlined" data-icon="notifications">notifications</span>
+</button>
+<button aria-label="shopping_basket" class="p-2 text-on-surface hover:text-primary transition-colors scale-95 active:scale-90 transition-transform">
+<span class="material-symbols-outlined" data-icon="shopping_basket">shopping_basket</span>
+</button>
+<button aria-label="account_circle" class="p-2 text-on-surface hover:text-primary transition-colors scale-95 active:scale-90 transition-transform">
+<span class="material-symbols-outlined" data-icon="account_circle">account_circle</span>
+</button>
+<!-- Mobile Menu Toggle -->
+<button aria-label="menu" class="md:hidden p-2 text-on-surface">
+<span class="material-symbols-outlined">menu</span>
+</button>
+</div>
+</div>
+</nav>
+<!-- Main Content Area -->
+<main class="max-w-max-width mx-auto px-margin-mobile md:px-gutter py-lg grid grid-cols-1 lg:grid-cols-12 gap-lg items-start">
+<!-- Header Section (Mobile/Tablet Top, Desktop spans full) -->
+<div class="lg:col-span-12 flex flex-col md:flex-row justify-between items-start md:items-end gap-md pb-md border-b border-outline-variant">
+<div>
+<h1 class="font-headline-xl text-headline-xl-mobile md:text-headline-xl text-on-surface mb-xs">Discover Manga</h1>
+<p class="font-body-md text-body-md text-on-surface-variant">Explore thousands of titles across all genres.</p>
+</div>
+<!-- Mobile Search Bar (Visible only on mobile/tablet) -->
+<div class="w-full lg:hidden relative mt-sm">
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant text-sm" data-icon="search">search</span>
+<input class="w-full pl-10 pr-4 py-3 bg-surface-container border border-outline-variant rounded-lg text-body-sm font-body-sm focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-shadow shadow-[0px_4px_20px_rgba(30,27,75,0.05)]" placeholder="Search manga, authors..." type="text"/>
+</div>
+</div>
+<!-- Left Sidebar: Filters -->
+<aside class="hidden lg:block lg:col-span-3 sticky top-28 space-y-md">
+<!-- Filter Group: Genres -->
+<div class="bg-surface-container-low rounded-xl p-sm shadow-[0px_4px_20px_rgba(30,27,75,0.05)]">
+<h3 class="font-headline-sm text-headline-sm text-on-surface mb-sm border-b border-outline-variant pb-xs">Genre</h3>
+<div class="space-y-xs">
+<!-- Checkbox Item -->
+<label class="flex items-center gap-3 cursor-pointer group">
+<div class="relative flex items-center justify-center">
+<input checked="" class="filter-checkbox peer sr-only" type="checkbox"/>
+<div class="w-5 h-5 border-2 border-outline rounded-DEFAULT bg-surface transition-colors group-hover:border-primary">
+<svg class="hidden w-3 h-3 text-on-primary absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 pointer-events-none" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path d="M5 13l4 4L19 7" stroke-linecap="round" stroke-linejoin="round" stroke-width="3"></path></svg>
+</div>
+</div>
+<span class="font-body-sm text-body-sm text-on-surface-variant group-hover:text-on-surface">Shonen</span>
+</label>
+<label class="flex items-center gap-3 cursor-pointer group">
+<div class="relative flex items-center justify-center">
+<input class="filter-checkbox peer sr-only" type="checkbox"/>
+<div class="w-5 h-5 border-2 border-outline rounded-DEFAULT bg-surface transition-colors group-hover:border-primary">
+<svg class="hidden w-3 h-3 text-on-primary absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 pointer-events-none" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path d="M5 13l4 4L19 7" stroke-linecap="round" stroke-linejoin="round" stroke-width="3"></path></svg>
+</div>
+</div>
+<span class="font-body-sm text-body-sm text-on-surface-variant group-hover:text-on-surface">Seinen</span>
+</label>
+<label class="flex items-center gap-3 cursor-pointer group">
+<div class="relative flex items-center justify-center">
+<input class="filter-checkbox peer sr-only" type="checkbox"/>
+<div class="w-5 h-5 border-2 border-outline rounded-DEFAULT bg-surface transition-colors group-hover:border-primary">
+<svg class="hidden w-3 h-3 text-on-primary absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 pointer-events-none" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path d="M5 13l4 4L19 7" stroke-linecap="round" stroke-linejoin="round" stroke-width="3"></path></svg>
+</div>
+</div>
+<span class="font-body-sm text-body-sm text-on-surface-variant group-hover:text-on-surface">Shojo</span>
+</label>
+</div>
+</div>
+<!-- Filter Group: Availability -->
+<div class="bg-surface-container-low rounded-xl p-sm shadow-[0px_4px_20px_rgba(30,27,75,0.05)]">
+<h3 class="font-headline-sm text-headline-sm text-on-surface mb-sm border-b border-outline-variant pb-xs">Availability</h3>
+<div class="space-y-xs">
+<label class="flex items-center gap-3 cursor-pointer group">
+<div class="relative flex items-center justify-center">
+<input checked="" class="filter-checkbox peer sr-only" type="checkbox"/>
+<div class="w-5 h-5 border-2 border-outline rounded-DEFAULT bg-surface transition-colors group-hover:border-primary">
+<svg class="hidden w-3 h-3 text-on-primary absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 pointer-events-none" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path d="M5 13l4 4L19 7" stroke-linecap="round" stroke-linejoin="round" stroke-width="3"></path></svg>
+</div>
+</div>
+<span class="font-body-sm text-body-sm text-on-surface-variant group-hover:text-on-surface">In Stock (Reserve)</span>
+</label>
+<label class="flex items-center gap-3 cursor-pointer group">
+<div class="relative flex items-center justify-center">
+<input class="filter-checkbox peer sr-only" type="checkbox"/>
+<div class="w-5 h-5 border-2 border-outline rounded-DEFAULT bg-surface transition-colors group-hover:border-primary">
+<svg class="hidden w-3 h-3 text-on-primary absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 pointer-events-none" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path d="M5 13l4 4L19 7" stroke-linecap="round" stroke-linejoin="round" stroke-width="3"></path></svg>
+</div>
+</div>
+<span class="font-body-sm text-body-sm text-on-surface-variant group-hover:text-on-surface">Available Online</span>
+</label>
+</div>
+</div>
+<button class="w-full py-2 px-4 bg-primary text-on-primary font-label-md text-label-md rounded-full shadow-[0px_4px_20px_rgba(30,27,75,0.05)] hover:bg-on-primary-fixed-variant transition-colors">
+                Apply Filters
+            </button>
+</aside>
+<!-- Main Grid Area -->
+<div class="lg:col-span-9 flex flex-col gap-md">
+<!-- Sorting & Results Count Bar -->
+<div class="flex flex-col sm:flex-row justify-between items-center gap-sm bg-surface-container-low p-3 rounded-lg shadow-[0px_4px_20px_rgba(30,27,75,0.05)]">
+<div class="font-body-sm text-body-sm text-on-surface-variant">
+                    Showing <span class="font-bold text-on-surface">12</span> of 1,248 results
+                </div>
+<div class="flex items-center gap-sm">
+<span class="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider">Sort By:</span>
+<select class="bg-surface border border-outline-variant text-on-surface font-body-sm text-body-sm rounded-md py-1 pl-3 pr-8 focus:ring-primary focus:border-primary">
+<option>Recommended</option>
+<option>Popular</option>
+<option>Newest</option>
+<option>Highest Rating</option>
+</select>
+<!-- Mobile Filter Toggle (Icon only) -->
+<button class="lg:hidden p-2 text-on-surface bg-surface-container-high rounded-md shadow-sm">
+<span class="material-symbols-outlined text-sm" data-icon="tune">tune</span>
+</button>
+</div>
+</div>
+<!-- Manga Grid -->
+<div class="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-4 gap-sm md:gap-md">
+<!-- Card 1 -->
+<div class="group relative bg-surface rounded-xl overflow-hidden shadow-[0px_4px_20px_rgba(30,27,75,0.05)] manga-card-hover flex flex-col">
+<div class="relative aspect-[2/3] w-full overflow-hidden bg-surface-variant">
+<img class="object-cover w-full h-full group-hover:scale-105 transition-transform duration-500" data-alt="A striking digital illustration manga cover featuring a young male protagonist with spiky dark hair and a glowing sword, standing against a high-contrast futuristic cityscape. The art style is crisp and modern anime, utilizing a palette of deep blacks, pristine whites, and vibrant neon blue accents. Soft studio lighting highlights the character's determined expression." src="https://lh3.googleusercontent.com/aida-public/AB6AXuCJDPa2jMrTjHg7NcsbFgtrANp4Z4FQvpw_FOcKu9ZUBV6JWM5vS_lxx_IOaqWez3K3_5NAWsWV_cVbLXZOhucHt3mFtBzlZaUbO3qZ8A8QulMV_YIXw-nU7uAVq3qWzAXOfWIwSK3DlHPJj4-aBRoycreSpii3qDxvrvTsYYvuVXL5vUdro-nI1WYGsyCpk0vTyjqWG9AzrpYtrh2OvuEk_mwk7J7wl3J_RgjIzwI8VWAJqpoo3mkd"/>
+<!-- Badge -->
+<div class="absolute top-2 right-2 bg-primary text-on-primary font-label-sm text-label-sm px-2 py-1 rounded-sm shadow-sm backdrop-blur-sm bg-opacity-90">
+                            Available
+                        </div>
+</div>
+<div class="p-3 flex-grow flex flex-col justify-between">
+<div>
+<h3 class="font-headline-sm text-headline-sm text-on-surface line-clamp-1 group-hover:text-primary transition-colors">Cyber Blade Zero</h3>
+<p class="font-body-sm text-body-sm text-on-surface-variant line-clamp-1 mt-1">Kenjiro Hata</p>
+</div>
+<div class="mt-3 flex items-center justify-between">
+<div class="flex items-center text-primary">
+<span class="material-symbols-outlined text-[16px]" data-icon="star" data-weight="fill" style="font-variation-settings: 'FILL' 1;">star</span>
+<span class="font-label-sm text-label-sm ml-1">4.8</span>
+</div>
+<button aria-label="Reserve" class="text-primary hover:bg-primary-container/20 p-1 rounded-full transition-colors">
+<span class="material-symbols-outlined text-[20px]" data-icon="bookmark_add">bookmark_add</span>
+</button>
+</div>
+</div>
+</div>
+<!-- Card 2 -->
+<div class="group relative bg-surface rounded-xl overflow-hidden shadow-[0px_4px_20px_rgba(30,27,75,0.05)] manga-card-hover flex flex-col">
+<div class="relative aspect-[2/3] w-full overflow-hidden bg-surface-variant">
+<img class="object-cover w-full h-full group-hover:scale-105 transition-transform duration-500" data-alt="A beautifully detailed manga cover art showing a serene fantasy forest landscape with giant glowing mushrooms and a lone female adventurer resting beneath a tree. The color palette is composed of soft off-whites, cool emerald greens, and deep purple shadows. The lighting is diffused and ethereal, creating a calm, mystical mood typical of high-end fantasy light novels." src="https://lh3.googleusercontent.com/aida-public/AB6AXuD5FdR2JwEnTD-t_WBIBY-3nHwNQX8O2q5x_Ao3bXmHi93u7MfdfKnao7cp3gZ4qbA_7d55F-12k-eLXnV6BQCrN12kEDuIefCW3WqsUPEcH5Bodqss_P4pBNJml9rDa5hyXwpp3h_iC1850zECKOTsCUJsTLiIT63dNSXKXyqhb2ViNG_DQe_vEaHngXf8BbEQi9hhq17SjkqniKyLB2fcEWH1r7sSBUocMyAfzwb5dPXxSAdNb0Hg"/>
+<!-- Badge -->
+<div class="absolute top-2 right-2 bg-surface-container-high text-on-surface-variant font-label-sm text-label-sm px-2 py-1 rounded-sm shadow-sm backdrop-blur-sm bg-opacity-90">
+                            Reserved
+                        </div>
+</div>
+<div class="p-3 flex-grow flex flex-col justify-between">
+<div>
+<h3 class="font-headline-sm text-headline-sm text-on-surface line-clamp-1 group-hover:text-primary transition-colors">Wandering Spores</h3>
+<p class="font-body-sm text-body-sm text-on-surface-variant line-clamp-1 mt-1">Aoi Miyazaki</p>
+</div>
+<div class="mt-3 flex items-center justify-between">
+<div class="flex items-center text-primary">
+<span class="material-symbols-outlined text-[16px]" data-icon="star" data-weight="fill" style="font-variation-settings: 'FILL' 1;">star</span>
+<span class="font-label-sm text-label-sm ml-1">4.5</span>
+</div>
+<button aria-label="Waitlist" class="text-on-surface-variant hover:bg-surface-variant p-1 rounded-full transition-colors">
+<span class="material-symbols-outlined text-[20px]" data-icon="hourglass_empty">hourglass_empty</span>
+</button>
+</div>
+</div>
+</div>
+<!-- Repeat minimal mock cards for layout visualization -->
+<!-- Card 3 -->
+<div class="group relative bg-surface rounded-xl overflow-hidden shadow-[0px_4px_20px_rgba(30,27,75,0.05)] manga-card-hover flex flex-col">
+<div class="relative aspect-[2/3] w-full overflow-hidden bg-surface-variant">
+<img class="object-cover w-full h-full group-hover:scale-105 transition-transform duration-500" data-alt="A dynamic action-oriented manga cover featuring two martial artists mid-kick in a stylized arena. The visual aesthetic relies on stark black ink lines against a pure white background, punctuated by intense slashes of deep primary purple to indicate motion blur. The mood is high-energy and competitive, reflecting a classic shonen tournament arc." src="https://lh3.googleusercontent.com/aida-public/AB6AXuCUDyLdPr5ftDnIYRPxBvufs03mGjLQcBc7cI1CdW7J8SnMd3IE4o6vS_AJ-nTJUynHttjHi-BtbmMAyc5u80LjivOrsLkaDuf6-ezFEUyYb4lfJLHBnnFbEYgPkoP_vtyxfAcN7t5l6i3g3uLuoIJ1YWuLb3Uend53CdmmZTkQFRRBVnmVGmgi26lVopm9bpg7e8jeI7YSRS3T3TE1MP1AvjG5zaefw0_vPCFZx-hoRqYHcuDkv51K"/>
+<div class="absolute top-2 right-2 bg-primary text-on-primary font-label-sm text-label-sm px-2 py-1 rounded-sm shadow-sm backdrop-blur-sm bg-opacity-90">
+                            Available
+                        </div>
+</div>
+<div class="p-3 flex-grow flex flex-col justify-between">
+<div><h3 class="font-headline-sm text-headline-sm text-on-surface line-clamp-1">Fist of the Zenith</h3><p class="font-body-sm text-body-sm text-on-surface-variant line-clamp-1 mt-1">Ryu Tanaka</p></div>
+<div class="mt-3 flex justify-between"><div class="text-primary text-sm font-bold">4.9</div></div>
+</div>
+</div>
+<!-- Card 4 -->
+<div class="group relative bg-surface rounded-xl overflow-hidden shadow-[0px_4px_20px_rgba(30,27,75,0.05)] manga-card-hover flex flex-col">
+<div class="relative aspect-[2/3] w-full overflow-hidden bg-surface-variant">
+<img class="object-cover w-full h-full group-hover:scale-105 transition-transform duration-500" data-alt="An elegant slice-of-life manga cover depicting a cozy modern coffee shop interior bathed in warm afternoon sunlight. A young barista is carefully pouring latte art. The palette uses soft pastels, off-whites, and gentle warm browns, maintaining a clean, minimalist light-mode aesthetic. The mood is relaxing and inviting." src="https://lh3.googleusercontent.com/aida-public/AB6AXuBxU5nXHXVxipiZ5v4FJnLqZ6ECOlyqPNtBMJqkZMBl7Otdbn0P_76xHKTDV9klShSdSrdxCBZI46buvLWB9ozUXvhNaTng9hXn-SIYNGulFkkoani6Eq45XogSEmRmRqPRhayu3p6f6TeTEs0rb7gJlEV0CuZYD3vTZTNvu8qKmsJSym4gdrS4mQ-xOsAMDouzdenGK-kcmN4_2T4HvR8j0UyrTeSvtkA6ChIyXWv9ep0gTP_BPy-7"/>
+</div>
+<div class="p-3 flex-grow flex flex-col justify-between">
+<div><h3 class="font-headline-sm text-headline-sm text-on-surface line-clamp-1">Latte Art Days</h3><p class="font-body-sm text-body-sm text-on-surface-variant line-clamp-1 mt-1">Yuki Sato</p></div>
+<div class="mt-3 flex justify-between"><div class="text-primary text-sm font-bold">4.2</div></div>
+</div>
+</div>
+</div>
+<!-- Pagination / Load More -->
+<div class="mt-lg flex justify-center pb-xl">
+<button class="px-6 py-3 border border-outline-variant text-on-surface font-label-md text-label-md rounded-full hover:bg-surface-container hover:text-primary transition-colors shadow-[0px_4px_20px_rgba(30,27,75,0.05)]">
+                    Load More Titles
+                </button>
+</div>
+</div>
+</main>
+<!-- Footer (From JSON) -->
+<footer class="w-full py-xl bg-surface-container-low dark:bg-inverse-surface border-t border-outline-variant">
+<div class="grid grid-cols-1 md:grid-cols-4 gap-lg px-gutter max-w-max-width mx-auto">
+<!-- Brand / Info -->
+<div class="col-span-1 md:col-span-2">
+<h4 class="font-headline-sm text-headline-sm font-bold text-primary dark:text-primary-fixed-dim mb-sm">Manga Discovery</h4>
+<p class="font-body-sm text-body-sm text-on-surface-variant dark:text-on-tertiary-container max-w-sm mb-md">
+                    Premium manga reservation service. Browse our extensive collection online and reserve your favorites to read or purchase in-store.
+                </p>
+<p class="font-label-sm text-label-sm text-on-surface-variant/70">
+                    © 2024 Manga Discovery. All rights reserved.
+                </p>
+</div>
+<!-- Links -->
+<div class="col-span-1">
+<h5 class="font-label-md text-label-md text-on-surface mb-sm">Services</h5>
+<ul class="space-y-2 font-body-sm text-body-sm">
+<li><a class="text-on-surface-variant dark:text-on-tertiary-container hover:text-primary transition-colors opacity-80 hover:opacity-100 transition-opacity" href="#">Reserve Online — Pay at Store</a></li>
+<li><a class="text-on-surface-variant dark:text-on-tertiary-container hover:text-primary transition-colors opacity-80 hover:opacity-100 transition-opacity" href="#">Store Info</a></li>
+</ul>
+</div>
+<div class="col-span-1">
+<h5 class="font-label-md text-label-md text-on-surface mb-sm">Legal</h5>
+<ul class="space-y-2 font-body-sm text-body-sm">
+<li><a class="text-on-surface-variant dark:text-on-tertiary-container hover:text-primary transition-colors opacity-80 hover:opacity-100 transition-opacity" href="#">Terms of Service</a></li>
+<li><a class="text-on-surface-variant dark:text-on-tertiary-container hover:text-primary transition-colors opacity-80 hover:opacity-100 transition-opacity" href="#">Privacy Policy</a></li>
+</ul>
+</div>
+</div>
+</footer>
+</body></html>

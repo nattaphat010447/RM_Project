@@ -1,62 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
+import MangaCard from '../components/MangaCard';
+import { getImageUrl } from '../utils/image';
 
 const API_URL = import.meta.env.VITE_API_BASE_URL;
 
-const getImageUrl = (url) => {
-    if (!url) return 'https://via.placeholder.com/150x220?text=No+Cover';
-    
-    if (url.startsWith('http')) return url;
-
-    if (url.startsWith('/images/') || url.startsWith('images/')) {
-      return url.startsWith('/') ? url : `/${url}`;
-    }
-
-    const baseUrl = API_URL ? API_URL.replace(/\/$/, '') : 'http://localhost:8000';
-    
-    if (url.startsWith('/media/') || url.startsWith('media/')) {
-      const cleanPath = url.startsWith('/') ? url : `/${url}`;
-      return `${baseUrl}${cleanPath}`;
-    }
-
-    return `${baseUrl}/media/${url}`;
-  };
-
-const renderStars = (rating) => {
-  const num = Math.round(rating || 0);
-  return '★'.repeat(num) + '☆'.repeat(5 - num);
-};
-
-const MangaCard = ({ manga }) => {
-  return (
-    <div className="bg-brand-light rounded-xl shadow-md p-4 flex flex-col hover:shadow-xl transition-shadow duration-300">
-      <img src={getImageUrl(manga.cover_image_url)} alt={manga.title} className="w-full h-64 object-cover rounded-lg mb-4" />
-      
-      <h3 className="font-semibold text-lg text-brand-primary line-clamp-1">{manga.title}</h3>
-      
-      <div className="flex flex-col mt-2 mb-4 gap-2">
-        <span className="bg-brand-light text-brand-primary text-xs font-semibold rounded-full uppercase tracking-wide truncate">
-          {manga.genre}
-        </span>
-        <div className="flex justify-between items-center">
-          <div className="flex text-brand-accent text-sm" title={`Rating: ${manga.avg_rating || 0}`}>
-            {renderStars(manga.avg_rating)}
-          </div>
-          <div className="text-xs font-medium text-brand-primary text-right">
-            Sold {manga.sold_count || 0}
-          </div>
-        </div>
-      </div>
-      
-      <Link 
-        to={`/manga/${manga.id}`}
-        className="mt-auto w-full bg-brand-secondary hover:bg-brand-primary text-brand-light font-semibold py-2 rounded-lg transition duration-200 shadow-sm block text-center"
-      >
-        Rent
-      </Link>
-    </div>
-  );
-};
+const HERO_BG = '/images/mangas/banner.svg';
 
 const Home = () => {
   const [mangas, setMangas] = useState([]);
@@ -75,53 +24,158 @@ const Home = () => {
       });
   }, []);
 
+  const featured = mangas.slice(0, 3);
+
   return (
-    <div className="min-h-screen bg-brand-light pb-12">
-      <div className="w-full h-80 overflow-hidden">
-        <img
-          src="/images/mangas/banner.svg"
-          alt="Manga Book Rental Store Banner"
-          className="w-full h-full object-cover"
-        />
-      </div>
+    <div className="bg-lumina-surface pb-16 overflow-x-hidden">
 
-      <div className="max-w-6xl mx-auto px-6 mt-12 space-y-16">
-        
-        {loading ? (
-          <div className="text-center text-xl font-semibold text-brand-primary my-20">Loading Mangas...</div>
-        ) : (
-          <>
-            <section>
-              <h2 className="section-header mb-6">Recommended for You</h2>
-              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-8">
-                {mangas.slice(0, 3).map(manga => (
-                  <MangaCard key={`rec-${manga.id}`} manga={manga} />
-                ))}
-              </div>
-              <div className="mt-6 flex justify-end">
-                <button className="text-brand-primary hover:text-brand-secondary font-semibold flex items-center transition">
-                  More <span className="ml-1">→</span>
-                </button>
-              </div>
-            </section>
+      <header className="relative flex items-center min-h-[560px] md:min-h-[720px] overflow-hidden">
+        <div className="absolute inset-0 z-0">
+          <img
+            src={HERO_BG}
+            alt=""
+            aria-hidden="true"
+            className="w-full h-full object-cover opacity-60"
+          />
+          <div className="absolute inset-0 bg-gradient-to-r from-lumina-surface via-lumina-surface/85 to-transparent"></div>
+        </div>
 
-            <section>
-              <h2 className="section-header mb-6">Popular This Week</h2>
-              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-8">
-                {mangas.slice(3, 6).map(manga => (
-                  <MangaCard key={`pop-${manga.id}`} manga={manga} />
-                ))}
-              </div>
-              <div className="mt-6 flex justify-end">
-                <button className="text-brand-primary hover:text-brand-secondary font-semibold flex items-center transition">
-                  More <span className="ml-1">→</span>
-                </button>
-              </div>
-            </section>
-          </>
-        )}
+        <div className="relative z-10 w-full max-w-screen-xl mx-auto px-6 py-16 grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
+          <div className="flex flex-col gap-8">
+            <div>
+              <h1 className="font-jakarta font-extrabold tracking-tight text-4xl md:text-5xl leading-tight text-lumina-text mb-4">
+                Discover your next <span className="text-lumina-primary">favorite manga.</span>
+              </h1>
+              <p className="font-jakarta text-lg text-lumina-text-muted max-w-lg">
+                Immerse yourself in thousands of stories, from hidden gems to blockbuster hits.
+                Reserve online and pick up in-store with ease.
+              </p>
+            </div>
 
-      </div>
+            <div className="flex flex-wrap gap-4">
+              <Link
+                to="/search"
+                className="inline-block bg-lumina-primary hover:bg-lumina-primary-light text-white px-8 py-4 rounded-full font-inter font-semibold text-sm transition-colors shadow-lumina-sm"
+              >
+                Explore Manga
+              </Link>
+              <Link
+                to="/popular"
+                className="inline-block bg-lumina-surface-card border border-lumina-outline/60 text-lumina-text hover:bg-lumina-surface-alt px-8 py-4 rounded-full font-inter font-semibold text-sm transition-colors"
+              >
+                View Popular
+              </Link>
+            </div>
+          </div>
+
+          {!loading && featured.length > 0 && (
+            <div className="hidden lg:grid grid-cols-2 gap-6 h-[500px]">
+              <Link
+                to={`/manga/${featured[0].id}`}
+                className="col-span-1 row-span-2 relative rounded-2xl overflow-hidden shadow-lumina-lg group"
+              >
+                <img
+                  src={getImageUrl(featured[0].cover_image_url)}
+                  alt={featured[0].title}
+                  className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent flex flex-col justify-end p-6">
+                  <span className="font-inter text-[10px] font-bold uppercase tracking-wide bg-status-requested text-white px-2 py-1 rounded w-fit mb-2">Featured</span>
+                  <h3 className="font-jakarta font-semibold text-xl text-white line-clamp-2">{featured[0].title}</h3>
+                  {featured[0].genre && (
+                    <p className="font-inter text-sm text-white/80">{featured[0].genre}</p>
+                  )}
+                </div>
+              </Link>
+
+              {featured.slice(1, 3).map((manga) => (
+                <Link
+                  key={`hero-${manga.id}`}
+                  to={`/manga/${manga.id}`}
+                  className="col-span-1 row-span-1 relative rounded-2xl overflow-hidden shadow-lumina-sm group"
+                >
+                  <img
+                    src={getImageUrl(manga.cover_image_url)}
+                    alt={manga.title}
+                    className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent flex flex-col justify-end p-4">
+                    <h4 className="font-inter font-semibold text-sm text-white line-clamp-1">{manga.title}</h4>
+                  </div>
+                </Link>
+              ))}
+            </div>
+          )}
+        </div>
+      </header>
+
+      <main className="max-w-screen-xl mx-auto px-6 space-y-16">
+
+        <section className="pt-16">
+          <div className="flex items-end justify-between mb-8 gap-4">
+            <div>
+              <h2 className="font-jakarta font-bold text-2xl md:text-3xl text-lumina-text">Recommended for You</h2>
+              <p className="font-jakarta text-lumina-text-muted mt-1">Based on your recent reading history</p>
+            </div>
+            <Link to="/foryou" className="font-inter text-sm font-semibold text-lumina-primary hover:underline whitespace-nowrap hidden sm:block">
+              See all recommendations
+            </Link>
+          </div>
+
+          {loading ? (
+            <div className="text-center font-semibold text-lumina-text-muted my-20">Loading Mangas...</div>
+          ) : mangas.length === 0 ? (
+            <div className="text-center text-lumina-text-muted my-20 border-2 border-dashed border-lumina-outline/60 rounded-2xl p-12">
+              No manga available yet. Please check back soon.
+            </div>
+          ) : (
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4 md:gap-6">
+              {mangas.slice(0, 3).map(manga => (
+                <MangaCard key={`rec-${manga.id}`} manga={manga} />
+              ))}
+            </div>
+          )}
+        </section>
+
+        <section>
+          <div className="flex items-end justify-between mb-8 gap-4">
+            <div>
+              <h2 className="font-jakarta font-bold text-2xl md:text-3xl text-lumina-text">Popular This Week</h2>
+              <p className="font-jakarta text-lumina-text-muted mt-1">Most rented manga during the last 7 days</p>
+            </div>
+            <Link to="/popular" className="font-inter text-sm font-semibold text-lumina-primary hover:underline whitespace-nowrap hidden sm:block">
+              See all popular
+            </Link>
+          </div>
+
+          {loading ? (
+            <div className="text-center font-semibold text-lumina-text-muted my-20">Loading Mangas...</div>
+          ) : mangas.length > 3 ? (
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4 md:gap-6">
+              {mangas.slice(3, 6).map(manga => (
+                <MangaCard key={`pop-${manga.id}`} manga={manga} />
+              ))}
+            </div>
+          ) : null}
+        </section>
+      </main>
+
+      <footer className="mt-20 bg-lumina-surface-card border-t border-lumina-outline/40">
+        <div className="max-w-screen-xl mx-auto px-6 py-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
+          <span className="font-jakarta text-lg font-extrabold text-lumina-primary">SukiManga</span>
+          <div className="flex items-start gap-3 p-4 rounded-2xl border border-lumina-outline/50 bg-lumina-surface-alt max-w-md">
+            <svg className="w-6 h-6 text-lumina-primary shrink-0 mt-0.5" fill="none" stroke="currentColor" strokeWidth="1.8" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 21v-7.8a1 1 0 01.3-.7l6-6A2 2 0 0021 5V3.6a.6.6 0 00-1-.43L14.35 8.8M13.5 21h-3m3 0H3V17a4 4 0 014-4h3.5m0 8v-8m0 0V9a3 3 0 00-3-3H6" />
+            </svg>
+            <div>
+              <h5 className="font-inter text-sm font-semibold text-lumina-text mb-1">Reserve Online — Pay at Store</h5>
+              <p className="font-inter text-xs text-lumina-text-muted leading-relaxed">
+                1. Reserve here&nbsp;&nbsp;·&nbsp;&nbsp;2. Get confirmation&nbsp;&nbsp;·&nbsp;&nbsp;3. Pay &amp; collect in-store
+              </p>
+            </div>
+          </div>
+        </div>
+      </footer>
     </div>
   );
 };

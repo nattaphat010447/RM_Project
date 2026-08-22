@@ -1,0 +1,309 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Manga Discovery - Discover your next favorite manga</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&amp;family=Inter:wght@400;500;600&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "on-primary-container": "#dac5ff",
+                        "on-tertiary-fixed-variant": "#46464f",
+                        "surface-dim": "#dad6ff",
+                        "error-container": "#ffdad6",
+                        "on-secondary": "#ffffff",
+                        "primary-container": "#6d28d9",
+                        "on-primary-fixed": "#250059",
+                        "on-primary-fixed-variant": "#5b00c5",
+                        "error": "#ba1a1a",
+                        "inverse-primary": "#d3bbff",
+                        "inverse-on-surface": "#f3eeff",
+                        "on-error-container": "#93000a",
+                        "surface-container-low": "#f6f2ff",
+                        "surface-bright": "#fcf8ff",
+                        "on-surface-variant": "#4a4455",
+                        "tertiary-fixed": "#e3e1ed",
+                        "background": "#fcf8ff",
+                        "surface-container": "#efebff",
+                        "on-error": "#ffffff",
+                        "tertiary-container": "#575761",
+                        "inverse-surface": "#2d2a5b",
+                        "on-tertiary": "#ffffff",
+                        "surface-container-lowest": "#ffffff",
+                        "on-secondary-fixed-variant": "#004c6e",
+                        "outline-variant": "#ccc3d7",
+                        "secondary-fixed": "#c9e6ff",
+                        "primary": "#5300b7",
+                        "on-tertiary-fixed": "#1a1b23",
+                        "outline": "#7b7486",
+                        "on-secondary-container": "#004666",
+                        "surface": "#fcf8ff",
+                        "surface-variant": "#e3dfff",
+                        "surface-container-high": "#e9e5ff",
+                        "surface-tint": "#7331df",
+                        "tertiary": "#3f4049",
+                        "surface-container-highest": "#e3dfff",
+                        "on-surface": "#181445",
+                        "on-background": "#181445",
+                        "primary-fixed-dim": "#d3bbff",
+                        "on-tertiary-container": "#cfcdd9",
+                        "primary-fixed": "#ebddff",
+                        "secondary": "#006591",
+                        "secondary-container": "#39b8fd",
+                        "on-primary": "#ffffff",
+                        "secondary-fixed-dim": "#89ceff",
+                        "on-secondary-fixed": "#001e2f",
+                        "tertiary-fixed-dim": "#c7c5d1"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    "spacing": {
+                        "xl": "64px",
+                        "gutter": "24px",
+                        "margin-mobile": "16px",
+                        "xs": "8px",
+                        "md": "24px",
+                        "base": "4px",
+                        "max-width": "1280px",
+                        "sm": "16px",
+                        "margin-desktop": "48px",
+                        "lg": "40px"
+                    },
+                    "fontFamily": {
+                        "headline-md": ["Plus Jakarta Sans"],
+                        "body-sm": ["Plus Jakarta Sans"],
+                        "label-sm": ["Inter"],
+                        "headline-xl-mobile": ["Plus Jakarta Sans"],
+                        "body-lg": ["Plus Jakarta Sans"],
+                        "label-md": ["Inter"],
+                        "headline-lg": ["Plus Jakarta Sans"],
+                        "body-md": ["Plus Jakarta Sans"],
+                        "headline-lg-mobile": ["Plus Jakarta Sans"],
+                        "headline-sm": ["Plus Jakarta Sans"],
+                        "headline-xl": ["Plus Jakarta Sans"]
+                    },
+                    "fontSize": {
+                        "headline-md": ["24px", { "lineHeight": "32px", "fontWeight": "700" }],
+                        "body-sm": ["14px", { "lineHeight": "20px", "fontWeight": "400" }],
+                        "label-sm": ["12px", { "lineHeight": "16px", "fontWeight": "500" }],
+                        "headline-xl-mobile": ["28px", { "lineHeight": "34px", "fontWeight": "800" }],
+                        "body-lg": ["18px", { "lineHeight": "28px", "fontWeight": "400" }],
+                        "label-md": ["14px", { "lineHeight": "16px", "letterSpacing": "0.05em", "fontWeight": "600" }],
+                        "headline-lg": ["32px", { "lineHeight": "40px", "letterSpacing": "-0.02em", "fontWeight": "700" }],
+                        "body-md": ["16px", { "lineHeight": "24px", "fontWeight": "400" }],
+                        "headline-lg-mobile": ["24px", { "lineHeight": "30px", "fontWeight": "700" }],
+                        "headline-sm": ["20px", { "lineHeight": "28px", "fontWeight": "600" }],
+                        "headline-xl": ["40px", { "lineHeight": "48px", "letterSpacing": "-0.02em", "fontWeight": "800" }]
+                    }
+                }
+            }
+        }
+    </script>
+<style>
+        .manga-card-hover { transition: transform 0.3s ease, box-shadow 0.3s ease; }
+        .manga-card-hover:hover { transform: scale(1.02) translateY(-4px); box-shadow: 0px 12px 32px rgba(30,27,75,0.12); }
+        .glass-panel { background: rgba(252, 248, 255, 0.7); backdrop-filter: blur(12px); border: 1px solid rgba(204, 195, 215, 0.4); }
+    </style>
+</head>
+<body class="bg-background text-on-background font-body-md antialiased overflow-x-hidden pt-20">
+<!-- TopNavBar -->
+<nav class="fixed top-0 w-full z-50 bg-surface/80 dark:bg-surface/80 shadow-sm shadow-[0px_4px_20px_rgba(30,27,75,0.05)] backdrop-blur-md">
+<div class="flex justify-between items-center px-gutter max-w-max-width mx-auto h-20">
+<div class="flex items-center gap-xl">
+<a class="font-headline-md text-headline-md font-bold text-primary dark:text-primary-fixed-dim shrink-0" href="#">Manga Discovery</a>
+<!-- Desktop Nav Links -->
+<div class="hidden md:flex items-center gap-md">
+<a class="text-primary dark:text-primary-fixed-dim border-b-2 border-primary dark:border-primary-fixed-dim pb-1 font-label-md text-label-md scale-95 active:scale-90 transition-transform" href="#">Home</a>
+<a class="text-on-surface-variant dark:text-on-tertiary-container hover:text-primary transition-colors font-label-md text-label-md hover:text-primary dark:hover:text-primary-fixed-dim transition-all duration-200 scale-95 active:scale-90 transition-transform" href="#">Discover</a>
+<a class="text-on-surface-variant dark:text-on-tertiary-container hover:text-primary transition-colors font-label-md text-label-md hover:text-primary dark:hover:text-primary-fixed-dim transition-all duration-200 scale-95 active:scale-90 transition-transform" href="#">Popular</a>
+<a class="text-on-surface-variant dark:text-on-tertiary-container hover:text-primary transition-colors font-label-md text-label-md hover:text-primary dark:hover:text-primary-fixed-dim transition-all duration-200 scale-95 active:scale-90 transition-transform" href="#">Categories</a>
+</div>
+</div>
+<div class="flex items-center gap-sm">
+<div class="hidden md:flex relative mr-sm">
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-outline" data-icon="search">search</span>
+<input class="pl-10 pr-4 py-2 bg-surface-container-low border border-outline-variant rounded-full text-body-sm font-body-sm focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary w-64 transition-all" placeholder="Search manga..." type="text"/>
+</div>
+<button class="p-2 text-on-surface-variant hover:bg-surface-container rounded-full transition-colors hidden md:flex items-center justify-center">
+<span class="material-symbols-outlined" data-icon="notifications">notifications</span>
+</button>
+<button class="p-2 text-on-surface-variant hover:bg-surface-container rounded-full transition-colors hidden md:flex items-center justify-center">
+<span class="material-symbols-outlined" data-icon="shopping_basket">shopping_basket</span>
+</button>
+<button class="p-2 text-on-surface-variant hover:bg-surface-container rounded-full transition-colors flex items-center justify-center">
+<span class="material-symbols-outlined" data-icon="account_circle">account_circle</span>
+</button>
+<!-- Mobile Menu Toggle -->
+<button class="md:hidden p-2 text-on-surface-variant hover:bg-surface-container rounded-full transition-colors">
+<span class="material-symbols-outlined">menu</span>
+</button>
+</div>
+</div>
+</nav>
+<!-- Hero Section -->
+<header class="relative w-full overflow-hidden bg-surface-container-lowest min-h-[819px] flex items-center">
+<!-- Hero Background Image -->
+<div class="absolute inset-0 z-0">
+<div class="bg-cover bg-center w-full h-full opacity-60" data-alt="A sweeping, cinematic landscape illustration in a vibrant anime style, featuring towering futuristic architecture blended with ancient fantasy elements. The scene is bathed in warm, golden hour lighting with soft god rays piercing through stylized clouds, creating a majestic and awe-inspiring atmosphere suitable for a premium manga discovery platform." style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuD5bOa26ugnF4MscSuf0K2hoLgOyYd2JMP8MEcDXnjCXbMcqF-SQVTHQAPLXilBgyX47ud0bYZo_5ZByd57Wn1aQuM_WaZwBL3s5iXd9wzC_k11o2R2V0Mwrd7KFr2nDeEnwg-r1ZsOqldWMeClI_eZ-L1YjtOsXtInf1ubfgb0oTdsn0VvE3vPAj6944OJtpwt01anHuPx4_rL0dMJtc7gZNJgHKR9iA5UcI1kq2U5hMvAobJf5IbW')"></div>
+<div class="absolute inset-0 bg-gradient-to-r from-background via-background/80 to-transparent"></div>
+</div>
+<div class="relative z-10 max-w-max-width mx-auto px-gutter w-full grid grid-cols-1 md:grid-cols-2 gap-xl items-center py-xl">
+<div class="flex flex-col gap-lg">
+<div>
+<h1 class="font-headline-xl-mobile md:font-headline-xl text-headline-xl-mobile md:text-headline-xl text-on-surface mb-sm">Discover your next <span class="text-primary">favorite manga.</span></h1>
+<p class="font-body-lg text-body-lg text-on-surface-variant max-w-lg">Immerse yourself in thousands of stories, from hidden gems to blockbuster hits. Reserve online and read with ease.</p>
+</div>
+<div class="flex flex-wrap gap-sm">
+<button class="bg-primary text-on-primary px-8 py-4 rounded-full font-label-md text-label-md hover:bg-primary-fixed-variant transition-colors shadow-[0px_4px_20px_rgba(83,0,183,0.2)]">Explore Manga</button>
+<button class="bg-surface border border-outline-variant text-on-surface px-8 py-4 rounded-full font-label-md text-label-md hover:bg-surface-container transition-colors">View Popular</button>
+</div>
+</div>
+<!-- Hero Featured Cards (Bento Style) -->
+<div class="hidden md:grid grid-cols-2 gap-md h-[500px]">
+<div class="col-span-1 row-span-2 rounded-xl overflow-hidden shadow-[0px_12px_32px_rgba(30,27,75,0.12)] relative group">
+<img class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" data-alt="A highly detailed manga cover illustration showing an intense action scene with dynamic poses. The characters are rendered with sharp linework and vibrant contrasting colors against a dark background, reflecting a popular shonen action series aesthetic." src="https://lh3.googleusercontent.com/aida-public/AB6AXuDwW8A9z8d1ih4ZyAWFRH4_ryQcy6kGbAD7SQuYcJg91Du0bJziacn96qOrLWhQNxNfrsoLAG_tUN4q6LelNy0kQ0svPxiAx4-H8Q0BwkqwJVwprwrHNX2_qZIqwZ1vgzc8LG5puAgcU9Jzf75a2ivraY1FaU29dbeogZAewqy8lHUqc1OTuBd6--kBdeTuKDxBxCVvrP_eXJjpIyimoefr0w1d3odzYKmbsa_VrMJ04K-pW8Dj60qb"/>
+<div class="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent flex flex-col justify-end p-md">
+<span class="bg-secondary-container text-on-secondary-container text-[10px] font-bold uppercase px-2 py-1 rounded inline-block w-fit mb-xs">Trending #1</span>
+<h3 class="font-headline-sm text-headline-sm text-white">Blade of the Immortal Sky</h3>
+<p class="font-body-sm text-body-sm text-white/80">Action / Fantasy</p>
+</div>
+</div>
+<div class="col-span-1 row-span-1 rounded-xl overflow-hidden shadow-[0px_4px_20px_rgba(30,27,75,0.05)] relative group">
+<img class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" data-alt="A soft, watercolor style manga cover illustration featuring two characters sitting under a blossoming cherry tree. The color palette is pastel and bright, evoking a gentle romance or slice-of-life genre feel with a serene atmosphere." src="https://lh3.googleusercontent.com/aida-public/AB6AXuAK2GE9Lh_j4aQde0_PxQ8tkhTc9Cv8uS8_uZv0JhnMwl0S31ZzA6GbS6E7EoKiDn5Q_wWJaRmQsWbYtq9mKk7FgXTbZ9JDU1jGpG6pxs024E1dIHH5EdjE9swKLEiwyXXVV_UvcPCy8uCAmRBkcdXQJi0SKfyVA1P8DhIZuqrpiUhpgXYYnpCbGjvuelRvmzeI_YpFqDxOYvHMonGQl8V4mwfxNlW1MyyxtV-TF_LYuaDEUvoucTuQ"/>
+<div class="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent flex flex-col justify-end p-sm">
+<h3 class="font-label-md text-label-md text-white">Whispers of Spring</h3>
+</div>
+</div>
+<div class="col-span-1 row-span-1 rounded-xl overflow-hidden shadow-[0px_4px_20px_rgba(30,27,75,0.05)] relative group">
+<img class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" data-alt="A dark, moody sci-fi manga cover illustration featuring a futuristic cityscape at night and a lone protagonist in tech-wear. The scene uses deep blues, purples, and neon accents to create a cyberpunk thriller atmosphere." src="https://lh3.googleusercontent.com/aida-public/AB6AXuCwBI9Bu0BwUtrQPv55JpNSD9e9R_4fXkzDDmVrqoE6sfYFO7qmyBm_SwJcXvE0OwUDHMESatU4Wcg5u3Pp9EJtiLJaVI-LJFwb4PxLGqVF9e4J0rSov3PzeyLUHkPlWbcj3SRHCFgD3fRCA9SDZdlnQejL5TsFFvZ922vtlIUS8rNA1jII8tr-bSWvtPIBaQHQF7eRebgZH7LPKz5R3T3z9HSHY3P3pFbt26HsX345bzQt83z1ZXro"/>
+<div class="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent flex flex-col justify-end p-sm">
+<h3 class="font-label-md text-label-md text-white">Neon Protocol</h3>
+</div>
+</div>
+</div>
+</div>
+</header>
+<main class="py-xl flex flex-col gap-xl">
+<!-- Recommended Section -->
+<section class="max-w-max-width mx-auto px-gutter w-full">
+<div class="flex justify-between items-end mb-lg">
+<div>
+<h2 class="font-headline-lg-mobile md:font-headline-lg text-headline-lg-mobile md:text-headline-lg text-on-surface">Recommended for You</h2>
+<p class="font-body-md text-body-md text-on-surface-variant mt-1">Based on your recent reading history</p>
+</div>
+<a class="text-primary font-label-md text-label-md hover:underline hidden md:block" href="#">See all recommendations</a>
+</div>
+<div class="grid grid-cols-2 md:grid-cols-5 gap-sm md:gap-md">
+<!-- Manga Card 1 -->
+<div class="flex flex-col gap-xs group cursor-pointer manga-card-hover rounded-lg bg-surface p-2">
+<div class="aspect-[2/3] rounded-lg overflow-hidden relative shadow-[0px_4px_20px_rgba(30,27,75,0.05)]">
+<img class="w-full h-full object-cover" data-alt="A vibrant fantasy manga cover featuring a young wizard casting a glowing spell. Detailed magical circles and dynamic lighting highlight the character against a mystical forest backdrop." src="https://lh3.googleusercontent.com/aida-public/AB6AXuBupU_6wvVD0FuQD0Ae4pYaedXiqOcPZ72JehZvS49N5YcAa7KzWTZUJQo7QuNNpFI-nQf4mwI9HQwHiFOp73y2_YRyynGhp-UAVjK0doxDmLe_d-88nmFVT7IV-3Nno4RKDoekN1aFaA_Ar6UWPURwDobU8FQfjx99zp0ct9zrsbxD0x4iZxrK15VPobMwthb6VZocbsGvEVOSCm6w57nEADI0Q9PPrNrZEx2IPMzngXvDlb7IJhP_"/>
+<div class="absolute top-2 right-2 bg-green-100 text-green-800 text-[10px] font-bold px-2 py-1 rounded shadow-sm">Available</div>
+</div>
+<div class="pt-1">
+<h4 class="font-headline-sm text-[16px] leading-tight text-on-surface group-hover:text-primary transition-colors line-clamp-1">The Arcane Scholar</h4>
+<p class="font-body-sm text-body-sm text-on-surface-variant line-clamp-1">Kenji Sato</p>
+</div>
+</div>
+<!-- Manga Card 2 -->
+<div class="flex flex-col gap-xs group cursor-pointer manga-card-hover rounded-lg bg-surface p-2">
+<div class="aspect-[2/3] rounded-lg overflow-hidden relative shadow-[0px_4px_20px_rgba(30,27,75,0.05)]">
+<img class="w-full h-full object-cover" data-alt="A dramatic sports manga cover showing a tennis player mid-serve with intense focus. Sweat droplets and motion lines convey high speed and energy in a stark, contrasting art style." src="https://lh3.googleusercontent.com/aida-public/AB6AXuB8fTC_YEptBc_fjzV71Floz6xo0hWEYYc3VlzWsGnO3BZ-o6s7LsDXXhYClQxY2EKmxOiKfhm4sCwOZXWEO3pp4b2-ewkcX40t5fDIIb6YyNHqYOef1VSz3jYYbJMs9_rHdvjCsfOWnkuoJTyVW-4v09IZOT1qUEgwuPsZ4duYiWXRNlcspT8_DcTrWgw7T6vTmoXwCfhkEdIPGkplMCbCRCj3WNAoo_u-G5MmVI9oTt1DXb7GUuJL"/>
+<div class="absolute top-2 right-2 bg-orange-100 text-orange-800 text-[10px] font-bold px-2 py-1 rounded shadow-sm">Waitlist</div>
+</div>
+<div class="pt-1">
+<h4 class="font-headline-sm text-[16px] leading-tight text-on-surface group-hover:text-primary transition-colors line-clamp-1">Court Vision</h4>
+<p class="font-body-sm text-body-sm text-on-surface-variant line-clamp-1">Yumi Tanaka</p>
+</div>
+</div>
+<!-- Manga Card 3 -->
+<div class="flex flex-col gap-xs group cursor-pointer manga-card-hover rounded-lg bg-surface p-2">
+<div class="aspect-[2/3] rounded-lg overflow-hidden relative shadow-[0px_4px_20px_rgba(30,27,75,0.05)]">
+<img class="w-full h-full object-cover" data-alt="A psychological thriller manga cover featuring a distorted, mirrored reflection of a detective in a dimly lit, rain-slicked alleyway. Deep shadows and a muted color palette set a tense mood." src="https://lh3.googleusercontent.com/aida-public/AB6AXuBCnsTyWcRHstHqmv7DiZOCohE7wPQeGFZwuOscHgYDqJ1JnuAIRJZBz-YEOOVzddDObgDDEeLoRHwzLT8koFW7W5kRJHq7pY3Gj_20r3EbaH0W-NnZaPfdnMgIZq0A6LONsCQ2hOfCquT0HtGF3p8gdc7l0BRmmTJ2mbOuHionMZNOhtQBHKdx4BNxP42Pcb7FbLBRrma7GKbyA9Yu7vBn5VrZa5aPQKlh6Lw6_ze6q9Gc2GMezBYU"/>
+<div class="absolute top-2 right-2 bg-green-100 text-green-800 text-[10px] font-bold px-2 py-1 rounded shadow-sm">Available</div>
+</div>
+<div class="pt-1">
+<h4 class="font-headline-sm text-[16px] leading-tight text-on-surface group-hover:text-primary transition-colors line-clamp-1">Fractured Mind</h4>
+<p class="font-body-sm text-body-sm text-on-surface-variant line-clamp-1">Hideo Suzuki</p>
+</div>
+</div>
+<!-- Manga Card 4 -->
+<div class="flex flex-col gap-xs group cursor-pointer manga-card-hover rounded-lg bg-surface p-2 hidden md:flex">
+<div class="aspect-[2/3] rounded-lg overflow-hidden relative shadow-[0px_4px_20px_rgba(30,27,75,0.05)]">
+<img class="w-full h-full object-cover" data-alt="An ornate historical fiction manga cover depicting a noblewoman in elaborate traditional clothing standing before a grand palace. The art features intricate textile patterns and soft, elegant lighting." src="https://lh3.googleusercontent.com/aida-public/AB6AXuChfI1uxExZjE9dy0Vv_q7G01bFoteTWdfnyXjAMQgMXUVw8KY2BKC4lPuPhv555iftqVs1u6Uv_xJSSdO32QrgnU-dcM-Dot79Vj5V6h0bYdgrkvEtOQjlxa4A8tT39WP9qd02FJROJxL1orUso-5kMua3kbgSPkg-olgQ-nh-eGpqm-JeSKu7sbiaKOT8cV_7ENhKriQyDy7how6EKLcbvGvvW7fYWf9hZrFAZj99BU2o2lEoUhiy"/>
+<div class="absolute top-2 right-2 bg-green-100 text-green-800 text-[10px] font-bold px-2 py-1 rounded shadow-sm">Available</div>
+</div>
+<div class="pt-1">
+<h4 class="font-headline-sm text-[16px] leading-tight text-on-surface group-hover:text-primary transition-colors line-clamp-1">Dynasty's Shadow</h4>
+<p class="font-body-sm text-body-sm text-on-surface-variant line-clamp-1">Rin Nakamura</p>
+</div>
+</div>
+<!-- Manga Card 5 -->
+<div class="flex flex-col gap-xs group cursor-pointer manga-card-hover rounded-lg bg-surface p-2 hidden md:flex">
+<div class="aspect-[2/3] rounded-lg overflow-hidden relative shadow-[0px_4px_20px_rgba(30,27,75,0.05)]">
+<img class="w-full h-full object-cover" data-alt="A lighthearted comedy manga cover showing a group of high school students in a chaotic classroom setting, with expressive faces and bright, cheerful colors." src="https://lh3.googleusercontent.com/aida-public/AB6AXuD35lLxG_FC-b_K55f8YVXi7tYBNGZXODVxnljKzk8dWDZfTbVkOMce-XPaGNIWAGrCjFZEl1u_z9z9cPxMKHx_Xt-sCdzbEAn1ZXjE2vmHbZ5S-rYUoCzs8qqPI0Y3h2UVjz_3mA4hYYv2U-p3k9qKNZWxfx5GQ2ioBOjLm-FHQaG4TAqbxSl4izrXmDDSwLXOv7obX4SZN29zq_B1txaosQov_QyBCcI0i6RVvZ5GjaqmBjdHLv4I"/>
+<div class="absolute top-2 right-2 bg-green-100 text-green-800 text-[10px] font-bold px-2 py-1 rounded shadow-sm">Available</div>
+</div>
+<div class="pt-1">
+<h4 class="font-headline-sm text-[16px] leading-tight text-on-surface group-hover:text-primary transition-colors line-clamp-1">Classroom Chaos</h4>
+<p class="font-body-sm text-body-sm text-on-surface-variant line-clamp-1">Taro Yamada</p>
+</div>
+</div>
+</div>
+</section>
+</main>
+<!-- Footer -->
+<footer class="w-full py-xl bg-surface-container-low dark:bg-inverse-surface border-t border-outline-variant mt-xl">
+<div class="grid grid-cols-1 md:grid-cols-4 gap-lg px-gutter max-w-max-width mx-auto">
+<div class="flex flex-col gap-md col-span-1 md:col-span-1">
+<a class="font-headline-sm text-headline-sm font-bold text-primary dark:text-primary-fixed-dim" href="#">Manga Discovery</a>
+<p class="font-body-sm text-body-sm text-on-surface-variant">Your premier destination for finding, reserving, and enjoying the best manga series from around the world.</p>
+<!-- Reservation Indicator / Service Model -->
+<div class="mt-4 p-4 rounded-xl border border-primary/20 bg-primary/5 flex items-start gap-3">
+<span class="material-symbols-outlined text-primary mt-0.5" data-icon="storefront">storefront</span>
+<div>
+<h5 class="font-label-md text-label-md text-on-surface mb-1">Reserve Online — Pay at Store</h5>
+<p class="font-body-sm text-[12px] text-on-surface-variant leading-tight">1. Reserve here<br/>2. Get confirmation<br/>3. Pay &amp; collect in-store</p>
+</div>
+</div>
+</div>
+<div class="flex flex-col gap-sm">
+<h4 class="font-label-md text-label-md text-on-surface mb-2">Explore</h4>
+<a class="font-body-sm text-body-sm text-on-surface-variant dark:text-on-tertiary-container hover:text-primary transition-colors" href="#">Popular Manga</a>
+<a class="font-body-sm text-body-sm text-on-surface-variant dark:text-on-tertiary-container hover:text-primary transition-colors" href="#">New Additions</a>
+<a class="font-body-sm text-body-sm text-on-surface-variant dark:text-on-tertiary-container hover:text-primary transition-colors" href="#">Browse by Genre</a>
+<a class="font-body-sm text-body-sm text-on-surface-variant dark:text-on-tertiary-container hover:text-primary transition-colors" href="#">Staff Picks</a>
+</div>
+<div class="flex flex-col gap-sm">
+<h4 class="font-label-md text-label-md text-on-surface mb-2">Support &amp; Info</h4>
+<a class="font-body-sm text-body-sm text-on-surface-variant dark:text-on-tertiary-container hover:text-primary transition-colors" href="#">Store Info</a>
+<a class="font-body-sm text-body-sm text-on-surface-variant dark:text-on-tertiary-container hover:text-primary transition-colors" href="#">FAQ</a>
+<a class="font-body-sm text-body-sm text-on-surface-variant dark:text-on-tertiary-container hover:text-primary transition-colors" href="#">Contact Us</a>
+</div>
+<div class="flex flex-col gap-sm">
+<h4 class="font-label-md text-label-md text-on-surface mb-2">Legal</h4>
+<a class="font-body-sm text-body-sm text-on-surface-variant dark:text-on-tertiary-container hover:text-primary transition-colors" href="#">Terms of Service</a>
+<a class="font-body-sm text-body-sm text-on-surface-variant dark:text-on-tertiary-container hover:text-primary transition-colors" href="#">Privacy Policy</a>
+<a class="font-body-sm text-body-sm text-on-surface-variant dark:text-on-tertiary-container hover:text-primary transition-colors opacity-80 hover:opacity-100 transition-opacity text-primary dark:text-primary-fixed-dim underline" href="#">Reserve Online — Pay at Store</a>
+</div>
+<div class="col-span-1 md:col-span-4 mt-lg pt-lg border-t border-outline-variant/30 flex justify-between items-center flex-wrap gap-4">
+<p class="font-body-sm text-body-sm text-on-surface-variant">© 2024 Manga Discovery. All rights reserved.</p>
+<div class="flex gap-4">
+<!-- Social placeholders -->
+<a class="text-on-surface-variant hover:text-primary transition-colors" href="#"><span class="material-symbols-outlined" data-icon="language">language</span></a>
+</div>
+</div>
+</div>
+</footer>
+</body></html>

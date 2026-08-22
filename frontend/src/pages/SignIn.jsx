@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 
 const SignIn = () => {
   const navigate = useNavigate();
@@ -12,7 +12,7 @@ const SignIn = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     const API_URL = import.meta.env.VITE_API_BASE_URL;
-    
+
     try {
       const response = await fetch(`${API_URL}/api/token/`, {
         method: 'POST',
@@ -63,24 +63,25 @@ const SignIn = () => {
       } else {
         alert("Invalid credentials");
       }
-    } catch (error) {
+    } catch {
       alert("Login failed");
     }
   };
 
+  const inputClass = "w-full rounded-lg border border-lumina-outline/60 bg-white px-4 py-3 font-inter text-sm text-lumina-text placeholder:text-lumina-text-muted/60 shadow-lumina-sm focus:outline-none focus:border-lumina-primary focus:ring-1 focus:ring-lumina-primary transition-shadow";
+
   return (
-    <div className="min-h-screen flex items-center justify-center bg-brand-light">
-      <div className="bg-brand-light p-8 rounded-xl shadow-lg border border-brand-primary w-full max-w-md">
-        
-        <div className="flex justify-center mb-4">
-          <div className="bg-brand-light p-4 rounded-full">
-            <svg xmlns="http://www.w3.org/2000/svg" className="h-10 w-10 text-brand-secondary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-            </svg>
+    <div className="min-h-screen flex items-center justify-center bg-lumina-surface px-4">
+      <div className="bg-white p-8 md:p-10 rounded-2xl shadow-lumina-lg border border-lumina-outline/40 w-full max-w-md">
+
+        <div className="flex justify-center mb-5">
+          <div className="w-14 h-14 rounded-full bg-lumina-primary-soft flex items-center justify-center">
+            <svg className="w-7 h-7 text-lumina-primary" fill="none" stroke="currentColor" strokeWidth="1.8" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" /></svg>
           </div>
         </div>
 
-        <h2 className="text-3xl font-bold text-center text-brand-primary mb-8">Sign In</h2>
+        <h2 className="font-jakarta text-3xl font-extrabold text-center text-lumina-text mb-2 tracking-tight">Sign In</h2>
+        <p className="font-jakarta text-sm text-lumina-text-muted text-center mb-8">Welcome back to MangaFlow.</p>
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
@@ -90,7 +91,7 @@ const SignIn = () => {
               placeholder="Username"
               value={formData.username}
               onChange={handleChange}
-              className="input-modern"
+              className={inputClass}
               required
             />
           </div>
@@ -101,20 +102,23 @@ const SignIn = () => {
               placeholder="Password"
               value={formData.password}
               onChange={handleChange}
-              className="input-modern"
+              className={inputClass}
               required
             />
           </div>
 
-          <div className="flex justify-center pt-4">
-            <button
-              type="submit"
-              className="btn-primary-modern px-8 py-2 rounded-lg font-semibold"
-            >
-              Sign In
-            </button>
-          </div>
+          <button
+            type="submit"
+            className="w-full bg-lumina-primary hover:bg-lumina-primary-light text-white font-inter font-semibold py-3.5 rounded-lg transition-colors duration-200 shadow-lumina-sm mt-2"
+          >
+            Sign In
+          </button>
         </form>
+
+        <p className="font-inter text-sm text-lumina-text-muted text-center mt-6">
+          New to MangaFlow?{' '}
+          <Link to="/signup" className="font-semibold text-lumina-primary hover:underline">Create Account</Link>
+        </p>
       </div>
     </div>
   );

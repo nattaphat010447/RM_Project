@@ -1,0 +1,308 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Admin Book Management - Manga Discovery</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&amp;family=Plus+Jakarta+Sans:wght@400;600;700;800&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "on-primary-container": "#dac5ff",
+                        "on-tertiary-fixed-variant": "#46464f",
+                        "surface-dim": "#dad6ff",
+                        "error-container": "#ffdad6",
+                        "on-secondary": "#ffffff",
+                        "primary-container": "#6d28d9",
+                        "on-primary-fixed": "#250059",
+                        "on-primary-fixed-variant": "#5b00c5",
+                        "error": "#ba1a1a",
+                        "inverse-primary": "#d3bbff",
+                        "inverse-on-surface": "#f3eeff",
+                        "on-error-container": "#93000a",
+                        "surface-container-low": "#f6f2ff",
+                        "surface-bright": "#fcf8ff",
+                        "on-surface-variant": "#4a4455",
+                        "tertiary-fixed": "#e3e1ed",
+                        "background": "#fcf8ff",
+                        "surface-container": "#efebff",
+                        "on-error": "#ffffff",
+                        "tertiary-container": "#575761",
+                        "inverse-surface": "#2d2a5b",
+                        "on-tertiary": "#ffffff",
+                        "surface-container-lowest": "#ffffff",
+                        "on-secondary-fixed-variant": "#004c6e",
+                        "outline-variant": "#ccc3d7",
+                        "secondary-fixed": "#c9e6ff",
+                        "primary": "#5300b7",
+                        "on-tertiary-fixed": "#1a1b23",
+                        "outline": "#7b7486",
+                        "on-secondary-container": "#004666",
+                        "surface": "#fcf8ff",
+                        "surface-variant": "#e3dfff",
+                        "surface-container-high": "#e9e5ff",
+                        "surface-tint": "#7331df",
+                        "tertiary": "#3f4049",
+                        "surface-container-highest": "#e3dfff",
+                        "on-surface": "#181445",
+                        "on-background": "#181445",
+                        "primary-fixed-dim": "#d3bbff",
+                        "on-tertiary-container": "#cfcdd9",
+                        "primary-fixed": "#ebddff",
+                        "secondary": "#006591",
+                        "secondary-container": "#39b8fd",
+                        "on-primary": "#ffffff",
+                        "secondary-fixed-dim": "#89ceff",
+                        "on-secondary-fixed": "#001e2f",
+                        "tertiary-fixed-dim": "#c7c5d1"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    "spacing": {
+                        "xl": "64px",
+                        "gutter": "24px",
+                        "margin-mobile": "16px",
+                        "xs": "8px",
+                        "md": "24px",
+                        "base": "4px",
+                        "max-width": "1280px",
+                        "sm": "16px",
+                        "margin-desktop": "48px",
+                        "lg": "40px"
+                    },
+                    "fontFamily": {
+                        "headline-md": ["Plus Jakarta Sans"],
+                        "body-sm": ["Plus Jakarta Sans"],
+                        "label-sm": ["Inter"],
+                        "headline-xl-mobile": ["Plus Jakarta Sans"],
+                        "body-lg": ["Plus Jakarta Sans"],
+                        "label-md": ["Inter"],
+                        "headline-lg": ["Plus Jakarta Sans"],
+                        "body-md": ["Plus Jakarta Sans"],
+                        "headline-lg-mobile": ["Plus Jakarta Sans"],
+                        "headline-sm": ["Plus Jakarta Sans"],
+                        "headline-xl": ["Plus Jakarta Sans"]
+                    },
+                    "fontSize": {
+                        "headline-md": ["24px", { "lineHeight": "32px", "fontWeight": "700" }],
+                        "body-sm": ["14px", { "lineHeight": "20px", "fontWeight": "400" }],
+                        "label-sm": ["12px", { "lineHeight": "16px", "fontWeight": "500" }],
+                        "headline-xl-mobile": ["28px", { "lineHeight": "34px", "fontWeight": "800" }],
+                        "body-lg": ["18px", { "lineHeight": "28px", "fontWeight": "400" }],
+                        "label-md": ["14px", { "lineHeight": "16px", "letterSpacing": "0.05em", "fontWeight": "600" }],
+                        "headline-lg": ["32px", { "lineHeight": "40px", "letterSpacing": "-0.02em", "fontWeight": "700" }],
+                        "body-md": ["16px", { "lineHeight": "24px", "fontWeight": "400" }],
+                        "headline-lg-mobile": ["24px", { "lineHeight": "30px", "fontWeight": "700" }],
+                        "headline-sm": ["20px", { "lineHeight": "28px", "fontWeight": "600" }],
+                        "headline-xl": ["40px", { "lineHeight": "48px", "letterSpacing": "-0.02em", "fontWeight": "800" }]
+                    }
+                }
+            }
+        }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .material-symbols-outlined.fill {
+            font-variation-settings: 'FILL' 1;
+        }
+    </style>
+</head>
+<body class="bg-background text-on-background min-h-screen flex font-body-md">
+<!-- SideNavBar -->
+<aside class="h-screen w-64 fixed left-0 top-0 bg-surface-container dark:bg-inverse-surface border-r border-outline-variant hidden md:flex flex-col gap-base p-sm z-40">
+<div class="mb-lg px-sm pt-md">
+<h1 class="font-headline-sm text-headline-sm font-bold text-primary dark:text-primary-fixed-dim">MangaAdmin</h1>
+<p class="font-body-sm text-body-sm text-on-surface-variant">Central Management</p>
+</div>
+<nav class="flex-1 flex flex-col gap-2">
+<!-- Dashboard -->
+<a class="flex items-center gap-3 px-4 py-3 text-on-surface-variant dark:text-on-tertiary-container hover:bg-surface-container-high dark:hover:bg-tertiary-container rounded-xl transition-colors duration-200" href="#">
+<span class="material-symbols-outlined" data-icon="dashboard">dashboard</span>
+<span class="font-label-md text-label-md">Dashboard</span>
+</a>
+<!-- Rentals -->
+<a class="flex items-center gap-3 px-4 py-3 text-on-surface-variant dark:text-on-tertiary-container hover:bg-surface-container-high dark:hover:bg-tertiary-container rounded-xl transition-colors duration-200" href="#">
+<span class="material-symbols-outlined" data-icon="book_online">book_online</span>
+<span class="font-label-md text-label-md">Rentals</span>
+</a>
+<!-- Books (Active) -->
+<a class="flex items-center gap-3 px-4 py-3 bg-primary-fixed dark:bg-primary text-on-primary-fixed dark:text-on-primary rounded-xl font-bold transition-colors duration-200" href="#">
+<span class="material-symbols-outlined fill" data-icon="menu_book">menu_book</span>
+<span class="font-label-md text-label-md">Books</span>
+</a>
+<!-- Members -->
+<a class="flex items-center gap-3 px-4 py-3 text-on-surface-variant dark:text-on-tertiary-container hover:bg-surface-container-high dark:hover:bg-tertiary-container rounded-xl transition-colors duration-200" href="#">
+<span class="material-symbols-outlined" data-icon="group">group</span>
+<span class="font-label-md text-label-md">Members</span>
+</a>
+<!-- History -->
+<a class="flex items-center gap-3 px-4 py-3 text-on-surface-variant dark:text-on-tertiary-container hover:bg-surface-container-high dark:hover:bg-tertiary-container rounded-xl transition-colors duration-200" href="#">
+<span class="material-symbols-outlined" data-icon="history">history</span>
+<span class="font-label-md text-label-md">History</span>
+</a>
+<!-- Overdue -->
+<a class="flex items-center gap-3 px-4 py-3 text-on-surface-variant dark:text-on-tertiary-container hover:bg-surface-container-high dark:hover:bg-tertiary-container rounded-xl transition-colors duration-200" href="#">
+<span class="material-symbols-outlined" data-icon="priority_high">priority_high</span>
+<span class="font-label-md text-label-md">Overdue</span>
+</a>
+</nav>
+<div class="mt-auto">
+<a class="flex items-center gap-3 px-4 py-3 text-on-surface-variant dark:text-on-tertiary-container hover:bg-surface-container-high dark:hover:bg-tertiary-container rounded-xl transition-colors duration-200" href="#">
+<span class="material-symbols-outlined" data-icon="settings">settings</span>
+<span class="font-label-md text-label-md">Settings</span>
+</a>
+</div>
+</aside>
+<!-- Main Content Area -->
+<main class="flex-1 md:ml-64 p-gutter md:p-margin-desktop max-w-max-width">
+<!-- Header Actions -->
+<header class="flex flex-col md:flex-row justify-between items-start md:items-center gap-sm mb-lg">
+<div>
+<h2 class="font-headline-lg text-headline-lg-mobile md:text-headline-lg text-on-surface">Book Management</h2>
+<p class="font-body-sm text-body-sm text-on-surface-variant mt-1">Manage manga inventory, track availability, and update status.</p>
+</div>
+<button class="bg-primary text-on-primary hover:bg-primary-container hover:text-on-primary-container px-6 py-3 rounded-lg font-label-md text-label-md transition-colors shadow-sm flex items-center gap-2">
+<span class="material-symbols-outlined text-sm">add</span>
+                Add New Manga
+            </button>
+</header>
+<!-- Filters & Search -->
+<div class="bg-surface rounded-xl shadow-[0px_4px_20px_rgba(30,27,75,0.05)] border border-outline-variant p-sm mb-md flex flex-col md:flex-row gap-sm items-center justify-between">
+<div class="relative w-full md:w-96">
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-outline">search</span>
+<input class="w-full bg-surface-container-lowest border border-outline-variant rounded-lg pl-10 pr-4 py-2 font-body-sm text-body-sm text-on-surface focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all" placeholder="Search by title, author, or ISBN..." type="text"/>
+</div>
+<div class="flex gap-3 w-full md:w-auto overflow-x-auto pb-2 md:pb-0">
+<select class="bg-surface-container-lowest border border-outline-variant rounded-lg px-4 py-2 font-body-sm text-body-sm text-on-surface focus:outline-none focus:border-primary">
+<option>All Genres</option>
+<option>Shonen</option>
+<option>Shojo</option>
+<option>Seinen</option>
+</select>
+<select class="bg-surface-container-lowest border border-outline-variant rounded-lg px-4 py-2 font-body-sm text-body-sm text-on-surface focus:outline-none focus:border-primary">
+<option>All Status</option>
+<option>Available</option>
+<option>Rented</option>
+<option>Maintenance</option>
+</select>
+</div>
+</div>
+<!-- Data Table -->
+<div class="bg-surface rounded-xl shadow-[0px_4px_20px_rgba(30,27,75,0.05)] border border-outline-variant overflow-hidden">
+<div class="overflow-x-auto">
+<table class="w-full text-left border-collapse">
+<thead class="bg-[#F5F3FF] border-b border-[#F3F4F6]">
+<tr>
+<th class="px-6 py-4 font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider">Title / Author</th>
+<th class="px-6 py-4 font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider">Genre</th>
+<th class="px-6 py-4 font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider text-right">Total</th>
+<th class="px-6 py-4 font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider text-right">Available</th>
+<th class="px-6 py-4 font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider">Status</th>
+<th class="px-6 py-4 font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider text-right">Actions</th>
+</tr>
+</thead>
+<tbody class="divide-y divide-[#F3F4F6]">
+<!-- Row 1 -->
+<tr class="hover:bg-surface-container-lowest transition-colors group">
+<td class="px-6 py-4">
+<div class="flex items-center gap-4">
+<img class="w-12 h-16 object-cover rounded-md shadow-sm border border-outline-variant" data-alt="A small, stylized cover illustration of a popular shonen manga featuring a bright, energetic teenage protagonist with spiky hair, surrounded by dynamic speed lines. The color palette is vibrant with high contrast, set in a clear, well-lit digital aesthetic." src="https://lh3.googleusercontent.com/aida-public/AB6AXuCMv8p2R4iwxaRKNSJFroyxtve78Bg0d9TTJX5uQqA1T14w4pLH-8WLXCsX9Ycq6HQggfI4f9zMM187b5hCQq8OYr2hO49G-63-EEmnybYqFvQkfyG6enPvDrZKShxa1KAldOZPfKxkBCxdyw3Qgdv-QohvMzm0ceNp98Jqu51Of-PYBG1NKlv-pkpih9LRBv3Op-3vNo2K_RoAuLLmvNF8G1_tOCp8022itOTe2PqmZxkf-EaPrneB"/>
+<div>
+<p class="font-headline-sm text-body-md font-semibold text-on-surface">Naruto Vol. 1</p>
+<p class="font-body-sm text-label-sm text-on-surface-variant">Masashi Kishimoto</p>
+</div>
+</div>
+</td>
+<td class="px-6 py-4 font-body-sm text-body-sm text-on-surface">Shonen</td>
+<td class="px-6 py-4 font-body-sm text-body-sm text-on-surface text-right">15</td>
+<td class="px-6 py-4 font-body-sm text-body-sm text-on-surface text-right font-medium text-primary">12</td>
+<td class="px-6 py-4">
+<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-secondary-fixed text-on-secondary-fixed">
+                                    Available
+                                </span>
+</td>
+<td class="px-6 py-4 text-right">
+<button class="text-outline hover:text-primary transition-colors p-1"><span class="material-symbols-outlined text-sm">edit</span></button>
+<button class="text-outline hover:text-error transition-colors p-1"><span class="material-symbols-outlined text-sm">delete</span></button>
+</td>
+</tr>
+<!-- Row 2 -->
+<tr class="hover:bg-surface-container-lowest transition-colors group">
+<td class="px-6 py-4">
+<div class="flex items-center gap-4">
+<img class="w-12 h-16 object-cover rounded-md shadow-sm border border-outline-variant" data-alt="A moody, atmospheric cover illustration of a dark fantasy seinen manga. It depicts a lone warrior in heavy, weathered armor standing against an overcast, desolate landscape. The color palette leans on deep grays, blacks, and muted earthy tones, projecting a gritty, serious aesthetic." src="https://lh3.googleusercontent.com/aida-public/AB6AXuBSWia3AxW-WAT0p9btpG7ZycG3DHUogdGZMQzrkVdX_32LI_wuXS6wV3LaKgCcEQaKLOYTIZkmmF5t3gpaSjYSYwsLuYjuimSAS9Rb8-wsGhMbWqwkNL15Z9GCN2m2ShjC1vkf3f88bYxn4ZGC8pomf6KSdC347s6yzu-NnZInoVzoHh4b-o5q_NOWQpy4ZonErLVl2dYvboeJ2IfO-J-oLGxsJqWNUwSK8_vvfjQoBttnaGAgb9R4"/>
+<div>
+<p class="font-headline-sm text-body-md font-semibold text-on-surface">Berserk Vol. 1</p>
+<p class="font-body-sm text-label-sm text-on-surface-variant">Kentaro Miura</p>
+</div>
+</div>
+</td>
+<td class="px-6 py-4 font-body-sm text-body-sm text-on-surface">Seinen</td>
+<td class="px-6 py-4 font-body-sm text-body-sm text-on-surface text-right">5</td>
+<td class="px-6 py-4 font-body-sm text-body-sm text-on-surface text-right font-medium text-error">0</td>
+<td class="px-6 py-4">
+<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-error-container text-on-error-container">
+                                    Rented Out
+                                </span>
+</td>
+<td class="px-6 py-4 text-right">
+<button class="text-outline hover:text-primary transition-colors p-1"><span class="material-symbols-outlined text-sm">edit</span></button>
+<button class="text-outline hover:text-error transition-colors p-1"><span class="material-symbols-outlined text-sm">delete</span></button>
+</td>
+</tr>
+<!-- Row 3 -->
+<tr class="hover:bg-surface-container-lowest transition-colors group">
+<td class="px-6 py-4">
+<div class="flex items-center gap-4">
+<img class="w-12 h-16 object-cover rounded-md shadow-sm border border-outline-variant" data-alt="A delicate, beautiful cover illustration of a shojo romance manga. It features two elegant characters gazing into the distance amidst a flurry of cherry blossoms. The color palette is soft, utilizing pastel pinks, lavenders, and whites to create a dreamy, romantic light-mode aesthetic." src="https://lh3.googleusercontent.com/aida-public/AB6AXuD3I6oVSm-kqxkj6YQX6aoOqsCFYjSKl3si35YNjnVaH71833CfPpq8Qzg_uQbx0N09KIUzpd6W9jcaHCv2DODFP9nL81s4vxFppej79Z07xhcCq9_4hyCQK6NCxC-At2y0GvScKR9po5IKzxRkt85WCef7sHlrVdYbg2NJ3jDqXCmeBJu6mevRPHhNG_iuPnHGnwraj9ST3BN1pOBiyHxYJWi6CwOruYvBkUUmvtre3yTU6xW8RxgK"/>
+<div>
+<p class="font-headline-sm text-body-md font-semibold text-on-surface">Fruits Basket Vol. 1</p>
+<p class="font-body-sm text-label-sm text-on-surface-variant">Natsuki Takaya</p>
+</div>
+</div>
+</td>
+<td class="px-6 py-4 font-body-sm text-body-sm text-on-surface">Shojo</td>
+<td class="px-6 py-4 font-body-sm text-body-sm text-on-surface text-right">8</td>
+<td class="px-6 py-4 font-body-sm text-body-sm text-on-surface text-right font-medium text-primary">3</td>
+<td class="px-6 py-4">
+<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-surface-variant text-on-surface-variant">
+                                    Reserved
+                                </span>
+</td>
+<td class="px-6 py-4 text-right">
+<button class="text-outline hover:text-primary transition-colors p-1"><span class="material-symbols-outlined text-sm">edit</span></button>
+<button class="text-outline hover:text-error transition-colors p-1"><span class="material-symbols-outlined text-sm">delete</span></button>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+<!-- Pagination -->
+<div class="border-t border-[#F3F4F6] px-6 py-4 flex items-center justify-between bg-surface-container-lowest">
+<p class="font-body-sm text-body-sm text-on-surface-variant">Showing <span class="font-semibold text-on-surface">1</span> to <span class="font-semibold text-on-surface">10</span> of <span class="font-semibold text-on-surface">97</span> results</p>
+<div class="flex gap-2">
+<button class="px-3 py-1 border border-outline-variant rounded-md text-on-surface-variant hover:bg-surface-container transition-colors disabled:opacity-50"><span class="material-symbols-outlined text-sm align-middle">chevron_left</span></button>
+<button class="px-3 py-1 border border-primary bg-primary text-on-primary rounded-md font-label-sm text-label-sm">1</button>
+<button class="px-3 py-1 border border-outline-variant text-on-surface rounded-md font-label-sm text-label-sm hover:bg-surface-container transition-colors">2</button>
+<button class="px-3 py-1 border border-outline-variant text-on-surface rounded-md font-label-sm text-label-sm hover:bg-surface-container transition-colors">3</button>
+<span class="px-2 py-1 text-on-surface-variant">...</span>
+<button class="px-3 py-1 border border-outline-variant rounded-md text-on-surface-variant hover:bg-surface-container transition-colors"><span class="material-symbols-outlined text-sm align-middle">chevron_right</span></button>
+</div>
+</div>
+</div>
+</main>
+</body></html>
