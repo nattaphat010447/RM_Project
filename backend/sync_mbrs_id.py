@@ -17,7 +17,7 @@ def clean_title(title):
 
 def run_sync():
     csv_path = os.path.join('rentals', 'ml_models', 'Anime.csv')
-    
+
     if not os.path.exists(csv_path):
         print(f"File not found: {csv_path}")
         return

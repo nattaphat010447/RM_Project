@@ -797,7 +797,7 @@ class RecommendationView(APIView):
 
         return Response({
             'recommendations': recommendations_with_explanations,
-            'has_preferences': len(preference_mbrs_ids) > 0
+            'has_preferences': user_prefs.count() > 0
         })
 
 @api_view(['GET', 'POST'])

@@ -17,38 +17,75 @@ const ForYou = () => {
   };
 
   useEffect(() => {
-    const fetchRecommendations = async () => {
-      try {
-        const token = localStorage.getItem('access_token');
+  const fetchRecommendations = async () => {
+    try {
+      console.log('🔍 [ForYou] Starting fetchRecommendations...');
 
-        // No token: user is not logged in
-        if (!token) {
-           setError("Please log in to see your personalized recommendations.");
-           setLoading(false);
-           return;
-        }
+      const token = localStorage.getItem('access_token');
+      console.log('🔑 [ForYou] Token exists:', !!token);
 
-        // Fetch recommendations from the API
-        const response = await authFetch(`${API_URL}/api/recommendations/`, {
-          method: 'GET',
-          headers: { 'Content-Type': 'application/json' }
-        });
-
-        if (!response.ok) {
-          throw new Error('Network response was not ok');
-        }
-
-        const data = await response.json();
-        setMangas(data.recommendations || data);
-        setHasPreferences(data.has_preferences || false);
+      // No token: user is not logged in
+      if (!token) {
+        console.log('❌ [ForYou] No token found - user not logged in');
+        setError("Please log in to see your personalized recommendations.");
         setLoading(false);
-      } catch (err) {
-        console.error("Error fetching recommendations:", err);
-        setError("Unable to load recommendations. Please try again.");
-        setLoading(false);
+        return;
       }
-    };
 
+      console.log(
+        '📡 [ForYou] Fetching recommendations from:',
+        `${API_URL}/api/recommendations/`
+      );
+
+      // Fetch recommendations from the API
+      const response = await authFetch(`${API_URL}/api/recommendations/`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json'
+        }
+      });
+
+      console.log(
+        '📥 [ForYou] Response status:',
+        response.status,
+        response.ok ? '✅' : '❌'
+      );
+
+      if (!response.ok) {
+        throw new Error('Network response was not ok');
+      }
+
+      const data = await response.json();
+
+      console.log('📦 [ForYou] Data received:', data);
+      console.log(
+        '📚 [ForYou] Recommendations count:',
+        data.recommendations?.length || 0
+      );
+      console.log(
+        '👤 [ForYou] Has preferences:',
+        data.has_preferences
+      );
+
+      setMangas(data.recommendations || data);
+      setHasPreferences(data.has_preferences || false);
+      setLoading(false);
+
+      console.log('✅ [ForYou] State updated successfully');
+    } catch (err) {
+      console.error(
+        "❌ [ForYou] Error fetching recommendations:",
+        err
+      );
+
+      setError(
+        "Unable to load recommendations. Please try again."
+      );
+
+      setLoading(false);
+    }
+  };
+  
     fetchRecommendations();
   }, []);
 

@@ -152,74 +152,151 @@ const AdminMangaDetail = () => {
     </div>
   );
 
-  const inputClass = "w-full rounded-lg border border-lumina-outline/60 bg-white px-4 py-3 font-inter text-sm text-lumina-text placeholder:text-lumina-text-muted/60 shadow-lumina-sm focus:outline-none focus:border-lumina-primary focus:ring-1 focus:ring-lumina-primary transition-shadow";
-  const labelClass = "block font-inter text-xs font-semibold uppercase tracking-wide text-lumina-text-muted mb-2";
+const inputClass = "w-full rounded-lg border border-lumina-outline/60 bg-white px-4 py-3 font-inter text-sm text-lumina-text placeholder:text-lumina-text-muted/60 shadow-lumina-sm focus:outline-none focus:border-lumina-primary focus:ring-1 focus:ring-lumina-primary transition-shadow";
+const labelClass = "block font-inter text-xs font-semibold uppercase tracking-wide text-lumina-text-muted mb-2";
 
-  return (
-    <div className="min-h-screen bg-lumina-surface">
+return (
+  <div className="min-h-screen bg-lumina-surface">
 
-      <aside className="hidden md:block fixed left-0 top-0 h-screen w-64 z-40">
-        {sidebarContent}
-      </aside>
+    <aside className="hidden md:block fixed left-0 top-0 h-screen w-64 z-40">
+      {sidebarContent}
+    </aside>
 
-      {sidebarOpen && (
-        <div className="md:hidden fixed inset-0 z-50 flex">
-          <div className="absolute inset-0 bg-black/40" onClick={() => setSidebarOpen(false)}></div>
-          <div className="relative w-64 max-w-[80vw] h-full shadow-lumina-lg">{sidebarContent}</div>
+    {sidebarOpen && (
+      <div className="md:hidden fixed inset-0 z-50 flex">
+        <div className="absolute inset-0 bg-black/40" onClick={() => setSidebarOpen(false)}></div>
+        <div className="relative w-64 max-w-[80vw] h-full shadow-lumina-lg">
+          {sidebarContent}
         </div>
-      )}
+      </div>
+    )}
 
-      <main className="md:ml-64 min-h-screen p-4 md:p-8 lg:p-10">
+    <main className="md:ml-64 min-h-screen p-4 md:p-8 lg:p-10">
 
-        <header className="flex justify-between items-start mb-6 gap-4">
-          <div className="min-w-0">
-            <Link to="/admin/mangas" className="inline-flex items-center gap-1.5 font-inter text-sm text-lumina-text-muted hover:text-lumina-primary transition-colors mb-2">
-              <svg className="w-4 h-4 shrink-0" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M10 19l-7-7m0 0l7-7m-7 7h18" /></svg>
-              Back to Catalog
-            </Link>
-            <h2 className="font-jakarta font-extrabold tracking-tight text-3xl md:text-4xl text-lumina-text truncate">{manga.title}</h2>
-          </div>
-          <div className="flex items-start gap-3 shrink-0">
-            <button
-              onClick={() => setSidebarOpen(true)}
-              aria-label="Open admin menu"
-              className="md:hidden flex items-center justify-center w-11 h-11 rounded-full bg-white border border-lumina-outline/50 text-lumina-primary"
+      <header className="flex justify-between items-start mb-6 gap-4">
+        <div className="min-w-0">
+          <Link
+            to="/admin/mangas"
+            className="inline-flex items-center gap-1.5 font-inter text-sm text-lumina-text-muted hover:text-lumina-primary transition-colors mb-2"
+          >
+            <svg
+              className="w-4 h-4 shrink-0"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              viewBox="0 0 24 24"
             >
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M4 6h16M4 12h16M4 18h16" /></svg>
-            </button>
-            <Link to={`/admin/mangas/edit/${manga.id}`} className="hidden sm:inline-flex border border-lumina-primary/60 text-lumina-primary hover:bg-lumina-primary-soft font-inter text-sm font-semibold py-2.5 px-5 rounded-full transition-colors whitespace-nowrap">
-              Edit Manga
-            </Link>
-          </div>
-        </header>
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                d="M10 19l-7-7m0 0l7-7m-7 7h18"
+              />
+            </svg>
+            Back to Catalog
+          </Link>
 
-        <div className="bg-white rounded-2xl shadow-lumina-sm border border-lumina-outline/30 p-5 md:p-7 mb-6 flex flex-col sm:flex-row gap-5 md:gap-7">
-          <img
-            src={getImageUrl(manga.cover_image_url)}
-            alt={manga.title}
-            className="w-40 sm:w-44 self-start object-cover rounded-xl shadow-lumina-md border border-lumina-outline/40 bg-lumina-surface-alt"
-          />
-          <div className="flex flex-col min-w-0 py-1">
-            <span className="w-fit inline-flex bg-lumina-primary-soft text-lumina-primary font-inter text-xs font-semibold px-3 py-1 rounded-full mb-3">Manga Details (Admin)</span>
-            <dl className="space-y-2 font-inter text-sm">
-              <div className="flex gap-2">
-                <dt className="text-lumina-text-muted shrink-0 w-28">Author</dt>
-                <dd className="text-lumina-text font-medium">{manga.author}</dd>
-              </div>
-              <div className="flex gap-2">
-                <dt className="text-lumina-text-muted shrink-0 w-28">Genre</dt>
-                <dd className="text-lumina-text font-medium">{manga.genre}</dd>
-              </div>
-              <div className="flex gap-2">
-                <dt className="text-lumina-text-muted shrink-0 w-28">Available Copies</dt>
-                <dd className="text-status-available font-semibold">{availableCopies.length} of {manga.copies?.length || 0}</dd>
-              </div>
-            </dl>
-            <p className="mt-auto pt-4 font-jakarta font-extrabold text-2xl text-lumina-primary leading-none">
-              {manga.rental_price_per_day} THB<span className="font-inter text-sm font-semibold text-lumina-text-muted"> / day</span>
-            </p>
-          </div>
+          <h2 className="font-jakarta font-extrabold tracking-tight text-3xl md:text-4xl text-lumina-text truncate">
+            {manga.title}
+          </h2>
         </div>
+
+        <div className="flex items-start gap-3 shrink-0">
+          <button
+            onClick={() => setSidebarOpen(true)}
+            aria-label="Open admin menu"
+            className="md:hidden flex items-center justify-center w-11 h-11 rounded-full bg-white border border-lumina-outline/50 text-lumina-primary"
+          >
+            <svg
+              className="w-5 h-5"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                d="M4 6h16M4 12h16M4 18h16"
+              />
+            </svg>
+          </button>
+
+          <Link
+            to={`/admin/mangas/edit/${manga.id}`}
+            className="hidden sm:inline-flex border border-lumina-primary/60 text-lumina-primary hover:bg-lumina-primary-soft font-inter text-sm font-semibold py-2.5 px-5 rounded-full transition-colors whitespace-nowrap"
+          >
+            Edit Manga
+          </Link>
+        </div>
+      </header>
+
+      <div className="bg-white rounded-2xl shadow-lumina-sm border border-lumina-outline/30 p-5 md:p-7 mb-6 flex flex-col sm:flex-row gap-5 md:gap-7">
+
+        <img
+          src={getImageUrl(manga.cover_image_url)}
+          alt={manga.title}
+          className="w-40 sm:w-44 self-start object-cover rounded-xl shadow-lumina-md border border-lumina-outline/40 bg-lumina-surface-alt"
+        />
+
+        <div className="flex flex-col min-w-0 py-1">
+
+          <span className="w-fit inline-flex bg-lumina-primary-soft text-lumina-primary font-inter text-xs font-semibold px-3 py-1 rounded-full mb-3">
+            Manga Details (Admin)
+          </span>
+
+          <dl className="space-y-2 font-inter text-sm">
+
+            <div className="flex gap-2">
+              <dt className="text-lumina-text-muted shrink-0 w-28">
+                Author
+              </dt>
+              <dd className="text-lumina-text font-medium">
+                {manga.author}
+              </dd>
+            </div>
+
+            <div className="flex gap-2">
+              <dt className="text-lumina-text-muted shrink-0 w-28">
+                Genre
+              </dt>
+              <dd className="text-lumina-text font-medium">
+                {manga.genre}
+              </dd>
+            </div>
+
+            <div className="flex gap-2">
+              <dt className="text-lumina-text-muted shrink-0 w-28">
+                Available Copies
+              </dt>
+              <dd className="text-status-available font-semibold">
+                {availableCopies.length} of {manga.copies?.length || 0}
+              </dd>
+            </div>
+
+          </dl>
+
+          {/* Description จาก origin/main */}
+          {manga.description && (
+            <div className="mt-4">
+              <dt className="font-inter text-sm text-lumina-text-muted mb-1">
+                Description
+              </dt>
+              <dd className="font-inter text-sm text-lumina-text leading-relaxed max-w-2xl">
+                {manga.description}
+              </dd>
+            </div>
+          )}
+
+          <p className="mt-auto pt-4 font-jakarta font-extrabold text-2xl text-lumina-primary leading-none">
+            {manga.rental_price_per_day}
+            {" "}THB
+            <span className="font-inter text-sm font-semibold text-lumina-text-muted">
+              {" "} / day
+            </span>
+          </p>
+
+        </div>
+      </div>
 
         <div className="bg-white rounded-2xl shadow-lumina-sm border border-lumina-outline/30 p-5 md:p-7">
           <h3 className="font-jakarta font-bold text-xl text-lumina-text mb-1">Rent Manga for Customer</h3>

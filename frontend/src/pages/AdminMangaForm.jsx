@@ -21,7 +21,7 @@ const AdminMangaForm = () => {
   const isEditMode = Boolean(id);
 
   const [formData, setFormData] = useState({
-    title: '', author: '', genre: '', rental_price_per_day: '', serial_numbers: ''
+    title: '', author: '', genre: '', description: '', rental_price_per_day: '', serial_numbers: ''
   });
   const [coverFile, setCoverFile] = useState(null);
   const [currentImage, setCurrentImage] = useState('');
@@ -39,6 +39,7 @@ const AdminMangaForm = () => {
         .then(data => {
           setFormData({
             title: data.title, author: data.author || '', genre: data.genre || '',
+            description: data.description || '',
             rental_price_per_day: data.rental_price_per_day, serial_numbers: ''
           });
           setCurrentImage(data.cover_image_url);
@@ -66,6 +67,7 @@ const AdminMangaForm = () => {
     dataToSend.append('title', formData.title);
     dataToSend.append('author', formData.author);
     dataToSend.append('genre', formData.genre);
+    dataToSend.append('description', formData.description);
     dataToSend.append('rental_price_per_day', price);
 
     if (coverFile) {
@@ -252,8 +254,40 @@ const AdminMangaForm = () => {
             </div>
           </div>
 
-          <div className="bg-white rounded-2xl shadow-lumina-sm border border-lumina-outline/30 p-6 md:p-8 mb-6">
-            <h3 className="font-jakarta font-bold text-lg text-lumina-text mb-6 pb-4 border-b border-lumina-outline/40">Cover Image</h3>
+<div>
+  <label className="block text-sm font-bold mb-1">
+    Synopsis (Description)
+  </label>
+  <textarea
+    rows={4}
+    value={formData.description}
+    onChange={e =>
+      setFormData({
+        ...formData,
+        description: e.target.value
+      })
+    }
+    className="w-full rounded-lg border border-lumina-outline/60 bg-white px-4 py-3 font-inter text-sm text-lumina-text placeholder:text-lumina-text-muted/60 shadow-lumina-sm focus:outline-none focus:border-lumina-primary focus:ring-1 focus:ring-lumina-primary transition-shadow resize-none"
+    placeholder="Enter manga synopsis..."
+  />
+</div>
+
+<div className="bg-white rounded-2xl shadow-lumina-sm border border-lumina-outline/30 p-6 md:p-8 mb-6">
+  <h3 className="font-jakarta font-bold text-lg text-lumina-text mb-6 pb-4 border-b border-lumina-outline/40">
+    Cover Image
+  </h3>
+
+  <label className="block text-sm font-bold mb-1">
+    Cover Image (select new file to replace)
+  </label>
+
+  <input
+    type="file"
+    accept="image/*"
+    onChange={e => setCoverFile(e.target.files[0])}
+    className="w-full rounded-lg border border-lumina-outline/60 bg-white px-4 py-3 font-inter text-sm text-lumina-text shadow-lumina-sm focus:outline-none focus:border-lumina-primary focus:ring-1 focus:ring-lumina-primary transition-shadow"
+  />
+</div>
 
             <div className="flex items-start gap-6">
               <div className="flex-1">
@@ -273,7 +307,7 @@ const AdminMangaForm = () => {
                 </div>
               )}
             </div>
-          </div>
+         
 
           {!isEditMode && (
             <div className="bg-white rounded-2xl shadow-lumina-sm border border-lumina-outline/30 p-6 md:p-8 mb-8">

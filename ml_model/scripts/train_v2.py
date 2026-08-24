@@ -1,5 +1,5 @@
 """
-Training script for MB-CGCN v2 (3 behaviors: CLICK → CART → RENT)
+Training script for MB-CGCN v2 (3 behaviors: CLICK  CART  RENT)
 
 Usage:
     python train_v2.py --epochs 600 --batch_size 400000 --embed_dim 64
@@ -22,8 +22,8 @@ def compute_bpr_loss(pos_scores, neg_scores, temperature=0.05):
     Bayesian Personalized Ranking loss with temperature scaling.
 
     Args:
-        pos_scores: [batch_size] — scores for positive items
-        neg_scores: [batch_size] — scores for negative items
+        pos_scores: [batch_size]  scores for positive items
+        neg_scores: [batch_size]  scores for negative items
         temperature: softmax temperature (lower = sharper)
 
     Returns:
@@ -94,7 +94,7 @@ def evaluate_model(model, edge_click, edge_cart, edge_rent, test_data, device, k
         if test_edges.size(1) == 0:
             return 0.0, 0.0
 
-        # Filter test edges to user→item only (first half of bipartite edges)
+        # Filter test edges to useritem only (first half of bipartite edges)
         test_edges = test_edges[:, :test_edges.size(1) // 2]
 
         test_user_items = {}
@@ -153,10 +153,10 @@ def train_v2(
     Returns:
         final_metrics: dict with recall@10, ndcg@10
     """
-    print("🚀 Starting MB-CGCN v2 training (3 behaviors)...")
+    print(" Starting MB-CGCN v2 training (3 behaviors)...")
 
     # Load data
-    data = torch.load(data_path)
+    data = torch.load(data_path, weights_only=False)
     num_users = data['num_users']
     num_items = data['num_items']
 
@@ -164,7 +164,7 @@ def train_v2(
     edge_cart_train = data['edge_index_cart_train'].to(device)
     edge_rent_train = data['edge_index_rent_train'].to(device)
 
-    print(f"📊 Data loaded:")
+    print(f" Data loaded:")
     print(f"   Users: {num_users}, Items: {num_items}")
     print(f"   CLICK edges: {edge_click_train.size(1) // 2}")
     print(f"   CART edges:  {edge_cart_train.size(1) // 2}")
@@ -172,7 +172,7 @@ def train_v2(
 
     # Check minimum data requirement
     if edge_click_train.size(1) < 100 or edge_rent_train.size(1) < 100:
-        print("❌ Insufficient data for training v2 model.")
+        print(" Insufficient data for training v2 model.")
         print("   Need at least 50 CLICK and 50 RENT interactions.")
         return {'recall@10': 0.0, 'ndcg@10': 0.0, 'error': 'insufficient_data'}
 
@@ -189,7 +189,7 @@ def train_v2(
 
     # Log initial weights
     w_c, w_ca, w_r = model.get_behavior_weights()
-    print(f"🎚️  Initial weights: CLICK={w_c:.4f}, CART={w_ca:.4f}, RENT={w_r:.4f}")
+    print(f"  Initial weights: CLICK={w_c:.4f}, CART={w_ca:.4f}, RENT={w_r:.4f}")
 
     optimizer = torch.optim.Adam(model.parameters(), lr=lr, weight_decay=l2_reg)
 
@@ -203,7 +203,7 @@ def train_v2(
                 pos_user_items[u] = set()
             pos_user_items[u].add(m_original)
 
-    print(f"🎯 Training for {epochs} epochs...")
+    print(f" Training for {epochs} epochs...")
 
     best_recall = 0.0
 
@@ -215,7 +215,7 @@ def train_v2(
 
         # Sample positive pairs (from RENT behavior)
         if len(pos_user_items) == 0:
-            print("❌ No positive RENT interactions found.")
+            print(" No positive RENT interactions found.")
             break
 
         pos_users = list(pos_user_items.keys())[:batch_size]
@@ -247,7 +247,7 @@ def train_v2(
         if (epoch + 1) % 50 == 0:
             recall, ndcg = evaluate_model(model, edge_click_train, edge_cart_train, edge_rent_train, data, device, k=10)
             w_c, w_ca, w_r = model.get_behavior_weights()
-            print(f"\n📈 Epoch {epoch+1}/{epochs} | Loss: {loss.item():.4f} | Recall@10: {recall:.4f} | NDCG@10: {ndcg:.4f}")
+            print(f"\n Epoch {epoch+1}/{epochs} | Loss: {loss.item():.4f} | Recall@10: {recall:.4f} | NDCG@10: {ndcg:.4f}")
             print(f"   Weights: CLICK={w_c:.4f}, CART={w_ca:.4f}, RENT={w_r:.4f}")
 
             if recall > best_recall:
@@ -257,7 +257,7 @@ def train_v2(
     final_recall, final_ndcg = evaluate_model(model, edge_click_train, edge_cart_train, edge_rent_train, data, device, k=10)
     w_c, w_ca, w_r = model.get_behavior_weights()
 
-    print(f"\n✅ Training complete!")
+    print(f"\n Training complete!")
     print(f"   Final Recall@10: {final_recall:.4f}")
     print(f"   Final NDCG@10:   {final_ndcg:.4f}")
     print(f"   Final Weights: CLICK={w_c:.4f}, CART={w_ca:.4f}, RENT={w_r:.4f}")
@@ -277,7 +277,7 @@ def train_v2(
             'rent': w_r
         }
     }, output_path)
-    print(f"💾 Model saved to: {output_path}")
+    print(f" Model saved to: {output_path}")
 
     return {
         'recall@10': final_recall,

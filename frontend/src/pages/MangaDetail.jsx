@@ -28,22 +28,35 @@ const MangaDetail = () => {
   // Track CLICK behavior
   const logBehavior = async (eventType, additionalData = {}) => {
     const token = localStorage.getItem('access_token');
-    if (!token) return; // Only track for logged-in users
+    if (!token) {
+      console.log('⚠️ [BehaviorLog] Skipped: User not logged in');
+      return;
+    }
+
+    const source = location.state?.source || 'DIRECT';
+    console.log(`📊 [BehaviorLog] Logging ${eventType} event for manga #${id} (${manga?.title || 'Loading...'}) from ${source}`);
 
     try {
-      await authFetch(`${API_URL}/api/behaviors/log/`, {
+      const response = await authFetch(`${API_URL}/api/behaviors/log/`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           manga_id: id,
           event_type: eventType,
-          source: location.state?.source || 'DIRECT',
+          source: source,
           ...additionalData
         })
       });
+
+      if (response.ok) {
+        console.log(`✅ [BehaviorLog] Successfully logged ${eventType} for manga #${id}`);
+      } else {
+        const error = await response.json();
+        console.warn(`⚠️ [BehaviorLog] Failed to log ${eventType}:`, error);
+      }
     } catch (error) {
       // Silent fail — don't block user experience
-      console.debug('Behavior log failed:', error);
+      console.error('❌ [BehaviorLog] Error:', error.message);
     }
   };
 

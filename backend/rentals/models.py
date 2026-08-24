@@ -29,6 +29,7 @@ class Manga(models.Model):
     title = models.CharField(max_length=300)
     author = models.CharField(max_length=200, blank=True, null=True)
     genre = models.CharField(max_length=100, blank=True, null=True)
+    description = models.TextField(blank=True, null=True)
     cover_image_url = models.ImageField(upload_to='covers/', max_length=255, blank=True, null=True)
     rental_price_per_day = models.DecimalField(max_digits=10, decimal_places=2)
 

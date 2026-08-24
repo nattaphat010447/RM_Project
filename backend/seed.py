@@ -7,9 +7,7 @@ django.setup()
 from rentals.models import Manga, MangaCopy
 
 mangas = [
-    {"title": "One Piece Vol. 1", "author": "Eiichiro Oda", "genre": "Action/Adventure", "cover_image_url": "/images/mangas/one_piece_1.jpg", "price": 15.00},
     {"title": "Demon Slayer: Kimetsu no Yaiba Vol. 1", "author": "Koyoharu Gotouge", "genre": "Action/Fantasy", "cover_image_url": "/images/mangas/demon_slayer_1.jpg", "price": 12.00},
-    {"title": "Attack on Titan Vol. 1", "author": "Hajime Isayama", "genre": "Action/Dark Fantasy", "cover_image_url": "/images/mangas/attack_on_titan_1.jpg", "price": 18.00},
     {"title": "Jujutsu Kaisen Vol. 1", "author": "Gege Akutami", "genre": "Action/Supernatural", "cover_image_url": "/images/mangas/jujutsu_kaisen_1.jpg", "price": 14.50},
     {"title": "Spy x Family Vol. 1", "author": "Tatsuya Endo", "genre": "Comedy/Action", "cover_image_url": "/images/mangas/spy_x_family_1.jpg", "price": 13.00}
 ]

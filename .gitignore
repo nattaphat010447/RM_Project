@@ -10,6 +10,13 @@
 *.userosscache
 *.sln.docstates
 *.env
+.claude
+
+# Python virtual environment
+venv/
+env/
+ENV/
+.venv
 
 # User-specific files (MonoDevelop/Xamarin Studio)
 *.userprefs
@@ -416,3 +423,11 @@ FodyWeavers.xsd
 *.msix
 *.msm
 *.msp
+
+# ML Model Training Test
+ml_model/training_test/*
+
+# Dataset files
+Anime.csv
+**/Anime.csv
+ml_model/data/
