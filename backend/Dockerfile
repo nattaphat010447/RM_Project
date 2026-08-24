@@ -13,9 +13,6 @@ COPY requirements.txt ./
 
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Install PyTorch and ML dependencies for training scripts
-RUN pip install --no-cache-dir torch==2.0.1 pandas scikit-learn
-
 COPY . .
 
 EXPOSE 8000

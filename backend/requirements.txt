@@ -8,8 +8,9 @@ cryptography
 Pillow
 apscheduler
 pandas
-torch
+torch==2.0.1
 torch_geometric
+scikit-learn
 thefuzz
 gunicorn
 whitenoise

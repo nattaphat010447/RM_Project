@@ -26,7 +26,12 @@ def _load_anime_data():
         _anime_data_cache = False
         return False
 
-    csv_path = os.path.join(os.path.dirname(__file__), 'ml_models', 'Anime.csv')
+    backend_dir = os.path.dirname(os.path.dirname(__file__))
+    # Check if ml_model is inside backend dir (Docker) or one level up (local)
+    if os.path.exists(os.path.join(backend_dir, 'ml_model')):
+        csv_path = os.path.join(backend_dir, 'ml_model', 'data', 'Anime.csv')
+    else:
+        csv_path = os.path.join(os.path.dirname(backend_dir), 'ml_model', 'data', 'Anime.csv')
     if not os.path.exists(csv_path):
         logger.warning(f"Anime.csv not found at {csv_path} - mbrs_id sync disabled")
         _anime_data_cache = False
