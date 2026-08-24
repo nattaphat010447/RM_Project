@@ -2,6 +2,7 @@ from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from django.shortcuts import get_object_or_404
+from django.utils import timezone
 from .models import ABTestVariant, ABTestEvent, ModelTrainingLog
 from .permissions import IsAdminRole
 from .ab_testing import ABTestManager
@@ -137,17 +138,40 @@ def trigger_model_retrain(request):
     def run_training():
         import os
         import sys
-        project_root = os.path.dirname(os.path.dirname(os.path.dirname(__file__)))
+
+        # In Docker: /app is backend directory, ml_model is copied to /app/ml_model
+        # In Local: backend is a subdirectory, need to go up to project root
+        backend_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+
+        # Check if ml_model exists in current directory (Docker case)
+        if os.path.exists(os.path.join(backend_dir, 'ml_model')):
+            project_root = backend_dir
+        else:
+            # Local case: go up one more level
+            project_root = os.path.dirname(backend_dir)
 
         if model_version == 'v1':
             script_path = os.path.join(project_root, 'ml_model', 'scripts', 'retrain_model.py')
         else:
             script_path = os.path.join(project_root, 'ml_model', 'scripts', 'retrain_model_v2.py')
 
+        # Verify script exists
+        if not os.path.exists(script_path):
+            log.status = 'FAILED'
+            log.error_message = f'Training script not found: {script_path}'
+            log.completed_at = timezone.now()
+            log.save()
+            return
+
+        log.metadata = log.metadata or {}
+        log.metadata['script_path'] = str(script_path)
+        log.metadata['project_root'] = str(project_root)
+        log.save()
+
         try:
             result = subprocess.run(
                 [sys.executable, script_path],
-                cwd=project_root,
+                cwd=str(project_root),
                 capture_output=True,
                 text=True,
                 timeout=3600  # 1 hour timeout

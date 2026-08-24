@@ -522,23 +522,29 @@ def admin_user_detail(request, user_id):
         user.save()
         return Response({"message": "Member deactivated successfully."})
 
+
 @api_view(['POST'])
 @permission_classes([IsAdminRole])
 def admin_add_manga(request):
+    from .mbrs_sync import sync_mbrs_id_for_manga
+
     serializer = MangaSerializer(data=request.data)
     if serializer.is_valid():
         manga = serializer.save(is_active=True)
-        
+
         if 'cover_image_url' in request.FILES:
             manga.cover_image_url = request.FILES['cover_image_url']
             manga.save()
-        
+
         serial_numbers = request.data.get('serial_numbers', '')
         if serial_numbers:
             for sn in serial_numbers.split(','):
                 if sn.strip():
                     MangaCopy.objects.create(manga=manga, serial_no=sn.strip())
-                    
+
+        # Auto-sync mbrs_id for MB-CGCN v1 matching
+        sync_mbrs_id_for_manga(manga)
+
         return Response(serializer.data, status=201)
     return Response(serializer.errors, status=400)
 

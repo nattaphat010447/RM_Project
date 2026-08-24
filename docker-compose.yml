@@ -29,6 +29,7 @@ services:
     command: python manage.py runserver 0.0.0.0:8000
     volumes:
       - ./backend:/app
+      - ./ml_model:/app/ml_model
       - ./.env:/app/.env
     ports:
       - "${BACKEND_PORT:-8000}:8000"
