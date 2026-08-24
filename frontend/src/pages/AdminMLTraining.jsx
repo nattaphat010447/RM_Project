@@ -243,7 +243,6 @@ const tdCenterClass =
 
 return (
   <div className="min-h-screen bg-lumina-surface">
-
     <aside className="hidden md:block fixed left-0 top-0 h-screen w-64 z-40">
       {sidebarContent}
     </aside>
@@ -262,9 +261,7 @@ return (
     )}
 
     <main className="md:ml-64 min-h-screen p-4 md:p-8 lg:p-10">
-
       <header className="flex justify-between items-start mb-6 gap-4">
-
         <div>
           <h2 className="font-jakarta font-extrabold tracking-tight text-3xl md:text-4xl text-lumina-text">
             Model Training
@@ -276,7 +273,6 @@ return (
         </div>
 
         <div className="flex items-start gap-3 shrink-0">
-
           <button
             onClick={() => setSidebarOpen(true)}
             aria-label="Open admin menu"
@@ -316,21 +312,17 @@ return (
             </svg>
             Refresh
           </button>
-
         </div>
       </header>
 
       {/* Current Status */}
       <div className="bg-white rounded-2xl shadow-lumina-sm border border-lumina-outline/30 p-6 md:p-7 mb-6">
-
         <div className="flex flex-wrap items-center justify-between gap-3 mb-5">
-
           <h3 className="font-jakarta font-bold text-xl text-lumina-text">
             Current Status
           </h3>
 
           <div className="flex items-center gap-3">
-
             <label className="flex items-center gap-2 font-inter text-sm text-lumina-text-muted cursor-pointer select-none">
               <input
                 type="checkbox"
@@ -347,7 +339,6 @@ return (
             >
               Refresh
             </button>
-
           </div>
         </div>
         
@@ -356,448 +347,347 @@ return (
           <h2 className="text-lg font-bold text-brand-primary mb-4">Current Status</h2>
 
           {isTraining ? (
-  <div className="bg-status-requested/10 border border-status-requested/40 rounded-xl p-6">
-    <div className="flex items-center gap-4">
-      <div className="animate-spin rounded-full h-12 w-12 border-t-4 border-status-requested shrink-0"></div>
+            <div className="bg-status-requested/10 border border-status-requested/40 rounded-xl p-6">
+              <div className="flex items-center gap-4">
+                <div className="animate-spin rounded-full h-12 w-12 border-t-4 border-status-requested shrink-0"></div>
 
-      <div>
-        <h4 className="font-jakarta font-bold text-xl text-status-requested">
-          Training in Progress...
-        </h4>
+                <div>
+                  <h4 className="font-jakarta font-bold text-xl text-status-requested">
+                    Training in Progress...
+                  </h4>
 
-        <p className="font-inter text-sm text-lumina-text-muted mt-1">
-          Please wait. This may take 10-30 minutes.
-        </p>
+                  <p className="font-inter text-sm text-lumina-text-muted mt-1">
+                    Please wait. This may take 10-30 minutes.
+                  </p>
+                </div>
+              </div>
+            </div>
+          ) : latestLog?.status === 'COMPLETED' ? (
+            <div className="bg-status-available/10 border border-status-available/40 rounded-xl p-6">
+              <div className="flex flex-wrap items-center justify-between gap-4">
+                <div>
+                  <h4 className="font-jakarta font-bold text-xl text-status-available">
+                    Latest Training Completed
+                  </h4>
+
+                  <p className="font-inter text-sm text-lumina-text-muted mt-1">
+                    Completed: {formatDate(latestLog.completed_at)}
+                  </p>
+
+                  {latestLog.final_recall_at_10 && (
+                    <div className="mt-3 flex flex-wrap gap-x-8 gap-y-2">
+                      <div>
+                        <span className="font-inter text-sm text-lumina-text-muted">
+                          Recall@10:
+                        </span>
+
+                        <span className="ml-2 font-jakarta font-extrabold text-lg text-lumina-primary">
+                          {(latestLog.final_recall_at_10 * 100).toFixed(2)}%
+                        </span>
+                      </div>
+
+                      <div>
+                        <span className="font-inter text-sm text-lumina-text-muted">
+                          NDCG@10:
+                        </span>
+
+                        <span className="ml-2 font-jakarta font-extrabold text-lg text-lumina-primary">
+                          {(latestLog.final_ndcg_at_10 * 100).toFixed(2)}%
+                        </span>
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                <button
+                  onClick={() => handleRetrain('v1')}
+                  className="bg-lumina-primary hover:bg-lumina-primary-light text-white font-inter font-semibold px-6 py-3 rounded-lg transition-colors shadow-lumina-sm whitespace-nowrap"
+                >
+                  Retrain Model Now
+                </button>
+              </div>
+            </div>
+          ) : (
+            <div className="bg-lumina-surface-alt border border-lumina-outline/50 rounded-xl p-6">
+              <div className="flex flex-wrap items-center justify-between gap-4">
+                <div>
+                  <h4 className="font-jakarta font-bold text-xl text-lumina-text">
+                    Ready to Train
+                  </h4>
+
+                  <p className="font-inter text-sm text-lumina-text-muted mt-1">
+                    No training in progress
+                  </p>
+                </div>
+
+                <button
+                  onClick={() => handleRetrain('v1')}
+                  disabled={isTraining}
+                  className={`font-inter font-semibold px-6 py-3 rounded-lg transition-colors shadow-lumina-sm whitespace-nowrap ${
+                    isTraining
+                      ? 'bg-lumina-primary-light opacity-70 text-white cursor-not-allowed'
+                      : 'bg-lumina-primary hover:bg-lumina-primary-light text-white'
+                  }`}
+                >
+                  Retrain Model Now
+                </button>
+              </div>
+            </div>
+          )}
+        </div>
       </div>
-    </div>
-  </div>
-) : latestLog?.status === 'COMPLETED' ? (
-  <div className="bg-status-available/10 border border-status-available/40 rounded-xl p-6">
-    <div className="flex flex-wrap items-center justify-between gap-4">
 
-      <div>
-        <h4 className="font-jakarta font-bold text-xl text-status-available">
-          Latest Training Completed
-        </h4>
+      <h3 className="font-jakarta font-extrabold text-2xl text-lumina-text mb-4">
+        Model Comparison
+      </h3>
 
-        <p className="font-inter text-sm text-lumina-text-muted mt-1">
-          Completed: {formatDate(latestLog.completed_at)}
-        </p>
+      <div className="bg-white rounded-2xl shadow-lumina-sm border border-lumina-outline/30 overflow-hidden mb-6">
+        <div className="overflow-x-auto">
+          <table className="w-full text-left border-collapse min-w-[960px]">
+            <thead>
+              <tr className="border-b border-lumina-outline/40 bg-lumina-surface-alt/60">
+                <th className={thClass}>Model</th>
+                <th className={`${thClass} text-center`}>Behaviors</th>
+                <th className={`${thClass} text-center`}>Data Source</th>
+                <th className={`${thClass} text-center`}>Status</th>
+                <th className={`${thClass} text-center`}>Recall@10</th>
+                <th className={`${thClass} text-center`}>NDCG@10</th>
+                <th className={`${thClass} text-center`}>Trained At</th>
+                <th className={`${thClass} text-center`}>Action</th>
+              </tr>
+            </thead>
 
-        {latestLog.final_recall_at_10 && (
-          <div className="mt-3 flex flex-wrap gap-x-8 gap-y-2">
+            <tbody className="divide-y divide-lumina-outline/30">
+              <tr className="hover:bg-lumina-surface-alt/60 transition-colors">
+                <td className="px-5 py-4">
+                  <span className="font-jakarta font-bold text-lumina-primary">MB-CGCN</span>
+                  <span className="ml-2 font-inter text-xs text-lumina-text-muted">(Primary)</span>
+                </td>
 
-            <div>
-              <span className="font-inter text-sm text-lumina-text-muted">
-                Recall@10:
-              </span>
+                <td className={tdCenterClass}>CART → RENT</td>
+                <td className={tdCenterClass}>MAL Dataset + Web</td>
 
-              <span className="ml-2 font-jakarta font-extrabold text-lg text-lumina-primary">
-                {(latestLog.final_recall_at_10 * 100).toFixed(2)}%
-              </span>
-            </div>
+                <td className="px-5 py-4 text-center">
+                  {latestV1 ? (
+                    getStatusBadge(latestV1.status)
+                  ) : (
+                    <span className="font-inter text-xs text-lumina-text-muted">Not trained</span>
+                  )}
+                </td>
 
-            <div>
-              <span className="font-inter text-sm text-lumina-text-muted">
-                NDCG@10:
-              </span>
+                <td className="px-5 py-4 text-center">
+                  {latestV1?.final_recall_at_10 ? (
+                    <span className="font-inter text-sm font-bold text-lumina-primary">
+                      {(latestV1.final_recall_at_10 * 100).toFixed(2)}%
+                    </span>
+                  ) : (
+                    <span className="font-inter text-sm text-lumina-text-muted">-</span>
+                  )}
+                </td>
 
-              <span className="ml-2 font-jakarta font-extrabold text-lg text-lumina-primary">
-                {(latestLog.final_ndcg_at_10 * 100).toFixed(2)}%
-              </span>
-            </div>
+                <td className="px-5 py-4 text-center">
+                  {latestV1?.final_ndcg_at_10 ? (
+                    <span className="font-inter text-sm font-bold text-lumina-primary">
+                      {(latestV1.final_ndcg_at_10 * 100).toFixed(2)}%
+                    </span>
+                  ) : (
+                    <span className="font-inter text-sm text-lumina-text-muted">-</span>
+                  )}
+                </td>
 
+                <td className={`${tdCenterClass} whitespace-nowrap`}>
+                  {latestV1 ? formatDate(latestV1.completed_at) : '-'}
+                </td>
+
+                <td className="px-5 py-4 text-center">
+                  <button
+                    onClick={() => handleRetrain('v1')}
+                    disabled={isTraining}
+                    className={`font-inter text-xs font-semibold px-4 py-1.5 rounded-lg transition-colors ${
+                      isTraining
+                        ? 'bg-lumina-primary-light opacity-70 text-white cursor-not-allowed'
+                        : 'bg-lumina-primary hover:bg-lumina-primary-light text-white'
+                    }`}
+                  >
+                    Retrain
+                  </button>
+                </td>
+              </tr>
+
+              <tr className="hover:bg-lumina-surface-alt/60 transition-colors">
+                <td className="px-5 py-4">
+                  <span className="font-jakarta font-bold text-lumina-secondary">MB-CGCN-v2</span>
+                  <span className="ml-2 font-inter text-xs text-lumina-text-muted">(Secondary)</span>
+                </td>
+
+                <td className={tdCenterClass}>CLICK → CART → RENT</td>
+                <td className={tdCenterClass}>Web Only (3 behaviors)</td>
+
+                <td className="px-5 py-4 text-center">
+                  {latestV2 ? (
+                    getStatusBadge(latestV2.status)
+                  ) : (
+                    <span className="font-inter text-xs text-lumina-text-muted">Not trained</span>
+                  )}
+                </td>
+
+                <td className="px-5 py-4 text-center">
+                  {latestV2?.final_recall_at_10 ? (
+                    <span className="font-inter text-sm font-bold text-lumina-secondary">
+                      {(latestV2.final_recall_at_10 * 100).toFixed(2)}%
+                    </span>
+                  ) : (
+                    <span className="font-inter text-sm text-lumina-text-muted">-</span>
+                  )}
+                </td>
+
+                <td className="px-5 py-4 text-center">
+                  {latestV2?.final_ndcg_at_10 ? (
+                    <span className="font-inter text-sm font-bold text-lumina-secondary">
+                      {(latestV2.final_ndcg_at_10 * 100).toFixed(2)}%
+                    </span>
+                  ) : (
+                    <span className="font-inter text-sm text-lumina-text-muted">-</span>
+                  )}
+                </td>
+
+                <td className={`${tdCenterClass} whitespace-nowrap`}>
+                  {latestV2 ? formatDate(latestV2.completed_at) : '-'}
+                </td>
+
+                <td className="px-5 py-4 text-center">
+                  <button
+                    onClick={() => handleRetrain('v2')}
+                    disabled={isTraining}
+                    className={`font-inter text-xs font-semibold px-4 py-1.5 rounded-lg transition-colors ${
+                      isTraining
+                        ? 'bg-lumina-secondary-light opacity-70 text-white cursor-not-allowed'
+                        : 'bg-lumina-secondary hover:bg-lumina-secondary-light text-white'
+                    }`}
+                  >
+                    Retrain
+                  </button>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        {!latestV2 && (
+          <div className="bg-status-requested/10 border-t border-status-requested/30 p-4">
+            <p className="font-inter text-sm text-status-requested">
+              <strong>MB-CGCN-v2</strong> requires at least 50+ CLICK interactions from the web before training.
+            </p>
           </div>
         )}
       </div>
 
-      <button
-        onClick={() => handleRetrain('v1')}
-        className="bg-lumina-primary hover:bg-lumina-primary-light text-white font-inter font-semibold px-6 py-3 rounded-lg transition-colors shadow-lumina-sm whitespace-nowrap"
-      >
-        Retrain Model Now
-      </button>
+      <h3 className="font-jakarta font-extrabold text-2xl text-lumina-text mb-4">
+        Training History
+      </h3>
 
-    </div>
-  </div>
-) : (
-  <div className="bg-lumina-surface-alt border border-lumina-outline/50 rounded-xl p-6">
-    <div className="flex flex-wrap items-center justify-between gap-4">
+      <div className="bg-white rounded-2xl shadow-lumina-sm border border-lumina-outline/30 overflow-hidden mb-6">
+        <div className="overflow-x-auto">
+          <table className="w-full text-left border-collapse min-w-[1040px]">
+            <thead>
+              <tr className="border-b border-lumina-outline/40 bg-lumina-surface-alt/60">
+                <th className={thClass}>ID</th>
+                <th className={thClass}>Model</th>
+                <th className={`${thClass} text-center`}>Status</th>
+                <th className={`${thClass} text-center`}>Started</th>
+                <th className={`${thClass} text-center`}>Duration</th>
+                <th className={`${thClass} text-center`}>Users/Items</th>
+                <th className={`${thClass} text-center`}>Recall@10</th>
+                <th className={`${thClass} text-center`}>NDCG@10</th>
+                <th className={`${thClass} text-center`}>Weights</th>
+                <th className={`${thClass} text-center`}>Details</th>
+              </tr>
+            </thead>
 
-      <div>
-        <h4 className="font-jakarta font-bold text-xl text-lumina-text">
-          Ready to Train
-        </h4>
+            <tbody className="divide-y divide-lumina-outline/30">
+              {logs.length === 0 ? (
+                <tr>
+                  <td colSpan="10" className="py-12 font-jakarta text-lumina-text-muted italic text-center">
+                    No training records yet
+                  </td>
+                </tr>
+              ) : (
+                logs.map(log => (
+                  <tr key={log.id} className="hover:bg-lumina-surface-alt/60 transition-colors">
+                    <td className="px-5 py-4 font-inter text-sm text-lumina-text-muted">#{log.id}</td>
+                    <td className="px-5 py-4 font-jakarta font-semibold text-sm text-lumina-text">{log.model_name}</td>
+                    <td className="px-5 py-4 text-center">{getStatusBadge(log.status)}</td>
+                    <td className={`${tdCenterClass} whitespace-nowrap`}>{formatDate(log.started_at)}</td>
+                    <td className={`${tdCenterClass} whitespace-nowrap`}>{getDuration(log.started_at, log.completed_at)}</td>
+                    <td className={tdCenterClass}>{log.num_users > 0 ? `${log.num_users} / ${log.num_items}` : '-'}</td>
 
-        <p className="font-inter text-sm text-lumina-text-muted mt-1">
-          No training in progress
-        </p>
+                    <td className="px-5 py-4 text-center">
+                      {log.final_recall_at_10 ? (
+                        <span className="font-inter text-sm font-bold text-lumina-primary">
+                          {(log.final_recall_at_10 * 100).toFixed(2)}%
+                        </span>
+                      ) : (
+                        <span className="font-inter text-sm text-lumina-text-muted">-</span>
+                      )}
+                    </td>
+
+                    <td className="px-5 py-4 text-center">
+                      {log.final_ndcg_at_10 ? (
+                        <span className="font-inter text-sm font-bold text-lumina-primary">
+                          {(log.final_ndcg_at_10 * 100).toFixed(2)}%
+                        </span>
+                      ) : (
+                        <span className="font-inter text-sm text-lumina-text-muted">-</span>
+                      )}
+                    </td>
+
+                    <td className="px-5 py-4 text-center">
+                      {log.metadata?.learned_weights ? (
+                        <div className="font-inter text-xs text-lumina-text-muted">
+                          <div>C: {(log.metadata.learned_weights.click * 100).toFixed(1)}%</div>
+                          <div>Ca: {(log.metadata.learned_weights.cart * 100).toFixed(1)}%</div>
+                          <div>R: {(log.metadata.learned_weights.rent * 100).toFixed(1)}%</div>
+                        </div>
+                      ) : log.model_name?.includes('v2') ? (
+                        <span className="font-inter text-xs text-lumina-text-muted">Fixed</span>
+                      ) : (
+                        <span className="font-inter text-xs text-lumina-text-muted">-</span>
+                      )}
+                    </td>
+
+                    <td className="px-5 py-4 text-center">
+                      {log.error_message ? (
+                        <button
+                          onClick={() => alert(`Error: ${log.error_message}`)}
+                          className="font-inter text-xs font-semibold text-status-overdue hover:underline"
+                        >
+                          View Error
+                        </button>
+                      ) : (
+                        <span className="font-inter text-xs text-lumina-text-muted">-</span>
+                      )}
+                    </td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
+        </div>
       </div>
 
-      <button
-        onClick={() => handleRetrain('v1')}
-        disabled={isTraining}
-        className={`font-inter font-semibold px-6 py-3 rounded-lg transition-colors shadow-lumina-sm whitespace-nowrap ${
-          isTraining
-            ? 'bg-lumina-primary-light opacity-70 text-white cursor-not-allowed'
-            : 'bg-lumina-primary hover:bg-lumina-primary-light text-white'
-        }`}
-      >
-        Retrain Model Now
-      </button>
+      <div className="bg-white/60 rounded-2xl border border-dashed border-lumina-outline/60 p-6">
+        <h4 className="font-jakarta font-bold text-lg text-lumina-text mb-3">How It Works</h4>
 
-    </div>
+        <ul className="space-y-2 font-inter text-sm text-lumina-text-muted">
+          <li>• Trains MB-CGCN from the latest Cart and Rental data.</li>
+          <li>• Takes approximately 10-30 minutes depending on data size.</li>
+          <li>• The model reloads automatically after training completes.</li>
+          <li>• Recall@10 and NDCG@10 measure model accuracy (higher is better).</li>
+          <li>• Recommended to retrain every 1-2 weeks or when significant new data is available.</li>
+        </ul>
+      </div>
+    </main>
   </div>
-)}
-
-        {/* Model Comparison */}
-<h3 className="font-jakarta font-extrabold text-2xl text-lumina-text mb-4">
-  Model Comparison
-</h3>
-
-<div className="bg-white rounded-2xl shadow-lumina-sm border border-lumina-outline/30 overflow-hidden mb-6">
-  <div className="overflow-x-auto">
-    <table className="w-full text-left border-collapse min-w-[960px]">
-
-      <thead>
-        <tr className="border-b border-lumina-outline/40 bg-lumina-surface-alt/60">
-          <th className={thClass}>Model</th>
-          <th className={`${thClass} text-center`}>Behaviors</th>
-          <th className={`${thClass} text-center`}>Data Source</th>
-          <th className={`${thClass} text-center`}>Status</th>
-          <th className={`${thClass} text-center`}>Recall@10</th>
-          <th className={`${thClass} text-center`}>NDCG@10</th>
-          <th className={`${thClass} text-center`}>Trained At</th>
-          <th className={`${thClass} text-center`}>Action</th>
-        </tr>
-      </thead>
-
-      <tbody className="divide-y divide-lumina-outline/30">
-
-        {/* MB-CGCN v1 */}
-        <tr className="hover:bg-lumina-surface-alt/60 transition-colors">
-          <td className="px-5 py-4">
-            <span className="font-jakarta font-bold text-lumina-primary">
-              MB-CGCN
-            </span>
-            <span className="ml-2 font-inter text-xs text-lumina-text-muted">
-              (Primary)
-            </span>
-          </td>
-
-          <td className={tdCenterClass}>
-            CART → RENT
-          </td>
-
-          <td className={tdCenterClass}>
-            MAL Dataset + Web
-          </td>
-
-          <td className="px-5 py-4 text-center">
-            {latestV1
-              ? getStatusBadge(latestV1.status)
-              : (
-                <span className="font-inter text-xs text-lumina-text-muted">
-                  Not trained
-                </span>
-              )}
-          </td>
-
-          <td className="px-5 py-4 text-center">
-            {latestV1?.final_recall_at_10 ? (
-              <span className="font-inter text-sm font-bold text-lumina-primary">
-                {(latestV1.final_recall_at_10 * 100).toFixed(2)}%
-              </span>
-            ) : (
-              <span className="font-inter text-sm text-lumina-text-muted">
-                -
-              </span>
-            )}
-          </td>
-
-          <td className="px-5 py-4 text-center">
-            {latestV1?.final_ndcg_at_10 ? (
-              <span className="font-inter text-sm font-bold text-lumina-primary">
-                {(latestV1.final_ndcg_at_10 * 100).toFixed(2)}%
-              </span>
-            ) : (
-              <span className="font-inter text-sm text-lumina-text-muted">
-                -
-              </span>
-            )}
-          </td>
-
-          <td className={`${tdCenterClass} whitespace-nowrap`}>
-            {latestV1 ? formatDate(latestV1.completed_at) : '-'}
-          </td>
-
-          <td className="px-5 py-4 text-center">
-            <button
-              onClick={() => handleRetrain('v1')}
-              disabled={isTraining}
-              className={`font-inter text-xs font-semibold px-4 py-1.5 rounded-lg transition-colors ${
-                isTraining
-                  ? 'bg-lumina-primary-light opacity-70 text-white cursor-not-allowed'
-                  : 'bg-lumina-primary hover:bg-lumina-primary-light text-white'
-              }`}
-            >
-              Retrain
-            </button>
-          </td>
-        </tr>
-
-        {/* MB-CGCN v2 */}
-        <tr className="hover:bg-lumina-surface-alt/60 transition-colors">
-          <td className="px-5 py-4">
-            <span className="font-jakarta font-bold text-lumina-secondary">
-              MB-CGCN-v2
-            </span>
-            <span className="ml-2 font-inter text-xs text-lumina-text-muted">
-              (Secondary)
-            </span>
-          </td>
-
-          <td className={tdCenterClass}>
-            CLICK → CART → RENT
-          </td>
-
-          <td className={tdCenterClass}>
-            Web Only (3 behaviors)
-          </td>
-
-          <td className="px-5 py-4 text-center">
-            {latestV2
-              ? getStatusBadge(latestV2.status)
-              : (
-                <span className="font-inter text-xs text-lumina-text-muted">
-                  Not trained
-                </span>
-              )}
-          </td>
-
-          <td className="px-5 py-4 text-center">
-            {latestV2?.final_recall_at_10 ? (
-              <span className="font-inter text-sm font-bold text-lumina-secondary">
-                {(latestV2.final_recall_at_10 * 100).toFixed(2)}%
-              </span>
-            ) : (
-              <span className="font-inter text-sm text-lumina-text-muted">
-                -
-              </span>
-            )}
-          </td>
-
-          <td className="px-5 py-4 text-center">
-            {latestV2?.final_ndcg_at_10 ? (
-              <span className="font-inter text-sm font-bold text-lumina-secondary">
-                {(latestV2.final_ndcg_at_10 * 100).toFixed(2)}%
-              </span>
-            ) : (
-              <span className="font-inter text-sm text-lumina-text-muted">
-                -
-              </span>
-            )}
-          </td>
-
-          <td className={`${tdCenterClass} whitespace-nowrap`}>
-            {latestV2 ? formatDate(latestV2.completed_at) : '-'}
-          </td>
-
-          <td className="px-5 py-4 text-center">
-            <button
-              onClick={() => handleRetrain('v2')}
-              disabled={isTraining}
-              className={`font-inter text-xs font-semibold px-4 py-1.5 rounded-lg transition-colors ${
-                isTraining
-                  ? 'bg-lumina-secondary-light opacity-70 text-white cursor-not-allowed'
-                  : 'bg-lumina-secondary hover:bg-lumina-secondary-light text-white'
-              }`}
-            >
-              Retrain
-            </button>
-          </td>
-        </tr>
-
-      </tbody>
-    </table>
-  </div>
-
-  {!latestV2 && (
-    <div className="bg-status-requested/10 border-t border-status-requested/30 p-4">
-      <p className="font-inter text-sm text-status-requested">
-        <strong>MB-CGCN-v2</strong> requires at least 50+ CLICK interactions from the web before training.
-      </p>
-    </div>
-  )}
-</div>
-          {!latestV2 && (
-  <div className="bg-status-requested/10 border-t border-status-requested/30 p-4">
-    <p className="font-inter text-sm text-status-requested">
-      <strong>MB-CGCN-v2</strong> requires at least 50+ CLICK interactions from the web before training.
-    </p>
-  </div>
-)}
-</div>
-
-{/* Training History */}
-<h3 className="font-jakarta font-extrabold text-2xl text-lumina-text mb-4">
-  Training History
-</h3>
-
-<div className="bg-white rounded-2xl shadow-lumina-sm border border-lumina-outline/30 overflow-hidden mb-6">
-  <div className="overflow-x-auto">
-    <table className="w-full text-left border-collapse min-w-[1040px]">
-
-      <thead>
-        <tr className="border-b border-lumina-outline/40 bg-lumina-surface-alt/60">
-          <th className={thClass}>ID</th>
-          <th className={thClass}>Model</th>
-          <th className={`${thClass} text-center`}>Status</th>
-          <th className={`${thClass} text-center`}>Started</th>
-          <th className={`${thClass} text-center`}>Duration</th>
-          <th className={`${thClass} text-center`}>Users/Items</th>
-          <th className={`${thClass} text-center`}>Recall@10</th>
-          <th className={`${thClass} text-center`}>NDCG@10</th>
-          <th className={`${thClass} text-center`}>Weights</th>
-          <th className={`${thClass} text-center`}>Details</th>
-        </tr>
-      </thead>
-
-      <tbody className="divide-y divide-lumina-outline/30">
-
-        {logs.length === 0 ? (
-          <tr>
-            <td
-              colSpan="10"
-              className="py-12 font-jakarta text-lumina-text-muted italic text-center"
-            >
-              No training records yet
-            </td>
-          </tr>
-        ) : (
-          logs.map(log => (
-            <tr
-              key={log.id}
-              className="hover:bg-lumina-surface-alt/60 transition-colors"
-            >
-
-              <td className="px-5 py-4 font-inter text-sm text-lumina-text-muted">
-                #{log.id}
-              </td>
-
-              <td className="px-5 py-4 font-jakarta font-semibold text-sm text-lumina-text">
-                {log.model_name}
-              </td>
-
-              <td className="px-5 py-4 text-center">
-                {getStatusBadge(log.status)}
-              </td>
-
-              <td className={`${tdCenterClass} whitespace-nowrap`}>
-                {formatDate(log.started_at)}
-              </td>
-
-              <td className={`${tdCenterClass} whitespace-nowrap`}>
-                {getDuration(log.started_at, log.completed_at)}
-              </td>
-
-              <td className={tdCenterClass}>
-                {log.num_users > 0
-                  ? `${log.num_users} / ${log.num_items}`
-                  : '-'}
-              </td>
-
-              <td className="px-5 py-4 text-center">
-                {log.final_recall_at_10 ? (
-                  <span className="font-inter text-sm font-bold text-lumina-primary">
-                    {(log.final_recall_at_10 * 100).toFixed(2)}%
-                  </span>
-                ) : (
-                  <span className="font-inter text-sm text-lumina-text-muted">
-                    -
-                  </span>
-                )}
-              </td>
-
-              <td className="px-5 py-4 text-center">
-                {log.final_ndcg_at_10 ? (
-                  <span className="font-inter text-sm font-bold text-lumina-primary">
-                    {(log.final_ndcg_at_10 * 100).toFixed(2)}%
-                  </span>
-                ) : (
-                  <span className="font-inter text-sm text-lumina-text-muted">
-                    -
-                  </span>
-                )}
-              </td>
-
-              <td className="px-5 py-4 text-center">
-                {log.metadata?.learned_weights ? (
-                  <div className="font-inter text-xs text-lumina-text-muted">
-                    <div>
-                      C: {(log.metadata.learned_weights.click * 100).toFixed(1)}%
-                    </div>
-                    <div>
-                      Ca: {(log.metadata.learned_weights.cart * 100).toFixed(1)}%
-                    </div>
-                    <div>
-                      R: {(log.metadata.learned_weights.rent * 100).toFixed(1)}%
-                    </div>
-                  </div>
-                ) : log.model_name?.includes('v2') ? (
-                  <span className="font-inter text-xs text-lumina-text-muted">
-                    Fixed
-                  </span>
-                ) : (
-                  <span className="font-inter text-xs text-lumina-text-muted">
-                    -
-                  </span>
-                )}
-              </td>
-
-              <td className="px-5 py-4 text-center">
-                {log.error_message ? (
-                  <button
-                    onClick={() =>
-                      alert(`Error: ${log.error_message}`)
-                    }
-                    className="font-inter text-xs font-semibold text-status-overdue hover:underline"
-                  >
-                    View Error
-                  </button>
-                ) : (
-                  <span className="font-inter text-xs text-lumina-text-muted">
-                    -
-                  </span>
-                )}
-              </td>
-
-            </tr>
-          ))
-        )}
-
-      </tbody>
-    </table>
-  </div>
-</div>
-       {/* Info Card */}
-<div className="bg-white/60 rounded-2xl border border-dashed border-lumina-outline/60 p-6">
-  <h4 className="font-jakarta font-bold text-lg text-lumina-text mb-3">
-    How It Works
-  </h4>
-
-  <ul className="space-y-2 font-inter text-sm text-lumina-text-muted">
-    <li>• Trains MB-CGCN from the latest Cart and Rental data.</li>
-    <li>• Takes approximately 10-30 minutes depending on data size.</li>
-    <li>• The model reloads automatically after training completes.</li>
-    <li>• Recall@10 and NDCG@10 measure model accuracy (higher is better).</li>
-    <li>• Recommended to retrain every 1-2 weeks or when significant new data is available.</li>
-  </ul>
-</div>
-
-</main>
-
-</div>
 );
 };
 
