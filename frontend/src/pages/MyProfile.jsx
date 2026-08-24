@@ -6,7 +6,7 @@ const MyProfile = () => {
   const navigate = useNavigate();
   const API_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000';
   const [loading, setLoading] = useState(true);
-  
+
   const [formData, setFormData] = useState({
     username: '',
     email: '',
@@ -54,7 +54,6 @@ const MyProfile = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    const token = localStorage.getItem('access_token');
 
     const nameParts = formData.fullName.trim().split(' ');
     const firstName = nameParts[0] || '';
@@ -92,97 +91,107 @@ const MyProfile = () => {
     }
   };
 
-  if (loading) return <div className="min-h-screen flex justify-center items-center font-bold text-brand-primary bg-brand-light">Loading profile...</div>;
+  if (loading) return <div className="min-h-screen flex justify-center items-center font-jakarta font-semibold text-xl text-lumina-text-muted bg-lumina-surface">Loading profile...</div>;
+
+  const inputClass = "w-full rounded-lg border border-lumina-outline/60 bg-white px-4 py-3 font-inter text-sm text-lumina-text placeholder:text-lumina-text-muted/60 shadow-lumina-sm focus:outline-none focus:border-lumina-primary focus:ring-1 focus:ring-lumina-primary transition-shadow";
+  const labelClass = "block font-inter text-xs font-semibold uppercase tracking-wide text-lumina-text-muted mb-2";
+  const disabledClass = "w-full rounded-lg border border-lumina-outline/40 bg-lumina-surface-alt px-4 py-3 font-inter text-sm text-lumina-text-muted cursor-not-allowed";
 
   return (
-    <div className="min-h-screen bg-brand-light py-16 px-4">
-      <div className="max-w-2xl mx-auto bg-brand-light rounded-3xl shadow-xl overflow-hidden">
-        
-        <div className="bg-brand-primary px-8 py-6 text-brand-light">
-          <h1 className="text-3xl font-black tracking-wide">My Profile</h1>
-          <p className="text-brand-light mt-1">Manage your personal information</p>
-        </div>
+    <div className="min-h-screen bg-lumina-surface py-12 md:py-16 px-4">
+      <div className="max-w-2xl mx-auto">
 
-        <form onSubmit={handleSubmit} className="p-8 space-y-6">
-          
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 bg-brand-light p-6 rounded-xl border border-brand-secondary">
-            <div>
-              <label className="block text-sm font-bold text-brand-primary mb-2">Username</label>
-              <input 
-                type="text" 
-                value={formData.username} 
-                disabled 
-                className="w-full bg-brand-light border border-brand-secondary text-brand-primary rounded-lg px-4 py-2 cursor-not-allowed"
-              />
+        <header className="text-center mb-8">
+          <div className="flex justify-center mb-4">
+            <div className="w-16 h-16 rounded-full bg-lumina-primary-soft flex items-center justify-center">
+              <svg className="w-8 h-8 text-lumina-primary" fill="none" stroke="currentColor" strokeWidth="1.8" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" /></svg>
             </div>
+          </div>
+          <h1 className="font-jakarta text-3xl md:text-4xl font-extrabold tracking-tight text-lumina-text">My Profile</h1>
+          <p className="font-jakarta text-base text-lumina-text-muted mt-1">Manage your personal information.</p>
+        </header>
+
+        <form onSubmit={handleSubmit} className="space-y-6">
+
+          <div className="bg-white rounded-2xl shadow-lumina-sm border border-lumina-outline/30 p-6 md:p-8">
+            <h2 className="font-jakarta font-bold text-lg text-lumina-text mb-5 pb-4 border-b border-lumina-outline/40">Account</h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+              <div>
+                <label htmlFor="profile-username" className={labelClass}>Username</label>
+                <input id="profile-username" type="text" value={formData.username} disabled className={disabledClass} />
+              </div>
+              <div>
+                <label htmlFor="profile-email" className={labelClass}>Email</label>
+                <input id="profile-email" type="email" value={formData.email} disabled className={disabledClass} />
+              </div>
+            </div>
+            <p className="font-inter text-xs text-lumina-text-muted mt-3">Username and email cannot be changed.</p>
+          </div>
+
+          <div className="bg-white rounded-2xl shadow-lumina-sm border border-lumina-outline/30 p-6 md:p-8">
+            <h2 className="font-jakarta font-bold text-lg text-lumina-text mb-5 pb-4 border-b border-lumina-outline/40">Personal Details</h2>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-5 mb-5">
+              <div>
+                <label htmlFor="profile-fullname" className={labelClass}>Full Name *</label>
+                <input
+                  id="profile-fullname"
+                  type="text" required
+                  value={formData.fullName}
+                  onChange={(e) => setFormData({...formData, fullName: e.target.value})}
+                  className={inputClass}
+                />
+              </div>
+              <div>
+                <label htmlFor="profile-phone" className={labelClass}>Phone Number *</label>
+                <input
+                  id="profile-phone"
+                  type="text" required
+                  value={formData.phone}
+                  onChange={(e) => setFormData({...formData, phone: e.target.value})}
+                  className={inputClass}
+                />
+              </div>
+            </div>
+
             <div>
-              <label className="block text-sm font-bold text-brand-primary mb-2">Email</label>
-              <input 
-                type="email" 
-                value={formData.email} 
-                disabled 
-                className="w-full bg-brand-light border border-brand-secondary text-brand-primary rounded-lg px-4 py-2 cursor-not-allowed"
-              />
+              <label htmlFor="profile-address" className={labelClass}>Shipping / Contact Address *</label>
+              <textarea
+                id="profile-address"
+                required rows="3"
+                value={formData.address}
+                onChange={(e) => setFormData({...formData, address: e.target.value})}
+                className={`${inputClass} resize-none`}
+              ></textarea>
             </div>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-4">
-            <div>
-              <label className="block text-sm font-bold text-brand-primary mb-2">Full Name</label>
-              <input 
-                type="text" required
-                value={formData.fullName}
-                onChange={(e) => setFormData({...formData, fullName: e.target.value})}
-                className="w-full border-2 border-brand-secondary rounded-lg px-4 py-2.5 text-brand-primary focus:outline-none focus:border-brand-accent focus:ring-2 focus:ring-brand-light transition"
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-bold text-brand-primary mb-2">Phone Number</label>
-              <input 
-                type="text" required
-                value={formData.phone}
-                onChange={(e) => setFormData({...formData, phone: e.target.value})}
-                className="w-full border-2 border-brand-secondary rounded-lg px-4 py-2.5 text-brand-primary focus:outline-none focus:border-brand-accent focus:ring-2 focus:ring-brand-light transition"
-              />
-            </div>
-          </div>
-
-          <div>
-            <label className="block text-sm font-bold text-brand-primary mb-2">Shipping / Contact Address</label>
-            <textarea 
-              required rows="3"
-              value={formData.address}
-              onChange={(e) => setFormData({...formData, address: e.target.value})}
-              className="w-full border-2 border-brand-secondary rounded-lg px-4 py-3 text-brand-primary focus:outline-none focus:border-brand-accent focus:ring-2 focus:ring-brand-light transition resize-none"
-            ></textarea>
-          </div>
-
-          <div className="bg-brand-light border border-brand-secondary rounded-xl p-6 mt-4">
-            <label className="block text-sm font-bold text-brand-primary mb-2">New Password (optional)</label>
-            <input 
+          <div className="bg-white rounded-2xl shadow-lumina-sm border border-lumina-outline/30 p-6 md:p-8">
+            <h2 className="font-jakarta font-bold text-lg text-lumina-text mb-5 pb-4 border-b border-lumina-outline/40">Security</h2>
+            <label htmlFor="profile-password" className={labelClass}>New Password (optional)</label>
+            <input
+              id="profile-password"
               type="password"
               value={formData.password}
               onChange={(e) => setFormData({...formData, password: e.target.value})}
               placeholder="Leave blank if you do not want to change your password"
-              className="w-full border-2 border-brand-secondary rounded-lg px-4 py-2.5 text-brand-primary focus:outline-none focus:border-brand-accent focus:ring-2 focus:ring-brand-light transition"
+              className={inputClass}
             />
-            <p className="text-xs text-brand-secondary mt-2 font-medium">If you fill this field, your current password will be replaced when you save.</p>
+            <p className="font-inter text-xs text-lumina-text-muted mt-2">If you fill this field, your current password will be replaced when you save.</p>
           </div>
 
-          <div className="pt-6 border-t border-brand-light">
-            <button type="submit" className="w-full bg-brand-primary hover:bg-brand-primary text-brand-light font-black text-lg py-3.5 rounded-xl shadow-md transition duration-200 transform hover:-translate-y-0.5">
-              Save Profile
-            </button>
-          </div>
+          <button type="submit" className="w-full bg-lumina-primary hover:bg-lumina-primary-light text-white font-inter font-semibold text-base py-3.5 rounded-xl transition-colors duration-200 shadow-lumina-sm">
+            Save Profile
+          </button>
 
-          <div className="pt-4">
+          <div className="pt-2">
             <Link
               to="/onboarding"
-              className="block w-full text-center bg-blue-600 hover:bg-blue-700 text-white font-bold text-lg py-3.5 rounded-xl shadow-md transition duration-200"
+              className="block w-full text-center border border-lumina-secondary/60 text-lumina-secondary hover:bg-lumina-secondary/10 font-inter font-semibold text-base py-3.5 rounded-xl transition-colors duration-200"
             >
               Recalibrate Manga Preferences
             </Link>
-            <p className="text-xs text-gray-500 text-center mt-2">
+            <p className="font-inter text-xs text-lumina-text-muted text-center mt-2">
               Select 4 manga you like to get better recommendations
             </p>
           </div>

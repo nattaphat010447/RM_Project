@@ -1,51 +1,125 @@
-import React, { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import React, { useState, useEffect, useMemo } from 'react';
+import { useSearchParams } from 'react-router-dom';
+import MangaCard from '../components/MangaCard';
 
 const API_URL = import.meta.env.VITE_API_BASE_URL;
 
+const SORT_OPTIONS = [
+  { value: 'recommended', label: 'Recommended' },
+  { value: 'rating', label: 'Highest Rating' },
+  { value: 'popular', label: 'Most Popular' },
+  { value: 'title', label: 'Title A–Z' },
+];
+
+const hasAvailableCopy = (manga) =>
+  Array.isArray(manga.copies) && manga.copies.some(copy => copy.status === 'AVAILABLE');
+
+const CheckboxItem = ({ label, checked, onChange }) => (
+  <label className="flex items-center gap-3 cursor-pointer group">
+    <div className="relative flex items-center justify-center">
+      <input type="checkbox" checked={checked} onChange={onChange} className="sr-only" />
+      <div className={`w-5 h-5 border-2 rounded bg-white transition-colors group-hover:border-lumina-primary ${checked ? 'border-lumina-primary bg-lumina-primary' : 'border-lumina-outline'}`}>
+        {checked && (
+          <svg className="w-3 h-3 text-white absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path d="M5 13l4 4L19 7" strokeLinecap="round" strokeLinejoin="round" strokeWidth="3"></path>
+          </svg>
+        )}
+      </div>
+    </div>
+    <span className={`font-inter text-sm transition-colors ${checked ? 'text-lumina-text font-medium' : 'text-lumina-text-muted group-hover:text-lumina-text'}`}>{label}</span>
+  </label>
+);
+
+const FilterPanelContent = ({
+  selectedGenres,
+  allGenres,
+  genreSearch,
+  setGenreSearch,
+  toggleGenre,
+  removeGenre,
+  availabilityOnly,
+  setAvailabilityOnly,
+}) => {
+  const availableGenres = allGenres
+    .filter(genre => !selectedGenres.includes(genre))
+    .filter(genre => genre.toLowerCase().includes(genreSearch.toLowerCase()));
+
+  return (
+    <>
+      <div className="bg-white rounded-xl p-4 shadow-lumina-sm">
+        <h3 className="font-jakarta font-semibold text-lg text-lumina-text mb-3 border-b border-lumina-outline/50 pb-2">Genre</h3>
+
+        {selectedGenres.length > 0 && (
+          <div className="flex flex-wrap gap-2 mb-3">
+            {selectedGenres.map(genre => (
+              <span key={genre} className="inline-flex items-center gap-1.5 bg-lumina-primary-soft text-lumina-primary px-3 py-1 rounded-full font-inter text-xs font-semibold animate-fade-in">
+                {genre}
+                <button onClick={() => removeGenre(genre)} aria-label={`Remove ${genre}`} className="hover:text-lumina-text focus:outline-none transition">
+                  <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                </button>
+              </span>
+            ))}
+          </div>
+        )}
+
+        <input
+          type="text"
+          placeholder="Search genres"
+          value={genreSearch}
+          onChange={(e) => setGenreSearch(e.target.value)}
+          className="w-full bg-lumina-surface-alt border border-lumina-outline/60 rounded-lg px-3 py-2 mb-3 font-inter text-sm text-lumina-text placeholder:text-lumina-text-muted/60 focus:outline-none focus:border-lumina-primary focus:ring-1 focus:ring-lumina-primary transition-shadow"
+        />
+
+        <div className="space-y-2.5 max-h-44 overflow-y-auto custom-scrollbar pr-1">
+          {availableGenres.map(genre => (
+            <CheckboxItem key={genre} label={genre} checked={false} onChange={() => toggleGenre(genre)} />
+          ))}
+          {availableGenres.length === 0 && (
+            <p className="font-inter text-xs text-lumina-text-muted italic py-1">No matching genres</p>
+          )}
+        </div>
+      </div>
+
+      <div className="bg-white rounded-xl p-4 shadow-lumina-sm">
+        <h3 className="font-jakarta font-semibold text-lg text-lumina-text mb-3 border-b border-lumina-outline/50 pb-2">Availability</h3>
+        <CheckboxItem
+          label="Available Now"
+          checked={availabilityOnly}
+          onChange={() => setAvailabilityOnly(!availabilityOnly)}
+        />
+      </div>
+
+      <style dangerouslySetInnerHTML={{__html: `
+        .custom-scrollbar::-webkit-scrollbar { width: 6px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: #F5F3FF; border-radius: 4px; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #CCC3D7; border-radius: 4px; }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #5300B7; }
+      `}} />
+    </>
+  );
+};
+
 const Search = () => {
   const [mangas, setMangas] = useState([]);
-  const [filteredMangas, setFilteredMangas] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  const [searchTerm, setSearchTerm] = useState('');
-
+  const [searchParams, setSearchParams] = useSearchParams();
+  const searchTerm = searchParams.get('query') || '';
+  const handleSearchChange = (value) => setSearchParams(value ? { query: value } : {}, { replace: true });
+  const clearSearch = () => setSearchParams({}, { replace: true });
   const [allGenres, setAllGenres] = useState([]);
   const [selectedGenres, setSelectedGenres] = useState([]);
   const [genreSearch, setGenreSearch] = useState('');
-
-  const getImageUrl = (url) => {
-    if (!url) return 'https://via.placeholder.com/150x220?text=No+Cover';
-    
-    if (url.startsWith('http')) return url;
-
-    if (url.startsWith('/images/') || url.startsWith('images/')) {
-      return url.startsWith('/') ? url : `/${url}`;
-    }
-
-    const baseUrl = API_URL ? API_URL.replace(/\/$/, '') : 'http://localhost:8000';
-    
-    if (url.startsWith('/media/') || url.startsWith('media/')) {
-      const cleanPath = url.startsWith('/') ? url : `/${url}`;
-      return `${baseUrl}${cleanPath}`;
-    }
-
-    return `${baseUrl}/media/${url}`;
-  };
-
-  const renderStars = (rating) => {
-    const num = Math.round(rating || 0);
-    return '★'.repeat(num) + '☆'.repeat(5 - num);
-  };
+  const [availabilityOnly, setAvailabilityOnly] = useState(false);
+  const [sortBy, setSortBy] = useState('recommended');
+  const [showFilters, setShowFilters] = useState(false);
 
   useEffect(() => {
-    
     fetch(`${API_URL}/api/mangas/`)
       .then(res => res.json())
       .then(data => {
         setMangas(data);
-        setFilteredMangas(data);
-        
+
         const genresSet = new Set();
         data.forEach(manga => {
           if (manga.genre) {
@@ -55,7 +129,7 @@ const Search = () => {
             });
           }
         });
-        
+
         setAllGenres(Array.from(genresSet).sort());
         setLoading(false);
       })
@@ -65,13 +139,13 @@ const Search = () => {
       });
   }, []);
 
-  useEffect(() => {
+  const filteredMangas = useMemo(() => {
     let result = mangas;
 
     if (searchTerm.trim() !== '') {
       const lowerSearch = searchTerm.toLowerCase();
-      result = result.filter(manga => 
-        manga.title.toLowerCase().includes(lowerSearch) || 
+      result = result.filter(manga =>
+        manga.title.toLowerCase().includes(lowerSearch) ||
         (manga.author && manga.author.toLowerCase().includes(lowerSearch))
       );
     }
@@ -84,8 +158,20 @@ const Search = () => {
       });
     }
 
-    setFilteredMangas(result);
-  }, [searchTerm, selectedGenres, mangas]);
+    if (availabilityOnly) {
+      result = result.filter(hasAvailableCopy);
+    }
+
+    if (sortBy === 'rating') {
+      result = [...result].sort((a, b) => (b.avg_rating || 0) - (a.avg_rating || 0));
+    } else if (sortBy === 'popular') {
+      result = [...result].sort((a, b) => (b.sold_count || 0) - (a.sold_count || 0));
+    } else if (sortBy === 'title') {
+      result = [...result].sort((a, b) => a.title.localeCompare(b.title));
+    }
+
+    return result;
+  }, [mangas, searchTerm, selectedGenres, availabilityOnly, sortBy]);
 
   const toggleGenre = (genre) => {
     if (!selectedGenres.includes(genre)) {
@@ -98,125 +184,122 @@ const Search = () => {
     setSelectedGenres(selectedGenres.filter(g => g !== genre));
   };
 
-  if (loading) return <div className="min-h-screen flex justify-center items-center text-2xl font-bold text-brand-primary bg-brand-light">Loading data...</div>;
+  if (loading) return <div className="min-h-screen flex justify-center items-center font-jakarta text-xl font-semibold text-lumina-text-muted bg-lumina-surface">Loading data...</div>;
 
   return (
-    <div className="min-h-screen bg-brand-light py-10 px-4 md:px-10">
-      <div className="max-w-6xl mx-auto">
-        <h2 className="text-4xl font-bold text-brand-primary mb-8 text-center tracking-tight">Search</h2>
+    <div className="min-h-screen bg-lumina-surface pb-20 overflow-x-hidden">
+      <main className="max-w-screen-xl mx-auto px-4 md:px-6 pt-10 grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
 
-        <div className="bg-brand-light rounded-xl shadow-md p-6 md:p-8 mb-10">
-          
-          <div className="mb-6 relative">
-            <input 
-              type="text" 
-              placeholder="Search by manga title or author..." 
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full bg-brand-light border border-brand-primary text-brand-primary text-lg rounded-lg px-5 py-4 pl-12 focus:outline-none focus:border-brand-accent focus:ring-2 focus:ring-brand-light transition"
-            />
-            <svg className="w-6 h-6 text-brand-primary absolute left-4 top-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+        <header className="lg:col-span-12 flex flex-col gap-6 pb-6 border-b border-lumina-outline/50">
+          <div>
+            <h1 className="font-jakarta font-extrabold tracking-tight text-3xl md:text-4xl text-lumina-text mb-1">Discover Manga</h1>
+            <p className="font-jakarta text-base md:text-lg text-lumina-text-muted">Explore manga titles across all available genres.</p>
           </div>
 
-          <div className="border-t border-brand-primary pt-6">
-            <h3 className="text-lg font-semibold text-brand-primary mb-3 flex items-center">
-              <svg className="w-5 h-5 mr-2 text-brand-secondary" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"></path></svg>
-              Filter by genre
-            </h3>
+          <div className="relative w-full">
+            <svg className="w-5 h-5 text-lumina-text-muted absolute left-4 top-1/2 -translate-y-1/2 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+            <input
+              type="text"
+              placeholder="Search manga..."
+              value={searchTerm}
+              onChange={(e) => handleSearchChange(e.target.value)}
+              className="w-full bg-white border border-lumina-outline/60 rounded-lg pl-11 pr-11 py-3.5 font-jakarta text-base text-lumina-text placeholder:text-lumina-text-muted/60 shadow-lumina-sm focus:outline-none focus:border-lumina-primary focus:ring-1 focus:ring-lumina-primary transition-shadow"
+            />
+            {searchTerm !== '' && (
+              <button
+                type="button"
+                onClick={clearSearch}
+                aria-label="Clear search"
+                className="absolute right-3 top-1/2 -translate-y-1/2 w-6 h-6 flex items-center justify-center rounded-full bg-lumina-surface-alt hover:bg-lumina-primary-soft text-lumina-text-muted hover:text-lumina-primary transition-colors"
+              >
+                <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+              </button>
+            )}
+          </div>
+        </header>
 
-            <div className="flex flex-wrap gap-2 mb-4 min-h-[32px]">
-              {selectedGenres.length === 0 && <span className="text-brand-primary text-sm italic">No genres selected</span>}
-              {selectedGenres.map(genre => (
-                <span key={genre} className="bg-brand-secondary text-brand-light px-4 py-1.5 rounded-full text-sm font-semibold flex items-center gap-2 shadow-sm animate-fade-in">
-                  {genre}
-                  <button onClick={() => removeGenre(genre)} className="hover:text-brand-light focus:outline-none transition">
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12"></path></svg>
-                  </button>
-                </span>
+        <aside className="hidden lg:block lg:col-span-3 sticky top-28 space-y-6">
+          <FilterPanelContent
+            selectedGenres={selectedGenres}
+            allGenres={allGenres}
+            genreSearch={genreSearch}
+            setGenreSearch={setGenreSearch}
+            toggleGenre={toggleGenre}
+            removeGenre={removeGenre}
+            availabilityOnly={availabilityOnly}
+            setAvailabilityOnly={setAvailabilityOnly}
+          />
+        </aside>
+
+        <div className="lg:col-span-9 flex flex-col gap-6">
+
+          <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-3 bg-white p-3 rounded-lg shadow-lumina-sm">
+            <p className="font-jakarta text-sm text-lumina-text-muted">
+              Showing <span className="font-bold text-lumina-text">{filteredMangas.length}</span> of {mangas.length} titles
+            </p>
+            <div className="flex items-center gap-3">
+              <label htmlFor="sort-by" className="font-inter text-xs font-semibold uppercase tracking-wider text-lumina-text-muted">Sort By:</label>
+              <select
+                id="sort-by"
+                value={sortBy}
+                onChange={(e) => setSortBy(e.target.value)}
+                className="bg-lumina-surface-alt border border-lumina-outline/60 text-lumina-text font-inter text-sm rounded-md py-1.5 pl-3 pr-8 focus:outline-none focus:ring-1 focus:ring-lumina-primary focus:border-lumina-primary"
+              >
+                {SORT_OPTIONS.map(opt => (
+                  <option key={opt.value} value={opt.value}>{opt.label}</option>
+                ))}
+              </select>
+              <button
+                onClick={() => setShowFilters(!showFilters)}
+                aria-expanded={showFilters}
+                className="lg:hidden flex items-center gap-2 p-2 text-sm font-inter font-semibold text-lumina-text bg-lumina-surface-alt hover:bg-lumina-primary-soft rounded-md transition-colors"
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4"></path></svg>
+                Filters
+              </button>
+            </div>
+          </div>
+
+          {showFilters && (
+            <div className="lg:hidden space-y-6">
+              <FilterPanelContent
+                selectedGenres={selectedGenres}
+                allGenres={allGenres}
+                genreSearch={genreSearch}
+                setGenreSearch={setGenreSearch}
+                toggleGenre={toggleGenre}
+                removeGenre={removeGenre}
+                availabilityOnly={availabilityOnly}
+                setAvailabilityOnly={setAvailabilityOnly}
+              />
+            </div>
+          )}
+
+          {filteredMangas.length === 0 ? (
+            <div className="bg-white rounded-2xl shadow-lumina-sm p-16 text-center">
+              <svg className="w-14 h-14 text-lumina-outline mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+              <h2 className="font-jakarta text-2xl font-bold text-lumina-text mb-2">No manga found</h2>
+              <p className="font-jakarta text-lumina-text-muted">Try a different title, author, or genre.</p>
+              {searchTerm !== '' && (
+                <button
+                  type="button"
+                  onClick={clearSearch}
+                  className="mt-5 font-inter text-sm font-semibold bg-lumina-primary hover:bg-lumina-primary-light text-white px-6 py-2 rounded-full shadow-lumina-sm transition-colors"
+                >
+                  Clear search
+                </button>
+              )}
+            </div>
+          ) : (
+            <div className="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-4 gap-4 md:gap-6">
+              {filteredMangas.map(manga => (
+                <MangaCard key={manga.id} manga={manga} />
               ))}
             </div>
+          )}
 
-            <div className="bg-brand-light rounded-lg p-4 shadow-md">
-              <input 
-                type="text" 
-                placeholder="Search genres" 
-                value={genreSearch}
-                onChange={(e) => setGenreSearch(e.target.value)}
-                className="w-full bg-brand-light border border-brand-primary text-sm rounded-lg px-4 py-2 mb-3 focus:outline-none focus:border-brand-accent"
-              />
-              
-              <div className="flex flex-wrap gap-2 max-h-40 overflow-y-auto custom-scrollbar">
-                {allGenres
-                  .filter(genre => !selectedGenres.includes(genre))
-                  .filter(genre => genre.toLowerCase().includes(genreSearch.toLowerCase()))
-                  .map(genre => (
-                    <button 
-                      key={genre}
-                      onClick={() => toggleGenre(genre)}
-                      className="bg-brand-light border border-brand-primary hover:border-brand-accent hover:text-brand-secondary text-brand-primary px-3 py-1.5 rounded-full text-sm font-medium transition shadow-md"
-                    >
-                      + {genre}
-                    </button>
-                  ))
-                }
-              </div>
-            </div>
-          </div>
         </div>
-
-        <div className="mb-4 text-brand-primary font-semibold flex justify-between items-end">
-          <span>Results: <span className="text-brand-secondary text-xl font-bold">{filteredMangas.length}</span> items</span>
-        </div>
-
-        {filteredMangas.length === 0 ? (
-          <div className="bg-brand-light rounded-xl shadow-md p-16 text-center">
-            <svg className="w-16 h-16 text-brand-light mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-            <h2 className="text-2xl font-bold text-brand-primary mb-2">No manga found</h2>
-            <p className="text-brand-primary">Try a different keyword or remove some genre filters.</p>
-          </div>
-        ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-8">
-            {filteredMangas.map((manga) => (
-              <div key={manga.id} className="bg-brand-light rounded-xl shadow-md p-4 flex flex-col hover:shadow-xl transition-shadow duration-300">
-                <img src={getImageUrl(manga.cover_image_url)} alt={manga.title} className="w-full h-64 object-cover rounded-lg mb-4" />
-                
-                <h3 className="font-semibold text-lg text-brand-primary line-clamp-1">{manga.title}</h3>
-                
-                <div className="flex flex-col mt-2 mb-4 gap-2">
-                  <span className="bg-brand-light text-brand-primary text-xs font-semibold rounded-full uppercase tracking-wide truncate">
-                    {manga.genre}
-                  </span>
-                  <div className="flex justify-between items-center">
-                    <div className="flex text-brand-accent text-sm" title={`Rating: ${manga.avg_rating || 0}`}>
-                      {renderStars(manga.avg_rating)}
-                    </div>
-                    <div className="text-xs font-medium text-brand-primary text-right">
-                      Sold {manga.sold_count || 0}
-                    </div>
-                  </div>
-                </div>
-                
-                <Link 
-                  to={`/manga/${manga.id}`}
-                  className="mt-auto w-full bg-brand-secondary hover:bg-brand-primary text-brand-light font-semibold py-2 rounded-lg transition duration-200 shadow-sm block text-center"
-                >
-                  Rent
-                </Link>
-              </div>
-            ))}
-          </div>
-        )}
-
-      </div>
-      
-      <style dangerouslySetInnerHTML={{__html: `
-        .custom-scrollbar::-webkit-scrollbar { width: 6px; }
-        .custom-scrollbar::-webkit-scrollbar-track { background: #FFFFFF; border-radius: 4px; }
-        .custom-scrollbar::-webkit-scrollbar-thumb { background: #547792; border-radius: 4px; }
-        .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #1A3263; }
-        .animate-fade-in { animation: fadeIn 0.2s ease-in-out; }
-        @keyframes fadeIn { from { opacity: 0; transform: scale(0.95); } to { opacity: 1; transform: scale(1); } }
-      `}} />
+      </main>
     </div>
   );
 };

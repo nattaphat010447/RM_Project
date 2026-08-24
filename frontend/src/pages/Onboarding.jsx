@@ -89,114 +89,176 @@ const Onboarding = () => {
     (manga.author && manga.author.toLowerCase().includes(searchTerm.toLowerCase()))
   );
 
-  if (loading) {
-    return (
-      <div className="min-h-screen flex justify-center items-center bg-brand-light">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-t-4 border-brand-primary mx-auto mb-4"></div>
-          <p className="text-brand-primary font-medium">Loading manga...</p>
+ if (loading) {
+  return (
+    <div className="min-h-screen flex justify-center items-center bg-lumina-surface">
+      <div className="text-center">
+        <div className="animate-spin rounded-full h-16 w-16 border-t-4 border-lumina-primary mx-auto mb-4"></div>
+        <p className="font-jakarta font-semibold text-lg text-lumina-text-muted">
+          Loading manga...
+        </p>
+      </div>
+    </div>
+  );
+}
+
+return (
+  <div className="min-h-screen bg-lumina-surface py-12 px-4 pb-36">
+    <div className="max-w-6xl mx-auto">
+
+      {/* Header */}
+      <div className="text-center mb-10">
+        <h1 className="font-jakarta text-3xl md:text-4xl font-extrabold tracking-tight text-lumina-text mb-3">
+          {existingPreferences.length > 0
+            ? 'Recalibrate Preferences'
+            : 'Choose Your Favourite Manga'}
+        </h1>
+
+        <p className="font-jakarta text-lg text-lumina-text-muted">
+          Select <span className="text-lumina-primary font-bold">4 manga</span> to receive tailored recommendations
+        </p>
+
+        <div className="mt-5 inline-flex items-center gap-2 bg-white border border-lumina-outline/50 rounded-full px-6 py-2.5 shadow-lumina-sm">
+          <p className="font-inter text-sm text-lumina-text-muted">
+            Selected:
+          </p>
+          <span className="font-jakarta text-2xl font-extrabold text-lumina-primary leading-none">
+            {selectedMangas.length}
+          </span>
+          <span className="font-inter text-sm text-lumina-text-muted">
+            / 4
+          </span>
         </div>
       </div>
-    );
-  }
 
-  return (
-    <div className="min-h-screen bg-brand-light pb-28 px-4 pt-8">
-      <div className="max-w-6xl mx-auto">
-
-        {/* Header */}
-        <div className="text-center mb-8">
-          <h1 className="text-3xl font-bold text-brand-primary mb-2">
-            {existingPreferences.length > 0 ? 'Update Preferences' : 'Choose Your Favourite Manga'}
-          </h1>
-          <p className="text-brand-primary text-sm">
-            Select <span className="font-bold">4 manga</span> to receive tailored recommendations
-          </p>
-          <div className="mt-3 inline-block bg-brand-light shadow-md rounded-lg px-6 py-2">
-            <p className="text-sm text-brand-primary">
-              Selected: <span className="text-xl font-bold">{selectedMangas.length}</span> / 4
-            </p>
-          </div>
-        </div>
-
-        {/* Search */}
-        <div className="mb-6 bg-brand-light rounded-lg px-4 py-2 flex items-center shadow-md">
-          <svg className="w-5 h-5 text-brand-primary mr-2 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-4.35-4.35M17 11A6 6 0 1 1 5 11a6 6 0 0 1 12 0z" />
-          </svg>
-          <input
-            type="text"
-            placeholder="Search manga or author..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="bg-transparent border-none focus:outline-none w-full text-brand-primary text-sm"
+      {/* Search */}
+      <div className="relative mb-8 max-w-xl mx-auto">
+        <svg
+          className="absolute left-5 top-1/2 -translate-y-1/2 w-5 h-5 text-lumina-text-muted pointer-events-none"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="2"
+          viewBox="0 0 24 24"
+        >
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
           />
-        </div>
+        </svg>
 
-        {/* Manga Grid */}
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 mb-6">
-          {filteredMangas.map(manga => {
-            const isSelected = selectedMangas.includes(manga.id);
-            return (
-              <div
-                key={manga.id}
-                onClick={() => toggleManga(manga.id)}
-                className={`relative cursor-pointer rounded-xl overflow-hidden transition-all duration-200 hover:shadow-xl ${
-                  isSelected
-                    ? 'shadow-xl ring-2 ring-brand-primary ring-offset-2'
-                    : 'shadow-md hover:scale-105'
-                }`}
-              >
-                {/* Cover Image */}
-                <div className="aspect-[3/4] bg-gray-100">
-                  {getImageUrl(manga.cover_image_url) ? (
-                    <img
-                      src={getImageUrl(manga.cover_image_url)}
-                      alt={manga.title}
-                      className="w-full h-full object-cover"
-                    />
-                  ) : (
-                    <div className="w-full h-full flex items-center justify-center text-gray-400 text-4xl font-bold">
-                      ?
-                    </div>
-                  )}
-                </div>
+        <input
+          type="text"
+          placeholder="Search manga or author..."
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+          className="w-full bg-white border border-lumina-outline/60 rounded-full pl-12 pr-6 py-3.5 font-inter text-base text-lumina-text placeholder:text-lumina-text-muted/60 shadow-lumina-sm focus:outline-none focus:border-lumina-primary focus:ring-1 focus:ring-lumina-primary transition-shadow"
+        />
+      </div>
 
-                {/* Selection Badge */}
-                {isSelected && (
-                  <div className="absolute top-2 right-2 bg-brand-primary text-white rounded-full w-8 h-8 flex items-center justify-center font-bold text-sm shadow">
-                    ✓
+      {/* Manga Grid */}
+      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6 mb-10">
+        {filteredMangas.map(manga => {
+          const isSelected = selectedMangas.includes(manga.id);
+
+          return (
+            <div
+              key={manga.id}
+              onClick={() => toggleManga(manga.id)}
+              role="button"
+              aria-pressed={isSelected}
+              tabIndex={0}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                  e.preventDefault();
+                  toggleManga(manga.id);
+                }
+              }}
+              className={`relative cursor-pointer rounded-2xl overflow-hidden border-2 transition-all duration-200 ${
+                isSelected
+                  ? 'border-lumina-primary ring-2 ring-lumina-primary shadow-lumina-lg'
+                  : 'border-transparent shadow-lumina-sm hover:border-lumina-outline hover:shadow-lumina-md'
+              }`}
+            >
+              {/* Cover Image */}
+              <div className="aspect-[3/4] bg-lumina-surface-alt">
+                {manga.cover_image_url ? (
+                  <img
+                    src={getImageUrl(manga.cover_image_url)}
+                    alt={manga.title}
+                    className="w-full h-full object-cover"
+                  />
+                ) : (
+                  <div className="w-full h-full flex items-center justify-center text-lumina-text-muted/40 text-4xl font-bold">
+                    📚
                   </div>
                 )}
-
-                {/* Title */}
-                <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 via-black/50 to-transparent p-3">
-                  <h3 className="text-xs font-semibold text-white line-clamp-2">{manga.title}</h3>
-                </div>
               </div>
-            );
-          })}
-        </div>
 
+              {/* Selection Badge */}
+              {isSelected && (
+                <div className="absolute top-3 right-3 bg-lumina-primary text-white rounded-full w-9 h-9 flex items-center justify-center shadow-lumina-md">
+                  <svg
+                    className="w-5 h-5"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="3"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      d="M5 13l4 4L19 7"
+                    />
+                  </svg>
+                </div>
+              )}
+
+              {/* Title */}
+              <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/85 via-black/45 to-transparent p-4">
+                <h3 className="font-inter text-sm font-semibold text-white line-clamp-2">
+                  {manga.title}
+                </h3>
+              </div>
+            </div>
+          );
+        })}
       </div>
 
-      {/* Submit Button — fixed bottom bar */}
-      <div className="fixed bottom-0 left-0 right-0 bg-brand-light border-t border-gray-200 shadow-md py-4 px-4">
-        <div className="max-w-md mx-auto">
+      {/* Empty search result */}
+      {!loading && filteredMangas.length === 0 && (
+        <div className="bg-white rounded-2xl border border-dashed border-lumina-outline/60 p-12 text-center mb-10">
+          <p className="font-jakarta text-lumina-text-muted italic">
+            {searchTerm
+              ? 'No manga matches your search'
+              : 'No manga available'}
+          </p>
+        </div>
+      )}
+
+      {/* Submit Button */}
+      <div className="fixed bottom-0 left-0 right-0 bg-white/95 border-t border-lumina-outline/50 backdrop-blur-sm py-5 px-4 z-40">
+        <div className="max-w-2xl mx-auto">
           <button
             onClick={handleSubmit}
             disabled={selectedMangas.length !== 4 || saving}
-            className={`w-full font-bold py-3 rounded-lg transition duration-200 shadow-md text-sm ${
+            className={`w-full font-inter font-semibold text-lg py-4 rounded-xl transition-colors duration-200 shadow-lumina-sm ${
               selectedMangas.length === 4 && !saving
-                ? 'bg-brand-light text-brand-primary hover:shadow-lg'
-                : 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                ? 'bg-lumina-primary hover:bg-lumina-primary-light text-white'
+                : 'bg-lumina-surface-alt text-lumina-text-muted cursor-not-allowed'
             }`}
           >
-            {saving ? 'Saving...' : selectedMangas.length === 4 ? 'Save Preferences' : `Select ${4 - selectedMangas.length} more`}
+            {saving
+              ? 'Saving...'
+              : selectedMangas.length === 4
+                ? 'Save Preferences'
+                : `Select ${4 - selectedMangas.length} more`}
           </button>
         </div>
       </div>
+
     </div>
+  </div>
   );
 };
 
