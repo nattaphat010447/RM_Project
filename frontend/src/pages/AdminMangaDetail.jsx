@@ -136,6 +136,9 @@ const AdminMangaDetail = () => {
               <p className="text-sm text-brand-primary mb-2">Author: {manga.author}</p>
               <p className="text-sm text-brand-primary mb-4">Genre: {manga.genre}</p>
               <p className="text-sm font-bold text-brand-primary">Rental Price: {manga.rental_price_per_day} THB/day</p>
+              {manga.description && (
+                <p className="text-sm text-brand-primary mt-3 max-w-sm leading-relaxed">{manga.description}</p>
+              )}
             </div>
           </div>
           <Link to={`/admin/mangas/edit/${manga.id}`} className="text-brand-accent border border-brand-secondary rounded-full px-6 py-2 hover:bg-brand-light transition text-sm">

@@ -6,6 +6,20 @@ const Onboarding = () => {
   const navigate = useNavigate();
   const API_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000';
 
+  const getImageUrl = (url) => {
+    if (!url) return null;
+    if (url.startsWith('http')) return url;
+    if (url.startsWith('/images/') || url.startsWith('images/')) {
+      return url.startsWith('/') ? url : `/${url}`;
+    }
+    const baseUrl = API_URL ? API_URL.replace(/\/$/, '') : 'http://localhost:8000';
+    if (url.startsWith('/media/') || url.startsWith('media/')) {
+      const cleanPath = url.startsWith('/') ? url : `/${url}`;
+      return `${baseUrl}${cleanPath}`;
+    }
+    return `${baseUrl}${url}`;
+  };
+
   const [mangas, setMangas] = useState([]);
   const [selectedMangas, setSelectedMangas] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -15,23 +29,12 @@ const Onboarding = () => {
 
   useEffect(() => {
     const token = localStorage.getItem('access_token');
-    if (!token) {
-      navigate('/signin');
-      return;
-    }
+    if (!token) { navigate('/signin'); return; }
 
-    // Guards against a slow response from a previous mount (e.g. dev
-    // StrictMode's double-invoke, or the user navigating away and back
-    // quickly) landing after this effect's own cleanup and clobbering
-    // state with stale data.
     let isMounted = true;
 
-    // Fetch existing preferences
     authFetch(`${API_URL}/api/preferences/`)
-      .then(res => {
-        if (!res.ok) throw new Error('Failed to load preferences');
-        return res.json();
-      })
+      .then(res => { if (!res.ok) throw new Error(); return res.json(); })
       .then(data => {
         if (!isMounted) return;
         if (data.has_preferences && data.preferences) {
@@ -40,27 +43,14 @@ const Onboarding = () => {
           setSelectedMangas(prefIds);
         }
       })
-      .catch(err => console.error('Error loading preferences:', err));
+      .catch(() => {});
 
-    // Fetch all mangas
     fetch(`${API_URL}/api/mangas/`)
-      .then(res => {
-        if (!res.ok) throw new Error('Failed to load manga list');
-        return res.json();
-      })
-      .then(data => {
-        if (!isMounted) return;
-        setMangas(data);
-        setLoading(false);
-      })
-      .catch(err => {
-        console.error(err);
-        if (isMounted) setLoading(false);
-      });
+      .then(res => { if (!res.ok) throw new Error(); return res.json(); })
+      .then(data => { if (isMounted) { setMangas(data); setLoading(false); } })
+      .catch(() => { if (isMounted) setLoading(false); });
 
-    return () => {
-      isMounted = false;
-    };
+    return () => { isMounted = false; };
   }, [API_URL, navigate]);
 
   const toggleManga = (mangaId) => {
@@ -76,30 +66,18 @@ const Onboarding = () => {
   };
 
   const handleSubmit = async () => {
-    if (selectedMangas.length !== 4) {
-      alert('Please select exactly 4 manga.');
-      return;
-    }
-
+    if (selectedMangas.length !== 4) { alert('Please select exactly 4 manga.'); return; }
     setSaving(true);
-
     try {
       const response = await authFetch(`${API_URL}/api/preferences/`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ manga_ids: selectedMangas })
       });
-
       const data = await response.json();
-
-      if (response.ok) {
-        alert(data.message || 'Preferences saved successfully.');
-        navigate('/for-you');
-      } else {
-        alert(data.error || 'An error occurred.');
-      }
-    } catch (err) {
-      console.error(err);
+      if (response.ok) { navigate('/for-you'); }
+      else { alert(data.error || 'An error occurred.'); }
+    } catch {
       alert('System error. Please try again.');
     } finally {
       setSaving(false);
@@ -113,107 +91,110 @@ const Onboarding = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex justify-center items-center bg-slate-900 text-white">
+      <div className="min-h-screen flex justify-center items-center bg-brand-light">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-16 w-16 border-t-4 border-cyan-400 mx-auto mb-4"></div>
-          <p className="text-lg font-bold">Loading manga...</p>
+          <div className="animate-spin rounded-full h-12 w-12 border-t-4 border-brand-primary mx-auto mb-4"></div>
+          <p className="text-brand-primary font-medium">Loading manga...</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-slate-900 text-slate-100 py-12 px-4">
+    <div className="min-h-screen bg-brand-light pb-28 px-4 pt-8">
       <div className="max-w-6xl mx-auto">
 
         {/* Header */}
-        <div className="text-center mb-10">
-          <h1 className="text-4xl font-black text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-blue-500 mb-3">
-            {existingPreferences.length > 0 ? 'Recalibrate Preferences' : 'Choose Your Favourite Manga'}
+        <div className="text-center mb-8">
+          <h1 className="text-3xl font-bold text-brand-primary mb-2">
+            {existingPreferences.length > 0 ? 'Update Preferences' : 'Choose Your Favourite Manga'}
           </h1>
-          <p className="text-slate-400 text-lg">
-            Select <span className="text-cyan-400 font-bold">4 manga</span> to receive tailored recommendations
+          <p className="text-brand-primary text-sm">
+            Select <span className="font-bold">4 manga</span> to receive tailored recommendations
           </p>
-          <div className="mt-4 inline-block bg-slate-800 border border-slate-700 rounded-lg px-6 py-3">
-            <p className="text-sm text-slate-300">
-              Selected: <span className="text-2xl font-black text-cyan-400">{selectedMangas.length}</span> / 4
+          <div className="mt-3 inline-block bg-brand-light shadow-md rounded-lg px-6 py-2">
+            <p className="text-sm text-brand-primary">
+              Selected: <span className="text-xl font-bold">{selectedMangas.length}</span> / 4
             </p>
           </div>
         </div>
 
         {/* Search */}
-        <div className="mb-8">
+        <div className="mb-6 bg-brand-light rounded-lg px-4 py-2 flex items-center shadow-md">
+          <svg className="w-5 h-5 text-brand-primary mr-2 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-4.35-4.35M17 11A6 6 0 1 1 5 11a6 6 0 0 1 12 0z" />
+          </svg>
           <input
             type="text"
-            placeholder="Search manga..."
+            placeholder="Search manga or author..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full bg-slate-800 border-2 border-slate-700 text-slate-100 rounded-xl px-6 py-4 text-lg focus:outline-none focus:border-cyan-400 transition"
+            className="bg-transparent border-none focus:outline-none w-full text-brand-primary text-sm"
           />
         </div>
 
         {/* Manga Grid */}
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 mb-10">
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 mb-6">
           {filteredMangas.map(manga => {
             const isSelected = selectedMangas.includes(manga.id);
             return (
               <div
                 key={manga.id}
                 onClick={() => toggleManga(manga.id)}
-                className={`relative cursor-pointer rounded-xl overflow-hidden border-4 transition-all duration-200 transform hover:scale-105 ${
+                className={`relative cursor-pointer rounded-xl overflow-hidden transition-all duration-200 hover:shadow-xl ${
                   isSelected
-                    ? 'border-cyan-400 shadow-lg shadow-cyan-400/50'
-                    : 'border-slate-700 hover:border-slate-600'
+                    ? 'shadow-xl ring-2 ring-brand-primary ring-offset-2'
+                    : 'shadow-md hover:scale-105'
                 }`}
               >
                 {/* Cover Image */}
-                <div className="aspect-[3/4] bg-slate-800">
-                  {manga.cover_image_url ? (
+                <div className="aspect-[3/4] bg-gray-100">
+                  {getImageUrl(manga.cover_image_url) ? (
                     <img
-                      src={`${API_URL}${manga.cover_image_url}`}
+                      src={getImageUrl(manga.cover_image_url)}
                       alt={manga.title}
                       className="w-full h-full object-cover"
                     />
                   ) : (
-                    <div className="w-full h-full flex items-center justify-center text-slate-600 text-4xl font-bold">
-                      📚
+                    <div className="w-full h-full flex items-center justify-center text-gray-400 text-4xl font-bold">
+                      ?
                     </div>
                   )}
                 </div>
 
                 {/* Selection Badge */}
                 {isSelected && (
-                  <div className="absolute top-3 right-3 bg-cyan-400 text-slate-900 rounded-full w-10 h-10 flex items-center justify-center font-black text-xl shadow-lg">
+                  <div className="absolute top-2 right-2 bg-brand-primary text-white rounded-full w-8 h-8 flex items-center justify-center font-bold text-sm shadow">
                     ✓
                   </div>
                 )}
 
                 {/* Title */}
-                <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-slate-900 via-slate-900/90 to-transparent p-4">
-                  <h3 className="text-sm font-bold text-white line-clamp-2">{manga.title}</h3>
+                <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 via-black/50 to-transparent p-3">
+                  <h3 className="text-xs font-semibold text-white line-clamp-2">{manga.title}</h3>
                 </div>
               </div>
             );
           })}
         </div>
 
-        {/* Submit Button */}
-        <div className="fixed bottom-0 left-0 right-0 bg-slate-900/95 border-t border-slate-700 backdrop-blur-sm py-6 px-4">
-          <div className="max-w-2xl mx-auto">
-            <button
-              onClick={handleSubmit}
-              disabled={selectedMangas.length !== 4 || saving}
-              className={`w-full font-black text-lg py-4 rounded-xl transition duration-200 shadow-lg ${
-                selectedMangas.length === 4 && !saving
-                  ? 'bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-600 hover:to-blue-700 text-white'
-                  : 'bg-slate-700 text-slate-500 cursor-not-allowed'
-              }`}
-            >
-              {saving ? 'Saving...' : selectedMangas.length === 4 ? 'Save Preferences' : `Select ${4 - selectedMangas.length} more`}
-            </button>
-          </div>
-        </div>
+      </div>
 
+      {/* Submit Button — fixed bottom bar */}
+      <div className="fixed bottom-0 left-0 right-0 bg-brand-light border-t border-gray-200 shadow-md py-4 px-4">
+        <div className="max-w-md mx-auto">
+          <button
+            onClick={handleSubmit}
+            disabled={selectedMangas.length !== 4 || saving}
+            className={`w-full font-bold py-3 rounded-lg transition duration-200 shadow-md text-sm ${
+              selectedMangas.length === 4 && !saving
+                ? 'bg-brand-light text-brand-primary hover:shadow-lg'
+                : 'bg-gray-100 text-gray-400 cursor-not-allowed'
+            }`}
+          >
+            {saving ? 'Saving...' : selectedMangas.length === 4 ? 'Save Preferences' : `Select ${4 - selectedMangas.length} more`}
+          </button>
+        </div>
       </div>
     </div>
   );

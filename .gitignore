@@ -425,9 +425,7 @@ FodyWeavers.xsd
 *.msp
 
 # ML Model Training Test
-ml_model/training_test/*.csv
-ml_model/training_test/*.pth
-ml_model/training_test/__pycache__/
+ml_model/training_test/*
 
 # Dataset files
 Anime.csv

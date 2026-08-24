@@ -1,159 +1,215 @@
 """
-Prepare training data for MB-CGCN v2 (3 behaviors) from Django database.
+Prepare training data for MB-CGCN v2 (3 behaviors).
 
-Behaviors:
-- CLICK: UserBehaviorLog with event_type='CLICK'
-- ADD_CART: UserBehaviorLog with event_type='ADD_CART'
-- RENT: UserBehaviorLog with event_type='RENT' (auto-logged on checkout)
+Two data sources — pick one via --source:
 
-Output:
-- ml_model/data/mbcgcn_v2_graph_data.pt containing:
-  - edge_index_click_train/test
-  - edge_index_cart_train/test
-  - edge_index_rent_train/test
-  - num_users, num_items
-  - user_id_map, manga_id_map
+  db   (default) — reads from Django database (UserBehaviorLog model)
+  csv  <path>    — reads from a CSV file with columns:
+                     user_id, manga_id, event_type, timestamp
+                   event_type values: CLICK, ADD_CART, RENT
+
+Output: ml_model/data/mbcgcn_v2_graph_data.pt
+  Keys: edge_index_{click,cart,rent}_{train,test}
+        num_users, num_items, user_id_map, manga_id_map
+
+Usage:
+    # from database
+    python prepare_data_v2.py
+
+    # from CSV
+    python prepare_data_v2.py --source csv --csv-path /path/to/logs.csv
 """
 import os
 import sys
-import django
+import argparse
 import torch
-from collections import defaultdict
+import pandas as pd
 
-# Setup Django environment
-project_root = os.path.dirname(os.path.dirname(os.path.dirname(__file__)))
-backend_path = os.path.join(project_root, 'backend')
-sys.path.insert(0, backend_path)
-os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'core.settings')
-django.setup()
-
-from rentals.models import UserBehaviorLog, User, Manga
+SCRIPT_DIR   = os.path.dirname(os.path.abspath(__file__))
+ML_MODEL_DIR = os.path.dirname(SCRIPT_DIR)
+PROJECT_ROOT = os.path.dirname(ML_MODEL_DIR)
 
 
-def prepare_v2_data(train_ratio=0.8, output_path=None):
+# ── Shared helpers ────────────────────────────────────────────────────────────
+
+def to_edge_index(edges, num_users):
     """
-    Export 3-behavior graph data from Django DB.
-
-    Args:
-        train_ratio: fraction for training set
-        output_path: where to save .pt file
+    Convert list of (user_idx, item_idx) pairs to a bidirectional bipartite
+    edge_index tensor [2, 2*E].  Item nodes are offset by num_users.
     """
-    print("🔄 Fetching data from Django database...")
+    if not edges:
+        return torch.empty((2, 0), dtype=torch.long)
+    users, items = zip(*edges)
+    items_off = [m + num_users for m in items]
+    return torch.tensor(
+        [list(users) + items_off, items_off + list(users)],
+        dtype=torch.long
+    )
 
-    # Get all active users and mangas
-    users = User.objects.filter(is_active=True).order_by('id')
-    mangas = Manga.objects.filter(is_active=True).order_by('id')
 
-    user_id_map = {u.id: idx for idx, u in enumerate(users)}
-    manga_id_map = {m.id: idx for idx, m in enumerate(mangas)}
+def split_edges(edges, ratio):
+    n = int(len(edges) * ratio)
+    return edges[:n], edges[n:]
 
-    num_users = len(user_id_map)
-    num_items = len(manga_id_map)
 
-    print(f"✅ Users: {num_users}, Mangas: {num_items}")
+def build_and_save(click_edges, cart_edges, rent_edges,
+                   num_users, num_items, user_id_map, manga_id_map,
+                   train_ratio, output_path):
+    c_tr, c_te   = split_edges(click_edges, train_ratio)
+    ca_tr, ca_te = split_edges(cart_edges,  train_ratio)
+    r_tr, r_te   = split_edges(rent_edges,  train_ratio)
 
-    # Fetch behavior logs
-    click_logs = UserBehaviorLog.objects.filter(
-        event_type='CLICK',
-        user__is_active=True,
-        manga__is_active=True
-    ).values_list('user_id', 'manga_id', 'created_at')
+    print(f"Train/test split ({train_ratio:.0%}):")
+    print(f"  CLICK : {len(c_tr)} / {len(c_te)}")
+    print(f"  CART  : {len(ca_tr)} / {len(ca_te)}")
+    print(f"  RENT  : {len(r_tr)} / {len(r_te)}")
 
-    cart_logs = UserBehaviorLog.objects.filter(
-        event_type='ADD_CART',
-        user__is_active=True,
-        manga__is_active=True
-    ).values_list('user_id', 'manga_id', 'created_at')
-
-    rent_logs = UserBehaviorLog.objects.filter(
-        event_type='RENT',
-        user__is_active=True,
-        manga__is_active=True
-    ).values_list('user_id', 'manga_id', 'created_at')
-
-    print(f"📊 CLICK: {len(click_logs)}, ADD_CART: {len(cart_logs)}, RENT: {len(rent_logs)}")
-
-    if len(click_logs) == 0 or len(rent_logs) == 0:
-        print("⚠️  Warning: Not enough data for v2 model. Need at least CLICK and RENT behaviors.")
-        print("    Falling back to empty graph (will fail to train).")
-
-    # Build edges for each behavior
-    def build_edges(logs):
-        """Convert logs to edge list, sorted by timestamp."""
-        edges = []
-        for user_id, manga_id, created_at in logs:
-            if user_id in user_id_map and manga_id in manga_id_map:
-                u_idx = user_id_map[user_id]
-                m_idx = manga_id_map[manga_id]
-                edges.append((u_idx, m_idx, created_at))
-
-        # Sort by timestamp
-        edges.sort(key=lambda x: x[2])
-        return [(u, m) for u, m, _ in edges]
-
-    click_edges = build_edges(click_logs)
-    cart_edges = build_edges(cart_logs)
-    rent_edges = build_edges(rent_logs)
-
-    # Train/test split (chronological)
-    def split_edges(edges, ratio):
-        split_idx = int(len(edges) * ratio)
-        train = edges[:split_idx]
-        test = edges[split_idx:]
-        return train, test
-
-    click_train, click_test = split_edges(click_edges, train_ratio)
-    cart_train, cart_test = split_edges(cart_edges, train_ratio)
-    rent_train, rent_test = split_edges(rent_edges, train_ratio)
-
-    print(f"🔀 Train/Test split ({train_ratio:.0%}):")
-    print(f"   CLICK: {len(click_train)} / {len(click_test)}")
-    print(f"   CART:  {len(cart_train)} / {len(cart_test)}")
-    print(f"   RENT:  {len(rent_train)} / {len(rent_test)}")
-
-    # Convert to PyTorch tensors
-    def to_edge_index(edges):
-        if len(edges) == 0:
-            return torch.empty((2, 0), dtype=torch.long)
-        users, items = zip(*edges)
-        # Add num_users offset to item indices (standard bipartite graph format)
-        edge_index = torch.tensor([
-            list(users) + [m + num_users for m in items],
-            [m + num_users for m in items] + list(users)
-        ], dtype=torch.long)
-        return edge_index
-
-    edge_index_click_train = to_edge_index(click_train)
-    edge_index_click_test = to_edge_index(click_test)
-    edge_index_cart_train = to_edge_index(cart_train)
-    edge_index_cart_test = to_edge_index(cart_test)
-    edge_index_rent_train = to_edge_index(rent_train)
-    edge_index_rent_test = to_edge_index(rent_test)
-
-    # Save to file
-    if output_path is None:
-        data_dir = os.path.join(os.path.dirname(__file__), '..', 'data')
-        os.makedirs(data_dir, exist_ok=True)
-        output_path = os.path.join(data_dir, 'mbcgcn_v2_graph_data.pt')
+    if len(r_tr) < 10:
+        print("WARNING: fewer than 10 RENT train interactions — model will not converge.")
 
     data = {
-        'edge_index_click_train': edge_index_click_train,
-        'edge_index_click_test': edge_index_click_test,
-        'edge_index_cart_train': edge_index_cart_train,
-        'edge_index_cart_test': edge_index_cart_test,
-        'edge_index_rent_train': edge_index_rent_train,
-        'edge_index_rent_test': edge_index_rent_test,
-        'num_users': num_users,
-        'num_items': num_items,
+        'edge_index_click_train': to_edge_index(c_tr,  num_users),
+        'edge_index_click_test':  to_edge_index(c_te,  num_users),
+        'edge_index_cart_train':  to_edge_index(ca_tr, num_users),
+        'edge_index_cart_test':   to_edge_index(ca_te, num_users),
+        'edge_index_rent_train':  to_edge_index(r_tr,  num_users),
+        'edge_index_rent_test':   to_edge_index(r_te,  num_users),
+        'num_users':   num_users,
+        'num_items':   num_items,
         'user_id_map': user_id_map,
         'manga_id_map': manga_id_map,
     }
-
+    os.makedirs(os.path.dirname(output_path), exist_ok=True)
     torch.save(data, output_path)
-    print(f"💾 Saved to: {output_path}")
-
+    print(f"Saved to: {output_path}")
     return data
 
 
+# ── CSV source ────────────────────────────────────────────────────────────────
+
+def prepare_from_csv(csv_path, train_ratio=0.8, output_path=None):
+    """
+    Load logs from a CSV file.
+
+    Required columns: user_id, manga_id, event_type, timestamp
+    event_type values: CLICK, ADD_CART, RENT
+    """
+    print(f"Loading logs from CSV: {csv_path}")
+    df = pd.read_csv(csv_path, parse_dates=['timestamp'])
+
+    required = {'user_id', 'manga_id', 'event_type', 'timestamp'}
+    missing  = required - set(df.columns)
+    if missing:
+        raise ValueError(f"CSV is missing columns: {missing}")
+
+    df = df.sort_values('timestamp').reset_index(drop=True)
+
+    # Remap raw IDs to contiguous 0-based indices
+    users  = sorted(df['user_id'].unique())
+    mangas = sorted(df['manga_id'].unique())
+    user_id_map  = {uid: idx for idx, uid in enumerate(users)}
+    manga_id_map = {mid: idx for idx, mid in enumerate(mangas)}
+    num_users = len(user_id_map)
+    num_items = len(manga_id_map)
+
+    print(f"Users: {num_users}, Unique mangas: {num_items}")
+
+    def extract(event_type):
+        sub = df[df['event_type'] == event_type].sort_values('timestamp')
+        return [(user_id_map[r.user_id], manga_id_map[r.manga_id])
+                for r in sub.itertuples()]
+
+    click_edges = extract('CLICK')
+    cart_edges  = extract('ADD_CART')
+    rent_edges  = extract('RENT')
+
+    print(f"CLICK: {len(click_edges)}, ADD_CART: {len(cart_edges)}, RENT: {len(rent_edges)}")
+
+    if output_path is None:
+        data_dir    = os.path.join(ML_MODEL_DIR, 'data')
+        output_path = os.path.join(data_dir, 'mbcgcn_v2_graph_data.pt')
+
+    return build_and_save(
+        click_edges, cart_edges, rent_edges,
+        num_users, num_items, user_id_map, manga_id_map,
+        train_ratio, output_path
+    )
+
+
+# ── Django DB source ──────────────────────────────────────────────────────────
+
+def prepare_from_db(train_ratio=0.8, output_path=None):
+    """Load logs from Django UserBehaviorLog model."""
+    backend_path = os.path.join(PROJECT_ROOT, 'backend')
+    sys.path.insert(0, backend_path)
+    os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'core.settings')
+
+    import django
+    django.setup()
+    from rentals.models import UserBehaviorLog, User, Manga
+
+    print("Fetching data from Django database...")
+
+    users  = User.objects.filter(is_active=True).order_by('id')
+    mangas = Manga.objects.filter(is_active=True).order_by('id')
+
+    user_id_map  = {u.id: idx for idx, u in enumerate(users)}
+    manga_id_map = {m.id: idx for idx, m in enumerate(mangas)}
+    num_users = len(user_id_map)
+    num_items = len(manga_id_map)
+
+    print(f"Users: {num_users}, Mangas: {num_items}")
+
+    def fetch(event_type):
+        logs = (UserBehaviorLog.objects
+                .filter(event_type=event_type,
+                        user__is_active=True,
+                        manga__is_active=True)
+                .order_by('created_at')
+                .values_list('user_id', 'manga_id'))
+        return [(user_id_map[u], manga_id_map[m])
+                for u, m in logs
+                if u in user_id_map and m in manga_id_map]
+
+    click_edges = fetch('CLICK')
+    cart_edges  = fetch('ADD_CART')
+    rent_edges  = fetch('RENT')
+
+    print(f"CLICK: {len(click_edges)}, ADD_CART: {len(cart_edges)}, RENT: {len(rent_edges)}")
+
+    if output_path is None:
+        data_dir    = os.path.join(ML_MODEL_DIR, 'data')
+        output_path = os.path.join(data_dir, 'mbcgcn_v2_graph_data.pt')
+
+    return build_and_save(
+        click_edges, cart_edges, rent_edges,
+        num_users, num_items, user_id_map, manga_id_map,
+        train_ratio, output_path
+    )
+
+
+# ── Entry point ───────────────────────────────────────────────────────────────
+
 if __name__ == '__main__':
-    prepare_v2_data()
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--source', choices=['db', 'csv'], default='db',
+                        help='Data source: Django DB (db) or CSV file (csv)')
+    parser.add_argument('--csv-path', default=None,
+                        help='Path to CSV log file (required when --source csv)')
+    parser.add_argument('--train-ratio', type=float, default=0.8)
+    parser.add_argument('--output-path', default=None)
+    args = parser.parse_args()
+
+    if args.source == 'csv':
+        if not args.csv_path:
+            parser.error('--csv-path is required when --source csv')
+        prepare_from_csv(
+            csv_path=args.csv_path,
+            train_ratio=args.train_ratio,
+            output_path=args.output_path,
+        )
+    else:
+        prepare_from_db(
+            train_ratio=args.train_ratio,
+            output_path=args.output_path,
+        )

@@ -20,22 +20,35 @@ const MangaDetail = () => {
   // Track CLICK behavior
   const logBehavior = async (eventType, additionalData = {}) => {
     const token = localStorage.getItem('access_token');
-    if (!token) return; // Only track for logged-in users
+    if (!token) {
+      console.log('⚠️ [BehaviorLog] Skipped: User not logged in');
+      return;
+    }
+
+    const source = location.state?.source || 'DIRECT';
+    console.log(`📊 [BehaviorLog] Logging ${eventType} event for manga #${id} (${manga?.title || 'Loading...'}) from ${source}`);
 
     try {
-      await authFetch(`${API_URL}/api/behaviors/log/`, {
+      const response = await authFetch(`${API_URL}/api/behaviors/log/`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           manga_id: id,
           event_type: eventType,
-          source: location.state?.source || 'DIRECT',
+          source: source,
           ...additionalData
         })
       });
+
+      if (response.ok) {
+        console.log(`✅ [BehaviorLog] Successfully logged ${eventType} for manga #${id}`);
+      } else {
+        const error = await response.json();
+        console.warn(`⚠️ [BehaviorLog] Failed to log ${eventType}:`, error);
+      }
     } catch (error) {
       // Silent fail — don't block user experience
-      console.debug('Behavior log failed:', error);
+      console.error('❌ [BehaviorLog] Error:', error.message);
     }
   };
 
@@ -169,6 +182,13 @@ const MangaDetail = () => {
                 <span className="font-bold text-lg text-brand-primary ml-2">{manga.rental_price_per_day} THB/day</span>
               </p>
             </div>
+
+            {manga.description && (
+              <div className="mb-6">
+                <h2 className="font-semibold text-brand-primary mb-2">Synopsis</h2>
+                <p className="text-brand-primary text-sm leading-relaxed">{manga.description}</p>
+              </div>
+            )}
 
             <div className="space-y-5 mb-8 flex-grow">
 

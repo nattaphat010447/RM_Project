@@ -9,7 +9,7 @@ const AdminMangaForm = () => {
   const API_URL = import.meta.env.VITE_API_BASE_URL;
 
   const [formData, setFormData] = useState({
-    title: '', author: '', genre: '', rental_price_per_day: '', serial_numbers: ''
+    title: '', author: '', genre: '', description: '', rental_price_per_day: '', serial_numbers: ''
   });
   const [coverFile, setCoverFile] = useState(null);
   const [currentImage, setCurrentImage] = useState('');
@@ -27,6 +27,7 @@ const AdminMangaForm = () => {
         .then(data => {
           setFormData({
             title: data.title, author: data.author || '', genre: data.genre || '',
+            description: data.description || '',
             rental_price_per_day: data.rental_price_per_day, serial_numbers: ''
           });
           setCurrentImage(data.cover_image_url);
@@ -54,6 +55,7 @@ const AdminMangaForm = () => {
     dataToSend.append('title', formData.title);
     dataToSend.append('author', formData.author);
     dataToSend.append('genre', formData.genre);
+    dataToSend.append('description', formData.description);
     dataToSend.append('rental_price_per_day', price);
 
     if (coverFile) {
@@ -163,6 +165,17 @@ const AdminMangaForm = () => {
               <label className="block text-sm font-bold mb-1">Genre</label>
               <input type="text" value={formData.genre} onChange={e => setFormData({...formData, genre: e.target.value})} className="w-full rounded px-3 py-2 shadow-md" />
             </div>
+          </div>
+
+          <div>
+            <label className="block text-sm font-bold mb-1">Synopsis (Description)</label>
+            <textarea
+              rows={4}
+              value={formData.description}
+              onChange={e => setFormData({...formData, description: e.target.value})}
+              className="w-full rounded px-3 py-2 shadow-md resize-none"
+              placeholder="Enter manga synopsis..."
+            />
           </div>
 
           <div>
