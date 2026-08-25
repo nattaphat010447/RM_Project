@@ -251,63 +251,39 @@ const AdminMangaForm = () => {
                   className={inputClass}
                 />
               </div>
-            </div>
-          </div>
 
-<div>
-  <label className="block text-sm font-bold mb-1">
-    Synopsis (Description)
-  </label>
-  <textarea
-    rows={4}
-    value={formData.description}
-    onChange={e =>
-      setFormData({
-        ...formData,
-        description: e.target.value
-      })
-    }
-    className="w-full rounded-lg border border-lumina-outline/60 bg-white px-4 py-3 font-inter text-sm text-lumina-text placeholder:text-lumina-text-muted/60 shadow-lumina-sm focus:outline-none focus:border-lumina-primary focus:ring-1 focus:ring-lumina-primary transition-shadow resize-none"
-    placeholder="Enter manga synopsis..."
-  />
-</div>
-
-<div className="bg-white rounded-2xl shadow-lumina-sm border border-lumina-outline/30 p-6 md:p-8 mb-6">
-  <h3 className="font-jakarta font-bold text-lg text-lumina-text mb-6 pb-4 border-b border-lumina-outline/40">
-    Cover Image
-  </h3>
-
-  <label className="block text-sm font-bold mb-1">
-    Cover Image (select new file to replace)
-  </label>
-
-  <input
-    type="file"
-    accept="image/*"
-    onChange={e => setCoverFile(e.target.files[0])}
-    className="w-full rounded-lg border border-lumina-outline/60 bg-white px-4 py-3 font-inter text-sm text-lumina-text shadow-lumina-sm focus:outline-none focus:border-lumina-primary focus:ring-1 focus:ring-lumina-primary transition-shadow"
-  />
-</div>
-
-            <div className="flex items-start gap-6">
-              <div className="flex-1">
-                <label htmlFor="manga-cover" className={labelClass}>Cover Image (select new file to replace)</label>
-                <input
-                  id="manga-cover"
-                  type="file"
-                  accept="image/*"
-                  onChange={e => setCoverFile(e.target.files[0])}
-                  className="w-full rounded-lg border border-lumina-outline/60 bg-white px-4 py-2.5 font-inter text-sm text-lumina-text-muted file:mr-4 file:rounded-md file:border-0 file:bg-lumina-primary-soft file:px-4 file:py-2 file:font-inter file:text-sm file:font-semibold file:text-lumina-primary hover:file:bg-lumina-primary/15 cursor-pointer shadow-lumina-sm"
+              <div>
+                <label htmlFor="manga-description" className={labelClass}>Synopsis (Description)</label>
+                <textarea
+                  id="manga-description"
+                  rows={4}
+                  value={formData.description}
+                  onChange={e => setFormData({ ...formData, description: e.target.value })}
+                  className={`${inputClass} resize-none`}
+                  placeholder="Enter manga synopsis..."
                 />
               </div>
-              {isEditMode && currentImage && !coverFile && (
-                <div className="shrink-0">
-                  <p className="font-inter text-xs font-semibold uppercase tracking-wide text-lumina-text-muted mb-2">Current</p>
-                  <img src={getImageUrl(currentImage)} alt="Current Cover" className="w-24 h-36 object-cover rounded-lg shadow-lumina-sm border border-lumina-outline/40" />
+
+              <div className="flex items-start gap-6 pt-2">
+                <div className="flex-1">
+                  <label htmlFor="manga-cover" className={labelClass}>Cover Image (select new file to replace)</label>
+                  <input
+                    id="manga-cover"
+                    type="file"
+                    accept="image/*"
+                    onChange={e => setCoverFile(e.target.files[0])}
+                    className="w-full rounded-lg border border-lumina-outline/60 bg-white px-4 py-2.5 font-inter text-sm text-lumina-text-muted file:mr-4 file:rounded-md file:border-0 file:bg-lumina-primary-soft file:px-4 file:py-2 file:font-inter file:text-sm file:font-semibold file:text-lumina-primary hover:file:bg-lumina-primary/15 cursor-pointer shadow-lumina-sm"
+                  />
                 </div>
-              )}
+                {isEditMode && currentImage && !coverFile && (
+                  <div className="shrink-0">
+                    <p className={labelClass}>Current</p>
+                    <img src={getImageUrl(currentImage)} alt="Current Cover" className="w-24 h-36 object-cover rounded-lg shadow-lumina-sm border border-lumina-outline/40" />
+                  </div>
+                )}
+              </div>
             </div>
-         
+          </div>
 
           {!isEditMode && (
             <div className="bg-white rounded-2xl shadow-lumina-sm border border-lumina-outline/30 p-6 md:p-8 mb-8">
