@@ -3,11 +3,12 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from django.shortcuts import get_object_or_404
 from django.utils import timezone
-from .models import ABTestVariant, ABTestEvent, ModelTrainingLog
+from .models import ABTestVariant, ABTestEvent, ModelTrainingLog, ModelConfig
 from .permissions import IsAdminRole
 from .ab_testing import ABTestManager
 import subprocess
 import threading
+import os
 
 # ============================================
 # A/B Testing Views
@@ -240,4 +241,100 @@ def model_training_status(request):
     return Response({
         'logs': data,
         'is_training': running
+    })
+
+
+def _check_model_availability():
+    """Return which model versions have weights+data on disk."""
+    backend_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    if os.path.exists(os.path.join(backend_dir, 'ml_model')):
+        ml = os.path.join(backend_dir, 'ml_model')
+    else:
+        ml = os.path.join(os.path.dirname(backend_dir), 'ml_model')
+
+    v1_ready = (
+        os.path.exists(os.path.join(ml, 'weights', 'mbcgcn_manga_weights.pth')) and
+        os.path.exists(os.path.join(ml, 'data',    'mbcgcn_graph_data.pt'))
+    )
+    v2_ready = (
+        os.path.exists(os.path.join(ml, 'weights', 'mbcgcn_v2_manga_weights.pth')) and
+        os.path.exists(os.path.join(ml, 'data',    'mbcgcn_v2_graph_data.pt'))
+    )
+    return {'v1': v1_ready, 'v2': v2_ready}
+
+
+@api_view(['GET', 'POST'])
+@permission_classes([IsAuthenticated, IsAdminRole])
+def model_config(request):
+    """
+    GET: Return active model version and availability of each version.
+    POST: Set active model version {'active_version': 'v1' | 'v2'}.
+    """
+    if request.method == 'GET':
+        cfg = ModelConfig.get()
+        availability = _check_model_availability()
+        return Response({
+            'active_version': cfg.active_version,
+            'active_log_id': cfg.active_log_id,
+            'updated_at': cfg.updated_at,
+            'updated_by': cfg.updated_by.username if cfg.updated_by else None,
+            'availability': availability,
+        })
+
+    version = request.data.get('active_version')
+    if version not in ('v1', 'v2'):
+        return Response({'error': "active_version must be 'v1' or 'v2'."}, status=400)
+
+    availability = _check_model_availability()
+    if not availability[version]:
+        return Response({
+            'error': f"Model {version} weights not found on disk. Train it first."
+        }, status=400)
+
+    cfg = ModelConfig.get()
+    cfg.active_version = version
+    cfg.updated_by = request.user
+    cfg.save()
+
+    # Force recommender to reload with the new version
+    from .recommender import RecommenderService
+    RecommenderService._instance = None
+
+    return Response({
+        'active_version': cfg.active_version,
+        'message': f'Active model switched to {version}. Recommender reloaded.'
+    })
+
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated, IsAdminRole])
+def activate_training_log(request, log_id):
+    """
+    Activate a specific completed training log as the live model.
+    Sets ModelConfig.active_log and active_version, then resets the singleton.
+    """
+    log = ModelTrainingLog.objects.filter(id=log_id, status='COMPLETED').first()
+    if not log:
+        return Response({'error': 'Training log not found or not completed.'}, status=404)
+
+    if not log.weight_path or not log.graph_path:
+        return Response({'error': 'This log has no saved weight/graph paths. Re-train to generate a rollback-capable checkpoint.'}, status=400)
+
+    import os
+    if not os.path.exists(log.weight_path) or not os.path.exists(log.graph_path):
+        return Response({'error': 'Weight or graph file no longer exists on disk.'}, status=400)
+
+    cfg = ModelConfig.get()
+    cfg.active_version = 'v2' if log.model_name == 'MB-CGCN-v2' else 'v1'
+    cfg.active_log = log
+    cfg.updated_by = request.user
+    cfg.save()
+
+    from .recommender import RecommenderService
+    RecommenderService._instance = None
+
+    return Response({
+        'message': f'Activated log #{log.id} ({log.model_name}). Recommender reloaded.',
+        'active_version': cfg.active_version,
+        'log_id': log.id,
     })

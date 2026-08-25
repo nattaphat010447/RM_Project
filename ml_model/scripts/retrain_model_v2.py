@@ -13,14 +13,18 @@ import sys
 import django
 
 # Setup Django
-project_root = os.path.dirname(os.path.dirname(os.path.dirname(__file__)))
+script_dir   = os.path.dirname(os.path.abspath(__file__))
+project_root = os.path.dirname(os.path.dirname(script_dir))
 backend_path = os.path.join(project_root, 'backend')
+
+if not os.path.exists(os.path.join(backend_path, 'core')):
+    backend_path = project_root
+
 sys.path.insert(0, backend_path)
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'core.settings')
 django.setup()
 
 from rentals.models import ModelTrainingLog, UserBehaviorLog
-from rentals.recommender import RecommenderService
 from datetime import datetime
 
 
@@ -42,9 +46,9 @@ def main():
         # Step 1: Prepare data
         print("\n📊 Step 1: Preparing 3-behavior data from web database...")
         sys.path.insert(0, os.path.join(project_root, 'ml_model', 'scripts'))
-        from prepare_data_v2 import prepare_v2_data
+        from prepare_data_v2 import prepare_from_db
 
-        data = prepare_v2_data()
+        data = prepare_from_db()
 
         # Check data sufficiency
         click_count = UserBehaviorLog.objects.filter(event_type='CLICK').count()
@@ -56,13 +60,16 @@ def main():
         if click_count < 50 or rent_count < 50:
             raise Exception(f"Insufficient data: need at least 50 CLICK and 50 RENT (got {click_count}, {rent_count})")
 
-        # Step 2: Train model
+        # Step 2: Train model — save to timestamped file so old weights aren't overwritten
         print("\n🤖 Step 2: Training MB-CGCN v2 model...")
         from train_v2 import train_v2
 
+        weight_path = os.path.join(project_root, 'ml_model', 'weights', f'mbcgcn_v2_manga_weights_{log.id}.pth')
+        graph_path  = os.path.join(project_root, 'ml_model', 'data',    'mbcgcn_v2_graph_data.pt')
+
         metrics = train_v2(
-            data_path=os.path.join(project_root, 'ml_model', 'data', 'mbcgcn_v2_graph_data.pt'),
-            output_path=os.path.join(project_root, 'ml_model', 'weights', 'mbcgcn_v2_manga_weights.pth'),
+            data_path=graph_path,
+            output_path=weight_path,
             epochs=600,
             batch_size=400000,
             embed_dim=64,
@@ -79,6 +86,8 @@ def main():
         log.epochs = 600
         log.final_recall_at_10 = metrics.get('recall@10', 0.0)
         log.final_ndcg_at_10 = metrics.get('ndcg@10', 0.0)
+        log.weight_path = weight_path
+        log.graph_path  = graph_path
 
         # Save learned weights to metadata
         if 'learned_weights' in metrics:

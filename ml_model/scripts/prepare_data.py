@@ -61,11 +61,11 @@ def prepare_graph_data(
         Includes both user->item and item->user edges so message passing
         updates both sides of the graph.
         """
-        users = np.asarray(user_idx_values)
-        items = np.asarray(item_idx_values) + num_users
-        src = np.concatenate([users, items])
-        dst = np.concatenate([items, users])
-        return torch.tensor(np.array([src, dst]), dtype=torch.long)
+        users = user_idx_values.tolist() if hasattr(user_idx_values, 'tolist') else list(user_idx_values)
+        items = [x + num_users for x in (item_idx_values.tolist() if hasattr(item_idx_values, 'tolist') else list(item_idx_values))]
+        src = users + items
+        dst = items + users
+        return torch.tensor([src, dst], dtype=torch.long)
 
     # CART behavior: "Plan to Watch"
     df_cart = df_interact[df_interact['status'] == 'Plan to Watch']

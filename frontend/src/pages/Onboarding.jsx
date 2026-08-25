@@ -84,10 +84,21 @@ const Onboarding = () => {
     }
   };
 
-  const filteredMangas = mangas.filter(manga =>
-    manga.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    (manga.author && manga.author.toLowerCase().includes(searchTerm.toLowerCase()))
-  );
+  const handleClearPreferences = () => {
+    setSelectedMangas([]);
+  };
+
+  const filteredMangas = mangas.filter(manga => {
+    const term = searchTerm.toLowerCase();
+    if (!term) return true;
+    if (manga.title.toLowerCase().includes(term)) return true;
+    if (manga.author && manga.author.toLowerCase().includes(term)) return true;
+    if (manga.genre) {
+      const genres = manga.genre.split(',').map(g => g.trim().toLowerCase());
+      if (genres.some(g => g.includes(term))) return true;
+    }
+    return false;
+  });
 
  if (loading) {
   return (
@@ -118,7 +129,7 @@ return (
           Select <span className="text-lumina-primary font-bold">4 manga</span> to receive tailored recommendations
         </p>
 
-        <div className="mt-5 inline-flex items-center gap-2 bg-white border border-lumina-outline/50 rounded-full px-6 py-2.5 shadow-lumina-sm">
+        <div className="mt-5 inline-flex items-center gap-3 bg-white border border-lumina-outline/50 rounded-full px-6 py-2.5 shadow-lumina-sm">
           <p className="font-inter text-sm text-lumina-text-muted">
             Selected:
           </p>
@@ -128,6 +139,14 @@ return (
           <span className="font-inter text-sm text-lumina-text-muted">
             / 4
           </span>
+          {selectedMangas.length > 0 && (
+            <button
+              onClick={handleClearPreferences}
+              className="ml-1 font-inter text-xs text-lumina-text-muted/70 hover:text-red-500 border border-lumina-outline/50 hover:border-red-300 rounded-full px-3 py-1 transition-colors duration-150"
+            >
+              Clear
+            </button>
+          )}
         </div>
       </div>
 
@@ -149,7 +168,7 @@ return (
 
         <input
           type="text"
-          placeholder="Search manga or author..."
+          placeholder="Search by title, author, or genre..."
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
           className="w-full bg-white border border-lumina-outline/60 rounded-full pl-12 pr-6 py-3.5 font-inter text-base text-lumina-text placeholder:text-lumina-text-muted/60 shadow-lumina-sm focus:outline-none focus:border-lumina-primary focus:ring-1 focus:ring-lumina-primary transition-shadow"

@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import MangaCard from '../components/MangaCard';
+import { authFetch } from '../api';
 import { getImageUrl } from '../utils/image';
 
 const API_URL = import.meta.env.VITE_API_BASE_URL;
@@ -10,6 +11,9 @@ const HERO_BG = '/images/mangas/banner.svg';
 const Home = () => {
   const [mangas, setMangas] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [recommendations, setRecommendations] = useState([]);
+  const isLoggedIn = !!localStorage.getItem('access_token');
+  const [recsLoading, setRecsLoading] = useState(isLoggedIn);
 
   useEffect(() => {
     fetch(`${API_URL}/api/mangas/`)
@@ -22,6 +26,20 @@ const Home = () => {
         console.error("Error fetching data: ", error);
         setLoading(false);
       });
+  }, []);
+
+  useEffect(() => {
+    if (!isLoggedIn) { setRecsLoading(false); return; }
+    authFetch(`${API_URL}/api/recommendations/`)
+      .then(res => (res && res.ok) ? res.json() : null)
+      .then(data => {
+        if (data) {
+          const recs = data.recommendations || [];
+          setRecommendations(recs.slice(0, 5));
+        }
+        setRecsLoading(false);
+      })
+      .catch(() => setRecsLoading(false));
   }, []);
 
   const featured = mangas.slice(0, 3);
@@ -115,14 +133,24 @@ const Home = () => {
           <div className="flex items-end justify-between mb-8 gap-4">
             <div>
               <h2 className="font-jakarta font-bold text-2xl md:text-3xl text-lumina-text">Recommended for You</h2>
-              <p className="font-jakarta text-lumina-text-muted mt-1">Based on your recent reading history</p>
+              <p className="font-jakarta text-lumina-text-muted mt-1">
+                {isLoggedIn ? 'Personalized picks from our recommendation engine' : 'Based on popular choices'}
+              </p>
             </div>
-            <Link to="/foryou" className="font-inter text-sm font-semibold text-lumina-primary hover:underline whitespace-nowrap hidden sm:block">
+            <Link to="/for-you" className="font-inter text-sm font-semibold text-lumina-primary hover:underline whitespace-nowrap hidden sm:block">
               See all recommendations
             </Link>
           </div>
 
-          {loading ? (
+          {recsLoading ? (
+            <div className="text-center font-semibold text-lumina-text-muted my-20">Loading recommendations...</div>
+          ) : recommendations.length > 0 ? (
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4 md:gap-6">
+              {recommendations.map(manga => (
+                <MangaCard key={`rec-${manga.id}`} manga={manga} />
+              ))}
+            </div>
+          ) : loading ? (
             <div className="text-center font-semibold text-lumina-text-muted my-20">Loading Mangas...</div>
           ) : mangas.length === 0 ? (
             <div className="text-center text-lumina-text-muted my-20 border-2 border-dashed border-lumina-outline/60 rounded-2xl p-12">
@@ -130,7 +158,7 @@ const Home = () => {
             </div>
           ) : (
             <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4 md:gap-6">
-              {mangas.slice(0, 3).map(manga => (
+              {mangas.slice(0, 5).map(manga => (
                 <MangaCard key={`rec-${manga.id}`} manga={manga} />
               ))}
             </div>

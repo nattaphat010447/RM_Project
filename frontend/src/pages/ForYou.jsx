@@ -5,8 +5,39 @@ import { getImageUrl } from '../utils/image';
 
 const API_URL = import.meta.env.VITE_API_BASE_URL;
 
+const MangaCard = ({ manga, renderStars }) => (
+  <div className="bg-white rounded-xl shadow-lumina-sm overflow-hidden transform hover:-translate-y-1 hover:shadow-lumina-lg transition-all duration-200 flex flex-col">
+    <Link to={`/manga/${manga.id}`} className="flex-grow flex flex-col">
+      <img
+        src={getImageUrl(manga.cover_image_url)}
+        alt={manga.title}
+        className="w-full h-72 object-cover"
+      />
+      <div className="p-4 flex-grow">
+        <h3 className="font-jakarta text-lg font-semibold text-lumina-text truncate">{manga.title}</h3>
+        <p className="font-inter text-sm text-lumina-text-muted mt-1">{manga.genre}</p>
+        {manga.explanation && (
+          <p className="font-inter text-xs text-lumina-primary mt-2 italic border-l-2 border-lumina-primary/40 pl-2">
+            {manga.explanation}
+          </p>
+        )}
+      </div>
+      <div className="mt-auto flex justify-between items-end border-t border-lumina-outline/50 pt-3 px-4 pb-3">
+        <div className="flex text-amber-400 text-sm" aria-label={`${manga.avg_rating || 0} out of 5 stars`}>
+          {renderStars(manga.avg_rating)}
+        </div>
+        <span className="font-inter text-xs font-semibold text-lumina-text-muted bg-lumina-surface-alt px-2 py-1 rounded-lg">
+          Sold {manga.sold_count || 0}
+        </span>
+      </div>
+    </Link>
+  </div>
+);
+
 const ForYou = () => {
   const [mangas, setMangas] = useState([]);
+  const [popularFill, setPopularFill] = useState([]);
+  const [showPopular, setShowPopular] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [hasPreferences, setHasPreferences] = useState(false);
@@ -17,75 +48,33 @@ const ForYou = () => {
   };
 
   useEffect(() => {
-  const fetchRecommendations = async () => {
-    try {
-      console.log('🔍 [ForYou] Starting fetchRecommendations...');
-
-      const token = localStorage.getItem('access_token');
-      console.log('🔑 [ForYou] Token exists:', !!token);
-
-      // No token: user is not logged in
-      if (!token) {
-        console.log('❌ [ForYou] No token found - user not logged in');
-        setError("Please log in to see your personalized recommendations.");
-        setLoading(false);
-        return;
-      }
-
-      console.log(
-        '📡 [ForYou] Fetching recommendations from:',
-        `${API_URL}/api/recommendations/`
-      );
-
-      // Fetch recommendations from the API
-      const response = await authFetch(`${API_URL}/api/recommendations/`, {
-        method: 'GET',
-        headers: {
-          'Content-Type': 'application/json'
+    const fetchRecommendations = async () => {
+      try {
+        const token = localStorage.getItem('access_token');
+        if (!token) {
+          setError("Please log in to see your personalized recommendations.");
+          setLoading(false);
+          return;
         }
-      });
 
-      console.log(
-        '📥 [ForYou] Response status:',
-        response.status,
-        response.ok ? '✅' : '❌'
-      );
+        const response = await authFetch(`${API_URL}/api/recommendations/`, {
+          method: 'GET',
+          headers: { 'Content-Type': 'application/json' }
+        });
 
-      if (!response.ok) {
-        throw new Error('Network response was not ok');
+        if (!response.ok) throw new Error('Network response was not ok');
+
+        const data = await response.json();
+        setMangas(data.recommendations || []);
+        setPopularFill(data.popular_fill || []);
+        setHasPreferences(data.has_preferences || false);
+        setLoading(false);
+      } catch (err) {
+        setError("Unable to load recommendations. Please try again.");
+        setLoading(false);
       }
+    };
 
-      const data = await response.json();
-
-      console.log('📦 [ForYou] Data received:', data);
-      console.log(
-        '📚 [ForYou] Recommendations count:',
-        data.recommendations?.length || 0
-      );
-      console.log(
-        '👤 [ForYou] Has preferences:',
-        data.has_preferences
-      );
-
-      setMangas(data.recommendations || data);
-      setHasPreferences(data.has_preferences || false);
-      setLoading(false);
-
-      console.log('✅ [ForYou] State updated successfully');
-    } catch (err) {
-      console.error(
-        "❌ [ForYou] Error fetching recommendations:",
-        err
-      );
-
-      setError(
-        "Unable to load recommendations. Please try again."
-      );
-
-      setLoading(false);
-    }
-  };
-  
     fetchRecommendations();
   }, []);
 
@@ -130,43 +119,52 @@ const ForYou = () => {
         </div>
       )}
 
-      {mangas.length === 0 ? (
+      {mangas.length === 0 && popularFill.length === 0 ? (
         <div className="text-center font-jakarta text-lumina-text mt-10 text-lg p-8 border-2 border-dashed border-lumina-outline rounded-xl max-w-2xl mx-auto">
           No recommendations yet. <br/> Try renting or adding manga to your cart first!
         </div>
       ) : (
-        <div className="max-w-6xl mx-auto grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6">
-          {mangas.map(manga => (
-            <div key={manga.id} className="bg-white rounded-xl shadow-lumina-sm overflow-hidden transform hover:-translate-y-1 hover:shadow-lumina-lg transition-all duration-200 flex flex-col">
-              <Link to={`/manga/${manga.id}`} className="flex-grow flex flex-col">
-                <img
-                  src={getImageUrl(manga.cover_image_url)}
-                  alt={manga.title}
-                  className="w-full h-72 object-cover"
-                />
-                <div className="p-4 flex-grow">
-                  <h3 className="font-jakarta text-lg font-semibold text-lumina-text truncate">{manga.title}</h3>
-                  <p className="font-inter text-sm text-lumina-text-muted mt-1">{manga.genre}</p>
-
-                  {manga.explanation && (
-                    <p className="font-inter text-xs text-lumina-primary mt-2 italic border-l-2 border-lumina-primary/40 pl-2">
-                      {manga.explanation}
-                    </p>
-                  )}
-                </div>
-
-                <div className="mt-auto flex justify-between items-end border-t border-lumina-outline/50 pt-3 px-4 pb-3">
-                  <div className="flex text-amber-400 text-sm" aria-label={`${manga.avg_rating || 0} out of 5 stars`}>
-                    {renderStars(manga.avg_rating)}
-                  </div>
-                  <span className="font-inter text-xs font-semibold text-lumina-text-muted bg-lumina-surface-alt px-2 py-1 rounded-lg">
-                    Sold {manga.sold_count || 0}
-                  </span>
-                </div>
-              </Link>
+        <>
+          {mangas.length > 0 && (
+            <div className="max-w-6xl mx-auto grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6">
+              {mangas.map(manga => (
+                <MangaCard key={manga.id} manga={manga} renderStars={renderStars} />
+              ))}
             </div>
-          ))}
-        </div>
+          )}
+
+          {mangas.length === 0 && (
+            <div className="text-center font-jakarta text-lumina-text-muted mt-6 text-base">
+              No direct matches found for your preferences yet.
+            </div>
+          )}
+
+          {popularFill.length > 0 && !showPopular && (
+            <div className="text-center mt-10">
+              <button
+                onClick={() => setShowPopular(true)}
+                className="bg-white border border-lumina-outline text-lumina-text-muted font-inter font-semibold py-2.5 px-8 rounded-full hover:bg-lumina-surface transition-colors duration-150 shadow-lumina-sm"
+              >
+                Show {popularFill.length} more popular manga
+              </button>
+            </div>
+          )}
+
+          {showPopular && (
+            <>
+              <div className="flex items-center gap-4 max-w-6xl mx-auto mt-12 mb-6">
+                <div className="flex-1 h-px bg-lumina-outline" />
+                <p className="font-inter text-sm text-lumina-text-muted whitespace-nowrap">Popular manga</p>
+                <div className="flex-1 h-px bg-lumina-outline" />
+              </div>
+              <div className="max-w-6xl mx-auto grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6">
+                {popularFill.map(manga => (
+                  <MangaCard key={manga.id} manga={manga} renderStars={renderStars} />
+                ))}
+              </div>
+            </>
+          )}
+        </>
       )}
     </div>
   );

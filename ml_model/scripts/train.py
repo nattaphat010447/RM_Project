@@ -170,7 +170,7 @@ def train_mbcgcn(
 
     # Load data
     print(f"Loading data from {data_path}...")
-    data = torch.load(data_path, weights_only=True)
+    data = torch.load(data_path, map_location='cpu', weights_only=False)
     num_users, num_items = data['num_users'], data['num_items']
     edge_index_cart = data['edge_index_cart'].to(device)
     edge_index_rent_train = data['edge_index_rent_train'].to(device)

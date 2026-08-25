@@ -14,14 +14,21 @@ import django
 from datetime import datetime
 
 # Setup Django
-project_root = os.path.dirname(os.path.dirname(os.path.dirname(__file__)))
+# In Docker: script is at /app/ml_model/scripts/retrain_model.py, Django app is at /app
+# In Local:  script is at <project>/ml_model/scripts/retrain_model.py, Django app is at <project>/backend
+script_dir   = os.path.dirname(os.path.abspath(__file__))
+project_root = os.path.dirname(os.path.dirname(script_dir))  # <project root>
 backend_path = os.path.join(project_root, 'backend')
+
+# Docker: backend files sit directly in project_root (/app), no 'backend' subdirectory
+if not os.path.exists(os.path.join(backend_path, 'core')):
+    backend_path = project_root
+
 sys.path.insert(0, backend_path)
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'core.settings')
 django.setup()
 
 from rentals.models import ModelTrainingLog
-from rentals.recommender import RecommenderService
 
 
 def prepare_data():
@@ -51,6 +58,7 @@ def prepare_data():
 
 def reload_recommender_service():
     """Force reload the recommender service with new weights."""
+    from rentals.recommender import RecommenderService
     print("Reloading recommender service...")
     RecommenderService._instance = None
     RecommenderService()

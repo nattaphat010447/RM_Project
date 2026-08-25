@@ -10,7 +10,7 @@ from .views import (
     log_behavior, behavior_log_stats, health_check
 )
 
-from .admin_ml_views import ab_test_variants, ab_test_metrics, trigger_model_retrain, model_training_status
+from .admin_ml_views import ab_test_variants, ab_test_metrics, trigger_model_retrain, model_training_status, model_config, activate_training_log
 
 urlpatterns = [
     path('mangas/', MangaListAPIView.as_view(), name='manga-list'),
@@ -55,6 +55,8 @@ urlpatterns = [
     # Model training endpoints
     path('admin/ml/retrain/', trigger_model_retrain, name='trigger-retrain'),
     path('admin/ml/status/', model_training_status, name='training-status'),
+    path('admin/ml/config/', model_config, name='model-config'),
+    path('admin/ml/training-logs/<int:log_id>/activate/', activate_training_log, name='activate-training-log'),
 
     # Health check
     path('health/', health_check, name='health-check'),

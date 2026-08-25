@@ -279,6 +279,9 @@ class ModelTrainingLog(models.Model):
     final_recall_at_10 = models.DecimalField(max_digits=6, decimal_places=4, null=True, blank=True)
     final_ndcg_at_10 = models.DecimalField(max_digits=6, decimal_places=4, null=True, blank=True)
 
+    weight_path = models.TextField(blank=True, null=True)
+    graph_path  = models.TextField(blank=True, null=True)
+
     error_message = models.TextField(blank=True, null=True)
     metadata = models.JSONField(default=dict, blank=True)
 
@@ -289,3 +292,39 @@ class ModelTrainingLog(models.Model):
 
     def __str__(self):
         return f"{self.model_name} - {self.status} ({self.created_at.strftime('%Y-%m-%d %H:%M')})"
+
+
+class ModelConfig(models.Model):
+    """Singleton: which model version is active for recommendations."""
+    active_version = models.CharField(
+        max_length=10,
+        choices=[('v1', 'MB-CGCN v1 (CART+RENT)'), ('v2', 'MB-CGCN v2 (CLICK+CART+RENT)')],
+        default='v1',
+    )
+    # Points to the specific training log whose weights are currently loaded.
+    # Null means fall back to the default hardcoded path.
+    active_log = models.ForeignKey(
+        'ModelTrainingLog',
+        null=True, blank=True,
+        on_delete=models.SET_NULL,
+        related_name='+',
+    )
+    updated_at = models.DateTimeField(auto_now=True)
+    updated_by = models.ForeignKey(
+        'User', null=True, blank=True, on_delete=models.SET_NULL, related_name='+'
+    )
+
+    class Meta:
+        verbose_name = 'Model Config'
+
+    def save(self, *args, **kwargs):
+        self.pk = 1
+        super().save(*args, **kwargs)
+
+    @classmethod
+    def get(cls):
+        obj, _ = cls.objects.get_or_create(pk=1)
+        return obj
+
+    def __str__(self):
+        return f"Active model: {self.active_version}"

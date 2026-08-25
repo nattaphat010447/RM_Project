@@ -11,23 +11,79 @@ const AdminMLTraining = () => {
   const [loading, setLoading] = useState(true);
   const [autoRefresh, setAutoRefresh] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [modelConfig, setModelConfig] = useState(null);
+  const [switchingVersion, setSwitchingVersion] = useState(false);
+  const [activatingLog, setActivatingLog] = useState(null);
 
 const fetchStatus = useCallback(async () => {
   try {
-    const response = await authFetch(`${API_URL}/api/admin/ml/status/`);
-    const data = await response.json();
+    const [statusRes, configRes] = await Promise.all([
+      authFetch(`${API_URL}/api/admin/ml/status/`),
+      authFetch(`${API_URL}/api/admin/ml/config/`),
+    ]);
+    const statusData = await statusRes.json();
+    const configData = await configRes.json();
 
-    setLogs(data.logs || []);
-    setIsTraining(data.is_training || false);
+    setLogs(statusData.logs || []);
+    setIsTraining(statusData.is_training || false);
+    setModelConfig(configData);
     setLoading(false);
 
-    if (data.is_training) {
+    if (statusData.is_training) {
       setAutoRefresh(true);
     }
   } catch {
     setLoading(false);
   }
 }, [API_URL]);
+
+  const handleActivateLog = async (logId, modelName) => {
+    if (activatingLog) return;
+    if (!confirm(`Activate log #${logId} (${modelName}) as the live model? The recommender will reload immediately.`)) return;
+    setActivatingLog(logId);
+    try {
+      const res = await authFetch(`${API_URL}/api/admin/ml/training-logs/${logId}/activate/`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+      });
+      const data = await res.json();
+      if (res.ok) {
+        await fetchStatus();
+        alert(data.message);
+      } else {
+        alert(data.error || 'Failed to activate log.');
+      }
+    } catch {
+      alert('System error. Please try again.');
+    } finally {
+      setActivatingLog(null);
+    }
+  };
+
+  const handleSwitchVersion = async (version) => {
+    if (switchingVersion) return;
+    const versionLabel = version === 'v1' ? 'MB-CGCN v1 (CART+RENT)' : 'MB-CGCN v2 (CLICK+CART+RENT)';
+    if (!confirm(`Switch active model to ${versionLabel}? The recommender will reload immediately.`)) return;
+    setSwitchingVersion(true);
+    try {
+      const res = await authFetch(`${API_URL}/api/admin/ml/config/`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ active_version: version }),
+      });
+      const data = await res.json();
+      if (res.ok) {
+        await fetchStatus();
+        alert(data.message);
+      } else {
+        alert(data.error || 'Failed to switch model.');
+      }
+    } catch {
+      alert('System error. Please try again.');
+    } finally {
+      setSwitchingVersion(false);
+    }
+  };
 
 useEffect(() => {
   const t = setTimeout(fetchStatus, 0);
@@ -438,6 +494,95 @@ return (
       </div>
 
       <h3 className="font-jakarta font-extrabold text-2xl text-lumina-text mb-4">
+        Active Model
+      </h3>
+
+      {modelConfig && (
+        <div className="bg-white rounded-2xl shadow-lumina-sm border border-lumina-outline/30 p-6 md:p-7 mb-6">
+          <p className="font-inter text-sm text-lumina-text-muted mb-4">
+            The active model is used for all "For You" recommendations. Switching reloads the recommender immediately.
+          </p>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            {/* V1 Card */}
+            {[
+              {
+                key: 'v1',
+                label: 'MB-CGCN v1',
+                desc: 'CART → RENT (2 behaviors)',
+                sub: 'Dataset: MAL CSV + Web data',
+              },
+              {
+                key: 'v2',
+                label: 'MB-CGCN v2',
+                desc: 'CLICK → CART → RENT (3 behaviors)',
+                sub: 'Dataset: Web behavior logs only',
+              },
+            ].map(({ key, label, desc, sub }) => {
+              const isActive = modelConfig.active_version === key;
+              const isAvailable = modelConfig.availability?.[key];
+
+              return (
+                <div
+                  key={key}
+                  className={`rounded-xl border-2 p-5 flex flex-col gap-3 transition-colors ${
+                    isActive
+                      ? 'border-lumina-primary bg-lumina-primary-soft'
+                      : 'border-lumina-outline/40 bg-lumina-surface-alt/40'
+                  }`}
+                >
+                  <div className="flex items-start justify-between gap-2">
+                    <div>
+                      <p className={`font-jakarta font-bold text-lg ${isActive ? 'text-lumina-primary' : 'text-lumina-text'}`}>
+                        {label}
+                      </p>
+                      <p className="font-inter text-sm text-lumina-text-muted">{desc}</p>
+                      <p className="font-inter text-xs text-lumina-text-muted mt-0.5">{sub}</p>
+                    </div>
+
+                    <div className="flex flex-col items-end gap-1 shrink-0">
+                      {isActive && (
+                        <span className="inline-block px-2.5 py-0.5 rounded-full bg-lumina-primary text-white font-inter text-xs font-semibold">
+                          Active
+                        </span>
+                      )}
+                      <span className={`inline-block px-2.5 py-0.5 rounded-full font-inter text-xs font-semibold ${
+                        isAvailable
+                          ? 'bg-status-available/15 text-status-available'
+                          : 'bg-status-overdue/15 text-status-overdue'
+                      }`}>
+                        {isAvailable ? 'Ready' : 'Not trained'}
+                      </span>
+                    </div>
+                  </div>
+
+                  {!isActive && (
+                    <button
+                      onClick={() => handleSwitchVersion(key)}
+                      disabled={!isAvailable || switchingVersion}
+                      className={`mt-auto font-inter text-sm font-semibold px-4 py-2 rounded-lg transition-colors ${
+                        isAvailable && !switchingVersion
+                          ? 'bg-lumina-primary hover:bg-lumina-primary-light text-white'
+                          : 'bg-lumina-outline/30 text-lumina-text-muted cursor-not-allowed'
+                      }`}
+                    >
+                      {switchingVersion ? 'Switching...' : isAvailable ? 'Set as Active' : 'Train first'}
+                    </button>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+
+          {modelConfig.updated_by && (
+            <p className="font-inter text-xs text-lumina-text-muted mt-3">
+              Last changed by <strong>{modelConfig.updated_by}</strong> on {new Date(modelConfig.updated_at).toLocaleString('th-TH')}
+            </p>
+          )}
+        </div>
+      )}
+
+      <h3 className="font-jakarta font-extrabold text-2xl text-lumina-text mb-4">
         Model Comparison
       </h3>
 
@@ -601,13 +746,14 @@ return (
                 <th className={`${thClass} text-center`}>NDCG@10</th>
                 <th className={`${thClass} text-center`}>Weights</th>
                 <th className={`${thClass} text-center`}>Details</th>
+                <th className={`${thClass} text-center`}>Action</th>
               </tr>
             </thead>
 
             <tbody className="divide-y divide-lumina-outline/30">
               {logs.length === 0 ? (
                 <tr>
-                  <td colSpan="10" className="py-12 font-jakarta text-lumina-text-muted italic text-center">
+                  <td colSpan="11" className="py-12 font-jakarta text-lumina-text-muted italic text-center">
                     No training records yet
                   </td>
                 </tr>
@@ -663,6 +809,26 @@ return (
                         >
                           View Error
                         </button>
+                      ) : (
+                        <span className="font-inter text-xs text-lumina-text-muted">-</span>
+                      )}
+                    </td>
+
+                    <td className="px-5 py-4 text-center">
+                      {log.status === 'COMPLETED' && log.weight_path ? (
+                        modelConfig?.active_log_id === log.id ? (
+                          <span className="font-inter text-xs font-semibold text-green-600 bg-green-50 px-2 py-1 rounded-full">
+                            Active
+                          </span>
+                        ) : (
+                          <button
+                            disabled={activatingLog === log.id}
+                            onClick={() => handleActivateLog(log.id, log.model_name)}
+                            className="font-inter text-xs font-semibold text-lumina-primary border border-lumina-primary/40 px-3 py-1 rounded-full hover:bg-lumina-primary-soft transition-colors disabled:opacity-50"
+                          >
+                            {activatingLog === log.id ? 'Loading…' : 'Activate'}
+                          </button>
+                        )
                       ) : (
                         <span className="font-inter text-xs text-lumina-text-muted">-</span>
                       )}

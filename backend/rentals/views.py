@@ -11,7 +11,7 @@ from django.db.models import Count, Q
 from decimal import Decimal, InvalidOperation
 from django.utils.dateformat import format
 from rest_framework.views import APIView
-from .recommender import RecommenderService
+from .recommender import RecommenderService, genre_rerank
 
 from .models import Manga, MangaCopy, Cart, CartItem, RentalOrder, RentalOrderItem, FineLog, MangaReview, UserPreference, ABTestVariant, ABTestEvent, ModelTrainingLog, UserBehaviorLog
 from .serializers import AdminUserSerializer, MangaSerializer, UserRegistrationSerializer, CartItemSerializer, RentalOrderSerializer, UserProfileSerializer
@@ -706,31 +706,43 @@ class RecommendationView(APIView):
     permission_classes = [IsAuthenticated]
 
     def get(self, request):
-        username = request.user.username
         service = RecommenderService()
+        is_v2 = getattr(service, 'model_version', 'v1') == 'v2'
 
-        # Check if user has preferences (cold-start solution)
         user_prefs = UserPreference.objects.filter(user=request.user).select_related('manga')
-        preference_mbrs_ids = [pref.manga.mbrs_id for pref in user_prefs if pref.manga.mbrs_id is not None]
 
-        # Get recommendations with explanations
+        # v2 uses Django manga.id; v1 uses mbrs_id
+        if is_v2:
+            user_key = request.user.id
+            preference_ids = [pref.manga.id for pref in user_prefs]
+        else:
+            user_key = request.user.username
+            preference_ids = [pref.manga.mbrs_id for pref in user_prefs if pref.manga.mbrs_id is not None]
+
         rec_with_explanations = service.get_recommendations_with_explanations(
-            username=username,
-            preference_mbrs_ids=preference_mbrs_ids if preference_mbrs_ids else None,
-            top_k=10
+            user_key=user_key,
+            preference_ids=preference_ids if preference_ids else None,
+            top_k=200,  # wide pool for genre re-ranking
         )
 
         if not rec_with_explanations:
-            # Fallback: try item-based from rental history
-            past_rentals = RentalOrderItem.objects.filter(
-                order__user=request.user
-            ).values_list('manga_copy__manga__mbrs_id', flat=True).distinct()
+            # Fallback: item-based from rental history
+            if is_v2:
+                past_ids = list(
+                    RentalOrderItem.objects.filter(order__user=request.user)
+                    .values_list('manga_copy__manga__id', flat=True).distinct()
+                )
+            else:
+                past_ids = [
+                    m_id for m_id in
+                    RentalOrderItem.objects.filter(order__user=request.user)
+                    .values_list('manga_copy__manga__mbrs_id', flat=True).distinct()
+                    if m_id is not None
+                ]
 
-            valid_past_ids = [m_id for m_id in past_rentals if m_id is not None]
-
-            if valid_past_ids:
-                recommended_ids = service.get_item_based_recommendations(valid_past_ids)
-                rec_with_explanations = [(rid, 'rental_history', valid_past_ids[:3]) for rid in recommended_ids]
+            if past_ids:
+                recommended_ids = service.get_item_based_recommendations(past_ids, top_k=50)
+                rec_with_explanations = [(rid, 'rental_history', past_ids[:3]) for rid in recommended_ids]
 
         if not rec_with_explanations:
             # Final fallback: popular manga
@@ -742,45 +754,92 @@ class RecommendationView(APIView):
                 'explanation': 'Popular and latest manga'
             })
 
-        # Map mbrs_id to Manga objects
-        mbrs_ids = [rec[0] for rec in rec_with_explanations]
-        all_matches = Manga.objects.filter(mbrs_id__in=mbrs_ids, is_active=True)
+        # Map returned IDs to Manga objects (fetch all candidates for re-ranking)
+        # Cast item_ids to int — model returns np.int64 keys which won't match
+        # Django int keys in a plain dict lookup.
+        item_ids = [int(rec[0]) for rec in rec_with_explanations]
+        if is_v2:
+            all_matches = {m.id: m for m in Manga.objects.filter(id__in=item_ids, is_active=True)}
+        else:
+            all_matches = {m.mbrs_id: m for m in Manga.objects.filter(mbrs_id__in=item_ids, is_active=True)}
 
-        unique_mangas = {}
-        for m in all_matches:
-            if m.mbrs_id not in unique_mangas:
-                unique_mangas[m.mbrs_id] = m
+        # Genre re-ranking: count how many preference manga share each genre
+        # Sports x4 gets 4x the weight of a genre that appears only once
+        preference_genres = {}
+        for pref in user_prefs:
+            if pref.manga.genre:
+                for g in pref.manga.genre.split(','):
+                    g = g.strip()
+                    preference_genres[g] = preference_genres.get(g, 0) + 1
+
+        # Inject genre-matched DB manga that might not appear in model top-200
+        extra_manga = None
+        if preference_genres:
+            from django.db.models import Q
+            genre_filter = Q()
+            for g in preference_genres:
+                genre_filter |= Q(genre__icontains=g)
+            pref_manga_ids = set(preference_ids) if preference_ids else set()
+            extra_manga = list(
+                Manga.objects.filter(genre_filter, is_active=True)
+                .exclude(mbrs_id__in=pref_manga_ids if not is_v2 else [])
+                .exclude(id__in=pref_manga_ids if is_v2 else [])
+            )
+
+        rec_with_explanations = genre_rerank(
+            rec_with_explanations,
+            manga_queryset=all_matches,
+            preference_genres=preference_genres,
+            genre_bonus=1.0,  # Higher bonus for genre-concentrated preferences
+            expand_k=200,
+            extra_manga_qs=extra_manga,
+        )
+
+        # genre_rerank may have injected extra_manga into all_matches in-place;
+        # ensure any newly added entries are covered for the final lookup below.
+        if extra_manga:
+            for m in extra_manga:
+                key = m.mbrs_id if not is_v2 else m.id
+                if key and key not in all_matches:
+                    all_matches[key] = m
 
         sorted_mangas = []
         explanations = []
 
-        for mbrs_id, explanation_type, source_ids in rec_with_explanations:
-            if mbrs_id in unique_mangas:
-                manga = unique_mangas[mbrs_id]
-                sorted_mangas.append(manga)
+        for item_id, explanation_type, source_ids in rec_with_explanations:
+            if len(sorted_mangas) >= 10:
+                break
+            if item_id not in all_matches:
+                continue
+            manga = all_matches[item_id]
+            sorted_mangas.append(manga)
 
-                # Generate explanation text
-                if explanation_type == 'user_history':
-                    explanation = 'Recommended based on your rental history'
-                elif explanation_type == 'preferences':
-                    # Find manga titles from source_ids
-                    source_mangas = Manga.objects.filter(mbrs_id__in=source_ids[:2], is_active=True)[:2]
-                    if source_mangas:
-                        titles = ', '.join([m.title for m in source_mangas])
-                        explanation = f'Recommended because you liked {titles}'
-                    else:
-                        explanation = 'Recommended based on your preferences'
-                elif explanation_type == 'rental_history':
-                    source_mangas = Manga.objects.filter(mbrs_id__in=source_ids[:2], is_active=True)[:2]
-                    if source_mangas:
-                        titles = ', '.join([m.title for m in source_mangas])
-                        explanation = f'Similar to manga you have rented: {titles}'
-                    else:
-                        explanation = 'Recommended based on your rental history'
+            if explanation_type == 'user_history':
+                explanation = 'Recommended based on your rental history'
+            elif explanation_type == 'preferences':
+                if is_v2:
+                    source_mangas = Manga.objects.filter(id__in=source_ids[:2], is_active=True)[:2]
                 else:
-                    explanation = 'Recommended for you'
+                    source_mangas = Manga.objects.filter(mbrs_id__in=source_ids[:2], is_active=True)[:2]
+                if source_mangas:
+                    titles = ', '.join([m.title for m in source_mangas])
+                    explanation = f'Recommended because you liked {titles}'
+                else:
+                    explanation = 'Recommended based on your preferences'
+            elif explanation_type == 'rental_history':
+                if is_v2:
+                    source_mangas = Manga.objects.filter(id__in=source_ids[:2], is_active=True)[:2]
+                else:
+                    source_mangas = Manga.objects.filter(mbrs_id__in=source_ids[:2], is_active=True)[:2]
+                if source_mangas:
+                    titles = ', '.join([m.title for m in source_mangas])
+                    explanation = f'Similar to manga you have rented: {titles}'
+                else:
+                    explanation = 'Recommended based on your rental history'
+            else:
+                explanation = 'Recommended for you'
 
-                explanations.append(explanation)
+            explanations.append(explanation)
 
         # Fill with popular if less than 10
         queryset = sorted_mangas[:10]
@@ -801,8 +860,12 @@ class RecommendationView(APIView):
             manga_data['explanation'] = explanation
             recommendations_with_explanations.append(manga_data)
 
+        model_recs = [r for r in recommendations_with_explanations if r.get('explanation') != 'Popular manga']
+        popular_fill = [r for r in recommendations_with_explanations if r.get('explanation') == 'Popular manga']
+
         return Response({
-            'recommendations': recommendations_with_explanations,
+            'recommendations': model_recs,
+            'popular_fill': popular_fill,
             'has_preferences': user_prefs.count() > 0
         })
 
