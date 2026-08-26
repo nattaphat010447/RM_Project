@@ -201,39 +201,43 @@ if ($healthy) { Write-Success "Database is healthy" }
 else { Write-Fail "Database did not become healthy after ${maxWait}s. Run '$composeLabel logs db_postgres' to investigate." }
 
 # ==========================================
-# 5b. Wait for backend to be ready
+# 5b. Wait for backend to be ready (HTTP)
 # ==========================================
 Write-Step "Waiting for backend to be ready..."
 
-$maxWaitBackend = 60
+# entrypoint.sh runs 'migrate' then starts runserver — we poll HTTP so we
+# know migrations are done before we attempt seed/superuser steps.
+$maxWaitBackend = 180
 $elapsed = 0
 $backendReady = $false
 while ($elapsed -lt $maxWaitBackend) {
     $savedPref = $ErrorActionPreference
     $ErrorActionPreference = "Continue"
-    $bStatus = docker inspect --format='{{.State.Status}}' manga_backend 2>$null
-    $ErrorActionPreference = $savedPref
-    if ($bStatus -eq "running") {
-        $ErrorActionPreference = "Continue"
-        Invoke-Compose @("exec", "-T", "backend", "python", "-c", "import sys; sys.exit(0)") 2>$null | Out-Null
-        $ErrorActionPreference = $savedPref
-        if ($LASTEXITCODE -eq 0) { $backendReady = $true; break }
+    try {
+        $resp = Invoke-WebRequest -Uri "http://localhost:$BackendPort/api/" `
+                    -UseBasicParsing -TimeoutSec 3 -ErrorAction Stop
+        $backendReady = $true
+    } catch {
+        # Any HTTP response (4xx/5xx) still means Django is serving
+        if ($null -ne $_.Exception.Response) { $backendReady = $true }
     }
+    $ErrorActionPreference = $savedPref
+    if ($backendReady) { break }
+    Write-Host "  Waiting for HTTP... ($elapsed/$maxWaitBackend s)" -ForegroundColor Gray
     Start-Sleep -Seconds 3
     $elapsed += 3
 }
 
 if ($backendReady) { Write-Success "Backend is ready" }
-else { Write-Warn "Backend readiness check timed out - attempting migrations anyway..." }
+else { Write-Warn "Backend readiness check timed out - proceeding anyway..." }
 
 # ==========================================
-# 6. Run migrations
+# 6. Verify migrations (entrypoint.sh already ran them)
 # ==========================================
-Write-Step "Running database migrations..."
+Write-Step "Verifying database migrations..."
 
-Invoke-Compose @("exec", "-T", "backend", "python", "manage.py", "migrate")
-if ($LASTEXITCODE -ne 0) { Write-Fail "migrate failed" }
-Write-Success "Migrations applied"
+Invoke-Compose @("exec", "-T", "backend", "python", "manage.py", "showmigrations", "--list")
+Write-Success "Migrations verified"
 
 # ==========================================
 # 7. Seed data
@@ -248,6 +252,11 @@ if (-not $SkipSeed) {
     Invoke-Compose @("exec", "-T", "backend", "python", "seed_manga_from_anilist.py")
     if ($LASTEXITCODE -eq 0) { Write-Success "seed_manga_from_anilist.py done" }
     else { Write-Warn "AniList seed failed or already seeded - continuing." }
+
+    Write-Step "Seeding example_user01 (runs after manga data is ready)..."
+    Invoke-Compose @("exec", "-T", "backend", "python", "manage.py", "seed_example_user")
+    if ($LASTEXITCODE -eq 0) { Write-Success "example_user01 seeded with preferences and rental history" }
+    else { Write-Warn "seed_example_user failed or already seeded - continuing." }
 } else {
     Write-Warn "Skipped seeding (-SkipSeed)"
 }

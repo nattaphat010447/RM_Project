@@ -719,10 +719,22 @@ class RecommendationView(APIView):
             user_key = request.user.username
             preference_ids = [pref.manga.mbrs_id for pref in user_prefs if pref.manga.mbrs_id is not None]
 
+        logger.info(
+            "[Recommend] user=%s model=%s has_prefs=%s pref_ids=%s",
+            request.user.username, 'v2' if is_v2 else 'v1',
+            bool(preference_ids), preference_ids
+        )
+
         rec_with_explanations = service.get_recommendations_with_explanations(
             user_key=user_key,
             preference_ids=preference_ids if preference_ids else None,
             top_k=200,  # wide pool for genre re-ranking
+        )
+
+        logger.info(
+            "[Recommend] model returned %d candidates for user=%s",
+            len(rec_with_explanations) if rec_with_explanations else 0,
+            request.user.username
         )
 
         if not rec_with_explanations:
@@ -740,12 +752,18 @@ class RecommendationView(APIView):
                     if m_id is not None
                 ]
 
+            logger.info(
+                "[Recommend] fallback=item_based user=%s past_ids=%s",
+                request.user.username, past_ids
+            )
+
             if past_ids:
                 recommended_ids = service.get_item_based_recommendations(past_ids, top_k=50)
                 rec_with_explanations = [(rid, 'rental_history', past_ids[:3]) for rid in recommended_ids]
 
         if not rec_with_explanations:
             # Final fallback: popular manga
+            logger.info("[Recommend] fallback=popular user=%s (no model output, no rental history)", request.user.username)
             queryset = Manga.objects.filter(is_active=True).order_by('-created_at')[:10]
             serializer = MangaSerializer(queryset, many=True, context={'request': request})
             return Response({
@@ -863,6 +881,12 @@ class RecommendationView(APIView):
         model_recs = [r for r in recommendations_with_explanations if r.get('explanation') != 'Popular manga']
         popular_fill = [r for r in recommendations_with_explanations if r.get('explanation') == 'Popular manga']
 
+        logger.info(
+            "[Recommend] response user=%s model_recs=%d popular_fill=%d titles=%s",
+            request.user.username, len(model_recs), len(popular_fill),
+            [r['title'] for r in model_recs]
+        )
+
         return Response({
             'recommendations': model_recs,
             'popular_fill': popular_fill,
@@ -890,6 +914,10 @@ def user_preferences(request):
                 'order': pref.order,
                 'created_at': pref.created_at,
             })
+        logger.info(
+            "[Preferences] GET user=%s has_preferences=%s count=%d manga_ids=%s",
+            user.username, len(data) > 0, len(data), [d['manga_id'] for d in data]
+        )
         return Response({
             'preferences': data,
             'count': len(data),
@@ -908,23 +936,31 @@ def user_preferences(request):
         if len(manga_ids) > 4:
             return Response({"error": "You can select at most 4 manga."}, status=400)
 
-        # Check all manga exist
+        if len(set(manga_ids)) != 4:
+            return Response({"error": "manga_ids must contain 4 unique manga."}, status=400)
+
         mangas = Manga.objects.filter(id__in=manga_ids, is_active=True)
-        if mangas.count() != len(manga_ids):
+        if mangas.count() != 4:
             return Response({"error": "One or more manga were not found."}, status=400)
 
+        manga_map = {m.id: m for m in mangas}
+
+        logger.info(
+            "[Preferences] POST user=%s saving manga_ids=%s titles=%s",
+            user.username, manga_ids, [manga_map[mid].title for mid in manga_ids]
+        )
+
         with transaction.atomic():
-            # Clear existing preferences
             UserPreference.objects.filter(user=user).delete()
 
-            # Create new preferences
             for order, manga_id in enumerate(manga_ids, start=1):
-                manga = mangas.get(id=manga_id)
                 UserPreference.objects.create(
                     user=user,
-                    manga=manga,
+                    manga=manga_map[manga_id],
                     order=order
                 )
+
+        logger.info("[Preferences] POST saved successfully user=%s", user.username)
 
         return Response({
             "message": "Preferences saved successfully.",
