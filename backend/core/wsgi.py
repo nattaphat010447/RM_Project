@@ -38,3 +38,10 @@ except Exception as exc:
         "The model will be loaded lazily on the first request.",
         exc,
     )
+finally:
+    # CRITICAL: the eager init above reads ModelConfig from Postgres, leaving
+    # an open connection in the master. With --preload every forked worker
+    # would inherit that same socket and share it -> "SSL connection has been
+    # closed unexpectedly" / protocol corruption. Close before gunicorn forks.
+    from django.db import connections
+    connections.close_all()

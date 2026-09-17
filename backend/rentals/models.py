@@ -42,6 +42,18 @@ class Manga(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
+    class Meta:
+        indexes = [
+            # Speeds up the ORM's genre__icontains = LIKE '%genre%' lookups
+            # used by RecommendationView's genre re-ranking. Requires the
+            # pg_trgm extension (created in the 0006 migration).
+            models.GinIndex(
+                fields=['genre'],
+                name='manga_genre_trgm_idx',
+                opclasses=['gin_trgm_ops'],
+            ),
+        ]
+
     def __str__(self):
         return self.title
 
