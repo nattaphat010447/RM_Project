@@ -1,5 +1,6 @@
 from django.db import models
 from django.contrib.auth.models import AbstractUser
+from django.contrib.postgres.indexes import GinIndex
 
 class User(AbstractUser):
     class Role(models.TextChoices):
@@ -47,7 +48,7 @@ class Manga(models.Model):
             # Speeds up the ORM's genre__icontains = LIKE '%genre%' lookups
             # used by RecommendationView's genre re-ranking. Requires the
             # pg_trgm extension (created in the 0006 migration).
-            models.GinIndex(
+            GinIndex(
                 fields=['genre'],
                 name='manga_genre_trgm_idx',
                 opclasses=['gin_trgm_ops'],
