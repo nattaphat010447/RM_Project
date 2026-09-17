@@ -1,8 +1,13 @@
+import os
+import logging
+import threading
+
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
 from torch_geometric.nn import LGConv
-import os
+
+logger = logging.getLogger(__name__)
 
 
 # ─── V1 Model (2 behaviors: CART + RENT) ──────────────────────────────────────
@@ -100,6 +105,17 @@ class MBCGCN_ThreeBehaviors(nn.Module):
 class RecommenderService:
     _instance = None
 
+    # Cache of the per-inference results that only change when the model is
+    # reloaded (i.e. when _instance is recreated). Computing the graph
+    # embeddings + popularity penalty on every request is the main CPU hog
+    # that pushed requests past gunicorn's timeout, so we memoize them.
+    # The lock guards access because gunicorn with --threads > 1 (or runserver
+    # autoreload) can hit the same instance from several threads concurrently.
+    _cache_lock = threading.Lock()
+    _cached_embeddings = None      # (final_u_emb, final_i_emb) tuple
+    _cached_pop_penalty = None     # 1-D tensor, size = num_items
+    _cache_version = None          # model identity the cache was built for
+
     def __new__(cls):
         if cls._instance is None:
             instance = super().__new__(cls)
@@ -109,6 +125,11 @@ class RecommenderService:
                 # Don't cache a half-initialised instance; next call will retry
                 raise
             cls._instance = instance
+            # Fresh model loaded — drop any inference cache that a *previous*
+            # process-wide instance may have populated.
+            cls._cached_embeddings = None
+            cls._cached_pop_penalty = None
+            cls._cache_version = None
         return cls._instance
 
     def _init_service(self):
@@ -199,6 +220,7 @@ class RecommenderService:
                 self.model.to(self.device)
                 self.model.eval()
                 print(f"Loaded MB-CGCN {ver} | users={num_users} items={num_items}")
+                self._loaded_model_key = self._cache_key()
                 loaded = True
                 break
             except RuntimeError as e:
@@ -221,7 +243,62 @@ class RecommenderService:
                 f"Expected v1: {v1_weight}"
             )
 
-    def _forward(self):
+    def _cache_key(self):
+        """Identity of the currently-loaded model config.
+
+        The model can be swapped two ways: admin handlers reset the singleton
+        (RecommenderService._instance = None → __new__ re-inits and clears the
+        cache) or ModelConfig.active_version / active_log changes directly in
+        the DB. Reading it here catches the DB-driven path too. Falls back to
+        the version captured at load time so a briefly-unreachable DB never
+        forces a cache recompute on every request (the exact stall we're
+        trying to eliminate).
+        """
+        try:
+            from .models import ModelConfig
+            cfg = ModelConfig.get()
+            return f"{cfg.active_version}:{cfg.active_log_id or ''}"
+        except Exception:
+            return getattr(self, '_loaded_model_key', getattr(self, 'model_version', 'v1'))
+
+    def _get_cached_results(self):
+        """Return (final_u_emb, final_i_emb, pop_penalty), computing on miss.
+
+        Both slots share one lock and one version stamp so a model/config
+        change can never serve a stale pop-penalty alongside fresh embeddings.
+        """
+        key = self._cache_key()
+        with self._cache_lock:
+            if self._cache_version != key:
+                logger.info(
+                    "[Recommender] config changed (%s -> %s); recomputing cache",
+                    self._cache_version, key,
+                )
+                self._cached_embeddings = None
+                self._cached_pop_penalty = None
+                self._cache_version = key
+
+            if self._cached_embeddings is None:
+                logger.info("[Recommender] embeddings cache MISS — running forward pass")
+                with torch.no_grad():
+                    self._cached_embeddings = self._compute_forward()
+            else:
+                logger.debug("[Recommender] embeddings cache HIT")
+
+            if self._cached_pop_penalty is None:
+                logger.info("[Recommender] pop-penalty cache MISS — recomputing")
+                self._cached_pop_penalty = self._compute_pop_penalty()
+            else:
+                logger.debug("[Recommender] pop-penalty cache HIT")
+
+            return (
+                self._cached_embeddings[0],
+                self._cached_embeddings[1],
+                self._cached_pop_penalty,
+            )
+
+    def _compute_forward(self):
+        """Run the actual GCN forward; result is memoized by _get_cached_results."""
         if self.model_version == 'v2':
             e_click = self.graph_data['edge_index_click_train'].to(self.device)
             e_cart  = self.graph_data['edge_index_cart_train'].to(self.device)
@@ -232,16 +309,23 @@ class RecommenderService:
             e_rent = self.graph_data['edge_index_rent_train'].to(self.device)
             return self.model(e_cart, e_rent)
 
-    def _pop_penalty(self):
+    def _compute_pop_penalty(self):
         """log(degree + 2) popularity penalty from the rent graph."""
-        edge = self.graph_data['edge_index_rent_train'].to(self.device)
-        # item nodes are offset by num_users in the bipartite graph
-        item_col = edge[1]
-        if self.model_version == 'v2':
-            # v2: item nodes are offset by num_users, strip the offset
-            item_col = item_col[item_col >= self.num_users] - self.num_users
-        degrees = torch.bincount(item_col, minlength=self.num_items).float()
+        with torch.no_grad():
+            edge = self.graph_data['edge_index_rent_train'].to(self.device)
+            # item nodes are offset by num_users in the bipartite graph
+            item_col = edge[1]
+            if self.model_version == 'v2':
+                # v2: item nodes are offset by num_users, strip the offset
+                item_col = item_col[item_col >= self.num_users] - self.num_users
+            degrees = torch.bincount(item_col, minlength=self.num_items).float()
         return torch.log(degrees + 2.0)
+
+    def _forward(self):
+        return self._get_cached_results()[:2]
+
+    def _pop_penalty(self):
+        return self._get_cached_results()[2]
 
     def get_recommendations(self, user_key, top_k=10):
         """user_key: user.id (v2) or username string (v1)."""

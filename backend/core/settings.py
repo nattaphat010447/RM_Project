@@ -55,6 +55,8 @@ INSTALLED_APPS = [
     # Third-party
     'corsheaders',
     'rest_framework',
+    # Postgres-specific helpers (GinIndex, TrigramExtension)
+    'django.contrib.postgres',
     # Local
     'rentals',
 ]
@@ -103,6 +105,15 @@ DATABASES = {
         'PASSWORD': os.environ.get('POSTGRES_PASSWORD'),
         'HOST': os.environ.get('POSTGRES_HOST'),
         'PORT': os.environ.get('POSTGRES_PORT', '5432'),
+        # Persistent connections: avoids the open/close cost (and the
+        # "SSL connection has been closed unexpectedly" churn) of creating a
+        # new PG connection per request. Each gunicorn worker holds one
+        # connection for up to 10 minutes instead of per-request.
+        'CONN_MAX_AGE': 600,
+        # Health check each persisting connection before reuse so a PG
+        # connection dropped by the network (unexpected eof / reset) is
+        # silently re-established instead of failing the request.
+        'CONN_HEALTH_CHECKS': True,
     }
 }
 
