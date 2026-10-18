@@ -55,7 +55,7 @@ const MangaDetail = () => {
         const source = location.state?.source || 'DIRECT';
         logClick(id, source);
       })
-      .catch(error => {
+      .catch(() => {
         setLoading(false);
       });
   }, [id, API_URL]);
@@ -91,7 +91,7 @@ const MangaDetail = () => {
       } else {
         alert(data.error || "Failed to add to cart");
       }
-    } catch (error) {
+    } catch {
       alert("System error. Please try again.");
     }
   };

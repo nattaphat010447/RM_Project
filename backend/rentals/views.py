@@ -232,35 +232,45 @@ def popular_mangas(request):
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])
 def submit_manga_review(request, manga_id):
+    manga = get_object_or_404(Manga, id=manga_id, is_active=True)
     rating = request.data.get('rating')
 
+    # Whole stars only: reject booleans, 4.5, "abc" and out-of-range values.
+    if isinstance(rating, bool) or not isinstance(rating, (int, str)):
+        return Response({"error": "Rating must be a whole number between 1 and 5"}, status=400)
     try:
         rating = int(rating)
     except (TypeError, ValueError):
-        return Response({"error": "Rating must be between 1 and 5"}, status=400)
+        return Response({"error": "Rating must be a whole number between 1 and 5"}, status=400)
 
     if not (1 <= rating <= 5):
-        return Response({"error": "Rating must be between 1 and 5"}, status=400)
+        return Response({"error": "Rating must be a whole number between 1 and 5"}, status=400)
 
     has_returned = RentalOrderItem.objects.filter(
         order__user=request.user,
-        manga_copy__manga_id=manga_id,
-        item_status='RETURNED'
+        manga_copy__manga=manga,
+        item_status=RentalOrderItem.ItemStatus.RETURNED,
     ).exists()
 
     if not has_returned:
         return Response({"error": "You can only rate manga you have returned"}, status=403)
 
+    # One rating per user per manga; rating again updates it. MangaReview.save
+    # refreshes Manga.avg_rating / rating_count.
     review, created = MangaReview.objects.update_or_create(
         user=request.user,
-        manga=Manga.objects.get(id=manga_id),
-        defaults={'rating': int(rating)}
+        manga=manga,
+        defaults={'rating': rating}
     )
+    manga.refresh_from_db(fields=['avg_rating', 'rating_count'])
 
     return Response({
-        "message": "Rating submitted successfully.", 
-        "rating": review.rating
-    })
+        "message": "Rating submitted successfully." if created else "Rating updated successfully.",
+        "rating": review.rating,
+        "created": created,
+        "avg_rating": round(float(manga.avg_rating), 1),
+        "rating_count": manga.rating_count,
+    }, status=201 if created else 200)
 
 
 @api_view(['GET'])
@@ -706,13 +716,12 @@ class RecommendationView(APIView):
     permission_classes = [IsAuthenticated]
 
     def get(self, request):
-        ab_manager = ABTestManager()
-        variant = ab_manager.get_user_variant(request.user)
-
+        # A/B: only users that already have an assignment are tracked. Their
+        # IMPRESSION events are recorded below, once the shown manga are known.
+        variant = ABTestManager.get_user_variant(request.user)
         if variant:
-            ab_manager.track_event(request.user, 'recommendation_request')
             logger.info("[ABTest] user=%s variant=%s algorithm=%s",
-                       request.user.username, variant.name, variant.algorithm)
+                        request.user.username, variant.name, variant.algorithm)
 
         service = RecommenderService()
         is_v2 = getattr(service, 'model_version', 'v1') == 'v2'
@@ -895,6 +904,10 @@ class RecommendationView(APIView):
             [r['title'] for r in model_recs]
         )
 
+        if variant:
+            for manga in queryset[:len(model_recs)]:
+                ABTestManager.track_event(request.user, variant, manga, ABTestEvent.EventType.IMPRESSION)
+
         return Response({
             'recommendations': model_recs,
             'popular_fill': popular_fill,
@@ -930,12 +943,14 @@ def user_preferences(request):
             'preferences': data,
             'count': len(data),
             'has_preferences': len(data) > 0,
-            'onboarding_completed': user.onboarding_completed
+            # Preferences created outside this endpoint (seed scripts, admin)
+            # also count as a finished onboarding.
+            'onboarding_completed': user.onboarding_completed or len(data) > 0
         })
 
     elif request.method == 'POST':
         # Check if onboarding already completed
-        if user.onboarding_completed:
+        if user.onboarding_completed or UserPreference.objects.filter(user=user).exists():
             return Response({
                 "error": "Onboarding already completed. Preferences cannot be changed."
             }, status=403)
@@ -997,7 +1012,7 @@ def log_behavior(request):
     """
     Log user behavior for 3-behavior MB-CGCN model training.
     Frontend fires this non-blocking on CLICK and ADD_CART events.
-    RENT is auto-logged by checkout_cart.
+    RENT is logged by the server when an admin approves the order.
     """
     manga_id   = request.data.get('manga_id')
     event_type = request.data.get('event_type')
@@ -1013,7 +1028,7 @@ def log_behavior(request):
     if event_type not in valid_events:
         return Response({"error": f"event_type must be one of {valid_events}"}, status=400)
 
-    # RENT is only logged by server-side checkout, not frontend
+    # RENT is only logged server-side (on admin approval), never from the frontend
     if event_type == UserBehaviorLog.EventType.RENT:
         return Response({"error": "RENT events are logged automatically by the server."}, status=400)
 

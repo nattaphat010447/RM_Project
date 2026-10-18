@@ -47,6 +47,7 @@ const AdminHistory = () => {
         setLoading(false);
       })
       .catch(err => {
+        logger.error('AdminLostHistory request failed', err);
         setLoading(false);
       });
   }, [navigate, API_URL]);

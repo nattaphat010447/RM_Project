@@ -2,9 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { authFetch } from '../api';
 
-import { createLogger } from '../utils/logger';
 
-const logger = createLogger('Onboarding');
 
 const Onboarding = () => {
   const navigate = useNavigate();
@@ -41,6 +39,10 @@ const Onboarding = () => {
       .then(res => { if (!res.ok) throw new Error(); return res.json(); })
       .then(data => {
         if (!isMounted) return;
+        if (data.onboarding_completed) {
+          navigate('/for-you', { replace: true });
+          return;
+        }
         if (data.has_preferences && data.preferences) {
           const prefIds = data.preferences.map(p => p.manga_id);
           setExistingPreferences(prefIds);

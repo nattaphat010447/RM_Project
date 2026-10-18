@@ -45,7 +45,7 @@ const MangaCard = ({ manga }) => {
         )}
 
         <div className="mt-auto pt-3 border-t border-lumina-outline/40 flex items-center justify-between gap-2">
-          <StarRating rating={manga.avg_rating} />
+          <StarRating rating={manga.avg_rating} count={manga.rating_count ?? 0} />
           <span className="font-inter text-[11px] font-medium text-lumina-text-muted whitespace-nowrap">
             Sold {manga.sold_count || 0}
           </span>

@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { authFetch } from '../api';
-import StarRating from '../components/StarRating';
 import StatusBadge from '../components/StatusBadge';
 import RatingModal from '../components/RatingModal';
 import { useToast } from '../components/Toast';
@@ -49,6 +48,7 @@ const Orders = () => {
         setLoading(false);
       })
       .catch(err => {
+        logger.error('Orders request failed', err);
         setLoading(false);
       });
   }, [navigate, API_URL]);
@@ -91,20 +91,21 @@ const Orders = () => {
     }
 
     try {
-      const response = await authFetch(`${API_URL}/api/mangas/${ratingModal.manga.id}/rate/`, {
+      const response = await authFetch(`${API_URL}/api/mangas/${ratingModal.manga.id}/review/`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ rating })
       });
 
+      const data = await response.json();
       if (response.ok) {
-        toast.success(`Rated "${ratingModal.manga.title}" ${rating} stars!`);
+        toast.success(`Rated "${ratingModal.manga.title}" ${rating} star${rating === 1 ? '' : 's'}. New average: ${Number(data.avg_rating).toFixed(1)} (${data.rating_count} rating${data.rating_count === 1 ? '' : 's'})`);
 
-        // Update local state
+        // The same manga can appear in several orders; update every row.
         setOrders(orders.map(order => ({
           ...order,
           items: order.items.map(item =>
-            item.manga.id === ratingModal.manga.id
+            item.manga_id === ratingModal.manga.id
               ? { ...item, user_rating: rating }
               : item
           )
@@ -112,7 +113,6 @@ const Orders = () => {
 
         setRatingModal({ isOpen: false, manga: null, orderId: null, currentRating: null });
       } else {
-        const data = await response.json();
         toast.error(data.error || "Failed to submit rating");
       }
     } catch (err) {
@@ -271,15 +271,15 @@ const Orders = () => {
                                       </div>
                                     </div>
                                     <button
-                                      onClick={() => handleOpenRating(item.manga, order.id, item.user_rating)}
+                                      onClick={() => handleOpenRating({ id: item.manga_id, title: item.manga_title }, order.id, item.user_rating)}
                                       className="px-3 py-1.5 border border-lumina-outline text-lumina-text-muted rounded-lg font-inter text-xs font-medium hover:bg-lumina-surface-alt transition-colors"
                                     >
-                                      View rating
+                                      Change rating
                                     </button>
                                   </div>
                                 ) : (
                                   <button
-                                    onClick={() => handleOpenRating(item.manga, order.id, item.user_rating)}
+                                    onClick={() => handleOpenRating({ id: item.manga_id, title: item.manga_title }, order.id, null)}
                                     className="px-4 py-2 bg-lumina-primary text-white rounded-lg font-inter text-sm font-semibold hover:bg-lumina-primary-light transition-colors"
                                   >
                                     Rate this manga
@@ -312,6 +312,7 @@ const Orders = () => {
       </main>
 
       <RatingModal
+        key={`${ratingModal.manga?.id ?? 'none'}-${ratingModal.isOpen}`}
         isOpen={ratingModal.isOpen}
         onClose={() => setRatingModal({ isOpen: false, manga: null, orderId: null, currentRating: null })}
         manga={ratingModal.manga}

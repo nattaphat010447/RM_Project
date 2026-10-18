@@ -33,6 +33,7 @@ const Cart = () => {
         const data = await response.json();
         setCartItems(data);
       } else {
+        setNotification({ isOpen: true, message: 'Unable to load your cart. Please try again.', type: 'error' });
       }
     } catch (error) {
       logger.error('Error in Cart', error);
@@ -84,6 +85,7 @@ const Cart = () => {
       }
     } catch (error) {
       logger.error('Error in Cart', error);
+      setNotification({ isOpen: true, message: 'System error. Please try again.', type: 'error' });
     } finally {
       setIsCheckingOut(false);
     }

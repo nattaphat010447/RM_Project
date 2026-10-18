@@ -56,6 +56,7 @@ const AdminOrders = () => {
         setLoading(false);
       })
       .catch(err => {
+        logger.error('AdminOrders request failed', err);
         setLoading(false);
       });
   };

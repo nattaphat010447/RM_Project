@@ -107,3 +107,13 @@ describe('mangaHasGenre', () => {
     expect(mangaHasGenre(manga, 'Action')).toBe(false);
   });
 });
+
+describe('genre spelling from the catalogue', () => {
+  test('keeps hyphenated and multi-word genres readable', () => {
+    expect(parseGenres('Action, sci-fi, slice of life')).toEqual(['Action', 'Sci-Fi', 'Slice of Life']);
+  });
+
+  test('matches multi-word genres case-insensitively', () => {
+    expect(mangaHasGenre({ genre: 'Drama, Slice of Life' }, 'slice of life')).toBe(true);
+  });
+});

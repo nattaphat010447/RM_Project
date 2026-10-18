@@ -44,10 +44,11 @@ class MangaSerializer(serializers.ModelSerializer):
         fields = [
             'id', 'title', 'cover_image_url', 'author', 'genre',
             'description',
-            'rental_price_per_day', 'sold_count', 'avg_rating',
+            'rental_price_per_day', 'sold_count', 'avg_rating', 'rating_count',
             'available_copies',
             'copies'
         ]
+        read_only_fields = ['rating_count']
 
     def get_sold_count(self, obj):
         from .models import RentalOrderItem
@@ -57,9 +58,8 @@ class MangaSerializer(serializers.ModelSerializer):
         ).values('order__user').distinct().count()
 
     def get_avg_rating(self, obj):
-        from django.db.models import Avg
-        avg = obj.reviews.aggregate(Avg('rating'))['rating__avg']
-        return round(avg, 1) if avg else 0.0
+        # Stored on Manga and refreshed whenever a MangaReview is saved/deleted
+        return round(float(obj.avg_rating or 0), 1)
 
     def get_available_copies(self, obj):
         return obj.copies.filter(status='AVAILABLE').count()

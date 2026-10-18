@@ -27,7 +27,7 @@ export const logBehavior = async (mangaId, eventType, source = 'DIRECT', metadat
         ...metadata
       })
     });
-  } catch (err) {
+  } catch {
     // Silent fail - don't block user experience
   }
 };
@@ -36,12 +36,12 @@ export const logBehavior = async (mangaId, eventType, source = 'DIRECT', metadat
  * Log CLICK event (view manga detail)
  */
 export const logClick = (mangaId, source = 'DIRECT') => {
-  logBehavior(mangaId, 'CLICK', source);
+  return logBehavior(mangaId, 'CLICK', source);
 };
 
 /**
  * Log ADD_CART event
  */
 export const logAddToCart = (mangaId, source = 'DIRECT') => {
-  logBehavior(mangaId, 'ADD_CART', source);
+  return logBehavior(mangaId, 'ADD_CART', source);
 };

@@ -90,6 +90,8 @@ class Command(BaseCommand):
             m = manga(mid)
             if m:
                 UserPreference.objects.create(user=user, manga=m, order=order_idx)
+        user.onboarding_completed = True
+        user.save(update_fields=['onboarding_completed'])
         self.stdout.write('  Preferences set: Attack on Titan, Tokyo Ghoul, Berserk, Banana Fish')
 
         # ─────────────────────────────────────────────────────────────────────

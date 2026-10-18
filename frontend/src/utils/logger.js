@@ -45,7 +45,7 @@ class Logger {
       };
 
       navigator.sendBeacon('/api/client-logs/', JSON.stringify(errorLog));
-    } catch (e) {
+    } catch {
       // Silent fail
     }
   }

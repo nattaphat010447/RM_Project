@@ -3,9 +3,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { authFetch } from '../api';
 import { getImageUrl } from '../utils/image';
 
-import { createLogger } from '../utils/logger';
 
-const logger = createLogger('AdminMangaForm');
 
 const API_URL = import.meta.env.VITE_API_BASE_URL;
 

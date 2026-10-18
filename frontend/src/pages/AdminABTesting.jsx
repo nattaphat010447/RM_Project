@@ -105,6 +105,7 @@ const AdminABTesting = () => {
         alert(data.error || 'An error occurred.');
       }
     } catch (err) {
+      logger.error('AdminABTesting request failed', err);
       alert('System error. Please try again.');
     }
   };
@@ -126,6 +127,7 @@ const AdminABTesting = () => {
         alert(data.error || 'An error occurred.');
       }
     } catch (err) {
+      logger.error('AdminABTesting request failed', err);
       alert('System error. Please try again.');
     }
   };

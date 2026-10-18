@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import MangaCard from '../components/MangaCard';
-import { parseGenres, getAllGenres, mangaHasGenre } from '../utils/genreParser';
+import { getAllGenres, mangaHasGenre } from '../utils/genreParser';
 
 import { createLogger } from '../utils/logger';
 
@@ -131,6 +131,7 @@ const Search = () => {
         setLoading(false);
       })
       .catch(err => {
+        logger.error('Search request failed', err);
         setLoading(false);
       });
   }, []);

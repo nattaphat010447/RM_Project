@@ -97,6 +97,7 @@ const AdminMangaDetail = () => {
       }
     } catch (err) {
       logger.error('Error in AdminMangaDetail', err);
+      alert("System error: " + err.message);
     } finally {
       setIsCheckingOut(false);
     }

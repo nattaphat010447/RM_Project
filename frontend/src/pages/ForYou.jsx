@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { authFetch } from '../api';
 import { getImageUrl } from '../utils/image';
+import StarRating from '../components/StarRating';
 
 import { createLogger } from '../utils/logger';
 
@@ -9,7 +10,7 @@ const logger = createLogger('ForYou');
 
 const API_URL = import.meta.env.VITE_API_BASE_URL;
 
-const MangaCard = ({ manga, renderStars }) => (
+const MangaCard = ({ manga }) => (
   <div className="bg-white rounded-xl shadow-lumina-sm overflow-hidden transform hover:-translate-y-1 hover:shadow-lumina-lg transition-all duration-200 flex flex-col">
     <Link to={`/manga/${manga.id}`} className="flex-grow flex flex-col">
       <img
@@ -27,9 +28,7 @@ const MangaCard = ({ manga, renderStars }) => (
         )}
       </div>
       <div className="mt-auto flex justify-between items-end border-t border-lumina-outline/50 pt-3 px-4 pb-3">
-        <div className="flex text-amber-400 text-sm" aria-label={`${manga.avg_rating || 0} out of 5 stars`}>
-          {renderStars(manga.avg_rating)}
-        </div>
+        <StarRating rating={manga.avg_rating} count={manga.rating_count ?? 0} />
         <span className="font-inter text-xs font-semibold text-lumina-text-muted bg-lumina-surface-alt px-2 py-1 rounded-lg">
           Sold {manga.sold_count || 0}
         </span>
@@ -44,12 +43,6 @@ const ForYou = () => {
   const [showPopular, setShowPopular] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [hasPreferences, setHasPreferences] = useState(false);
-
-  const renderStars = (rating) => {
-    const num = Math.round(rating || 0);
-    return '★'.repeat(num) + '☆'.repeat(5 - num);
-  };
 
   useEffect(() => {
     const fetchRecommendations = async () => {
@@ -71,11 +64,12 @@ const ForYou = () => {
         const data = await response.json();
         setMangas(data.recommendations || []);
         setPopularFill(data.popular_fill || []);
-        setHasPreferences(data.has_preferences || false);
         setLoading(false);
       } catch (err) {
-      logger.error('Error in ForYou', err);
-    }
+        logger.error('Error in ForYou', err);
+        setError("Unable to load recommendations. Please try again.");
+        setLoading(false);
+      }
     };
 
     fetchRecommendations();
@@ -116,7 +110,7 @@ const ForYou = () => {
           {mangas.length > 0 && (
             <div className="max-w-6xl mx-auto grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6">
               {mangas.map(manga => (
-                <MangaCard key={manga.id} manga={manga} renderStars={renderStars} />
+                <MangaCard key={manga.id} manga={manga} />
               ))}
             </div>
           )}
@@ -147,7 +141,7 @@ const ForYou = () => {
               </div>
               <div className="max-w-6xl mx-auto grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6">
                 {popularFill.map(manga => (
-                  <MangaCard key={manga.id} manga={manga} renderStars={renderStars} />
+                  <MangaCard key={manga.id} manga={manga} />
                 ))}
               </div>
             </>

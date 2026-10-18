@@ -2,9 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { getImageUrl } from '../utils/image';
 
-import { createLogger } from '../utils/logger';
 
-const logger = createLogger('AdminMangas');
 
 const API_URL = import.meta.env.VITE_API_BASE_URL;
 

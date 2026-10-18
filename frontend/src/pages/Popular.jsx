@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { getImageUrl } from '../utils/image';
+import StarRating from '../components/StarRating';
 
 import { createLogger } from '../utils/logger';
 
@@ -12,11 +13,6 @@ const Popular = () => {
   const [mangas, setMangas] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  const renderStars = (rating) => {
-    const num = Math.round(rating || 0);
-    return '★'.repeat(num) + '☆'.repeat(5 - num);
-  };
-
   useEffect(() => {
 
     fetch(`${API_URL}/api/mangas/popular/`)
@@ -26,6 +22,7 @@ const Popular = () => {
         setLoading(false);
       })
       .catch(err => {
+        logger.error('Popular request failed', err);
         setLoading(false);
       });
   }, []);
@@ -42,7 +39,7 @@ const Popular = () => {
 
       {mangas.length === 0 ? (
         <div className="text-center font-jakarta text-lumina-text-muted font-semibold text-xl mt-20 p-8 border-2 border-dashed border-lumina-outline rounded-xl max-w-2xl mx-auto">
-          No trending manga this week
+          No manga available yet
         </div>
       ) : (
         <div className="max-w-6xl mx-auto grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6">
@@ -63,9 +60,7 @@ const Popular = () => {
                 </div>
 
                 <div className="mt-auto flex justify-between items-end border-t border-lumina-outline/50 pt-3 px-4 pb-3">
-                  <div className="flex text-amber-400 text-sm" aria-label={`${manga.avg_rating || 0} out of 5 stars`}>
-                    {renderStars(manga.avg_rating)}
-                  </div>
+                  <StarRating rating={manga.avg_rating} count={manga.rating_count ?? 0} />
                   <span className="font-inter text-xs font-semibold text-lumina-text-muted bg-lumina-surface-alt px-2 py-1 rounded-lg">
                     Sold {manga.sold_count || 0}
                   </span>

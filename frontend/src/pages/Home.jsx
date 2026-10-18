@@ -16,6 +16,7 @@ const Home = () => {
   const [mangas, setMangas] = useState([]);
   const [loading, setLoading] = useState(true);
   const [recommendations, setRecommendations] = useState([]);
+  const [popular, setPopular] = useState([]);
   const isLoggedIn = !!localStorage.getItem('access_token');
   const [recsLoading, setRecsLoading] = useState(isLoggedIn);
 
@@ -27,8 +28,16 @@ const Home = () => {
         setLoading(false);
       })
       .catch(error => {
+        logger.error('Home request failed', error);
         setLoading(false);
       });
+  }, []);
+
+  useEffect(() => {
+    fetch(`${API_URL}/api/mangas/popular/`)
+      .then(res => (res.ok ? res.json() : []))
+      .then(data => setPopular(Array.isArray(data) ? data.slice(0, 3) : []))
+      .catch(error => logger.error('Home popular request failed', error));
   }, []);
 
   useEffect(() => {
@@ -171,8 +180,8 @@ const Home = () => {
         <section>
           <div className="flex items-end justify-between mb-8 gap-4">
             <div>
-              <h2 className="font-jakarta font-bold text-2xl md:text-3xl text-lumina-text">Popular This Week</h2>
-              <p className="font-jakarta text-lumina-text-muted mt-1">Most rented manga during the last 7 days</p>
+              <h2 className="font-jakarta font-bold text-2xl md:text-3xl text-lumina-text">Popular Manga</h2>
+              <p className="font-jakarta text-lumina-text-muted mt-1">Most rented manga of all time</p>
             </div>
             <Link to="/popular" className="font-inter text-sm font-semibold text-lumina-primary hover:underline whitespace-nowrap hidden sm:block">
               See all popular
@@ -181,9 +190,9 @@ const Home = () => {
 
           {loading ? (
             <div className="text-center font-semibold text-lumina-text-muted my-20">Loading Mangas...</div>
-          ) : mangas.length > 3 ? (
+          ) : popular.length > 0 ? (
             <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4 md:gap-6">
-              {mangas.slice(3, 6).map(manga => (
+              {popular.map(manga => (
                 <MangaCard key={`pop-${manga.id}`} manga={manga} />
               ))}
             </div>

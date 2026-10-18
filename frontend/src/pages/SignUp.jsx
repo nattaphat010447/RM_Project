@@ -68,6 +68,7 @@ const SignUp = () => {
       }
     } catch (error) {
       logger.error('Error in SignUp', error);
+      alert("System error. Please try again.");
     }
   };
 

@@ -38,6 +38,7 @@ const AdminMembers = () => {
         setLoading(false);
       })
       .catch(err => {
+        logger.error('AdminMembers request failed', err);
         setLoading(false);
       });
   };

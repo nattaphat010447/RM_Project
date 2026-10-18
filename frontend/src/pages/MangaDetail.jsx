@@ -44,7 +44,7 @@ const MangaDetail = () => {
         const source = location.state?.source || 'DIRECT';
         logClick(id, source);
       })
-      .catch(error => {
+      .catch(() => {
         setLoading(false);
       });
   }, [id, API_URL]);
@@ -53,7 +53,7 @@ const MangaDetail = () => {
     fetch(`${API_URL}/api/mangas/`)
       .then(res => res.json())
       .then(data => setAllMangas(Array.isArray(data) ? data : []))
-      .catch(err => {});
+      .catch(() => {});
   }, []);
 
   const relatedMangas = useMemo(() => {
@@ -102,7 +102,7 @@ const MangaDetail = () => {
       } else {
         alert(data.error || "Failed to add to cart");
       }
-    } catch (error) {
+    } catch {
       alert("System error. Please try again.");
     } finally {
       setIsSubmitting(false);
@@ -142,7 +142,7 @@ const MangaDetail = () => {
       } else {
         alert(data.error || "Failed to add to cart");
       }
-    } catch (error) {
+    } catch {
       alert("System error. Please try again.");
     } finally {
       setIsSubmitting(false);
@@ -218,7 +218,11 @@ const MangaDetail = () => {
 
               <div className="flex flex-wrap items-center gap-x-3 gap-y-2 mb-5">
                 <StarRating rating={manga.avg_rating} size="md" />
-                <span className="font-inter text-xs text-lumina-text-muted">{Number(manga.avg_rating || 0).toFixed(1)} rating</span>
+                <span className="font-inter text-xs text-lumina-text-muted">
+                  {manga.rating_count
+                    ? `${Number(manga.avg_rating || 0).toFixed(1)} / 5 from ${manga.rating_count} rating${manga.rating_count === 1 ? '' : 's'}`
+                    : 'No ratings yet'}
+                </span>
                 <span className="text-lumina-outline">•</span>
                 <span className="font-inter text-xs text-lumina-text-muted">Sold {manga.sold_count || 0}</span>
               </div>

@@ -51,6 +51,7 @@ const MyProfile = () => {
         setLoading(false);
       })
       .catch(err => {
+        logger.error('MyProfile request failed', err);
         setLoading(false);
       });
   }, [navigate, API_URL]);
@@ -90,6 +91,7 @@ const MyProfile = () => {
       }
     } catch (err) {
       logger.error('Error in MyProfile', err);
+      alert("System error. Please try again.");
     }
   };
 
@@ -188,13 +190,13 @@ const MyProfile = () => {
 
           <div className="pt-2">
             <Link
-              to="/onboarding"
+              to="/for-you"
               className="block w-full text-center border border-lumina-secondary/60 text-lumina-secondary hover:bg-lumina-secondary/10 font-inter font-semibold text-base py-3.5 rounded-xl transition-colors duration-200"
             >
-              Recalibrate Manga Preferences
+              View My Recommendations
             </Link>
             <p className="font-inter text-xs text-lumina-text-muted text-center mt-2">
-              Select 4 manga you like to get better recommendations
+              Recommendations update as you browse, add to cart and rent manga
             </p>
           </div>
 

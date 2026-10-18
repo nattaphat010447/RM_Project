@@ -35,7 +35,10 @@ class Manga(models.Model):
     cover_image_url = models.ImageField(upload_to='covers/', max_length=255, blank=True, null=True)
     rental_price_per_day = models.DecimalField(max_digits=10, decimal_places=2)
 
+    # Denormalised from MangaReview; kept current by MangaReview.save/delete
+    # through refresh_rating() so list endpoints don't aggregate per manga.
     avg_rating = models.DecimalField(max_digits=3, decimal_places=2, default=0.00)
+    rating_count = models.PositiveIntegerField(default=0)
 
     is_active = models.BooleanField(default=True)
 
@@ -58,6 +61,13 @@ class Manga(models.Model):
 
     def __str__(self):
         return self.title
+
+    def refresh_rating(self):
+        """Recompute avg_rating and rating_count from this manga's reviews."""
+        stats = self.reviews.aggregate(avg=models.Avg('rating'), count=models.Count('id'))
+        self.avg_rating = round(stats['avg'] or 0, 2)
+        self.rating_count = stats['count']
+        Manga.objects.filter(pk=self.pk).update(avg_rating=self.avg_rating, rating_count=self.rating_count)
 
 class MangaCopy(models.Model):
     class Status(models.TextChoices):
@@ -150,6 +160,16 @@ class MangaReview(models.Model):
 
     class Meta:
         unique_together = ('manga', 'user')
+
+    def save(self, *args, **kwargs):
+        super().save(*args, **kwargs)
+        self.manga.refresh_rating()
+
+    def delete(self, *args, **kwargs):
+        manga = self.manga
+        result = super().delete(*args, **kwargs)
+        manga.refresh_rating()
+        return result
 
     def __str__(self):
         return f"{self.user.username} - {self.manga.title} ({self.rating} Stars)"
