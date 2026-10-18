@@ -1,22 +1,25 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useNavigate, useParams, useLocation } from 'react-router-dom';
+import { authFetch } from '../api';
+import { logClick, logAddToCart } from '../utils/behaviorLogger';
 
-const API_URL = import.meta.env.VITE_API_BASE_URL;
+const API_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000';
 
 const MangaDetail = () => {
   const navigate = useNavigate();
   const { id } = useParams();
-  
+  const location = useLocation();
+
   const [manga, setManga] = useState(null);
   const [loading, setLoading] = useState(true);
-  
+
   const [isAdded, setIsAdded] = useState(false);
   const [copyId, setCopyId] = useState('');
   const [rentalDays, setRentalDays] = useState(7);
 
   const getImageUrl = (url) => {
     if (!url) return 'https://via.placeholder.com/150x220?text=No+Cover';
-    
+
     if (url.startsWith('http')) return url;
 
     if (url.startsWith('/images/') || url.startsWith('images/')) {
@@ -24,7 +27,7 @@ const MangaDetail = () => {
     }
 
     const baseUrl = API_URL ? API_URL.replace(/\/$/, '') : 'http://localhost:8000';
-    
+
     if (url.startsWith('/media/') || url.startsWith('media/')) {
       const cleanPath = url.startsWith('/') ? url : `/${url}`;
       return `${baseUrl}${cleanPath}`;
@@ -42,35 +45,36 @@ const MangaDetail = () => {
       .then(data => {
         setManga(data);
         setLoading(false);
-        
+
         const availableCopies = data.copies?.filter(c => c.status === 'AVAILABLE') || [];
-        
+
         if (availableCopies.length > 0) {
           setCopyId(availableCopies[0].id);
         }
+
+        const source = location.state?.source || 'DIRECT';
+        logClick(id, source);
       })
       .catch(error => {
-        console.error("Error fetching manga detail: ", error);
         setLoading(false);
       });
   }, [id, API_URL]);
 
   const handleAddToCart = async () => {
     const token = localStorage.getItem('access_token');
-    
+
     if (!token) {
       navigate('/signin');
       return;
     }
 
     try {
-      const response = await fetch(`${API_URL}/api/cart/add/${id}/`, {
+      const response = await authFetch(`${API_URL}/api/cart/add/${id}/`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
         },
-        body: JSON.stringify({ 
+        body: JSON.stringify({
           rent_days: rentalDays,
           copy_id: copyId
         })
@@ -81,11 +85,13 @@ const MangaDetail = () => {
       if (response.ok) {
         setIsAdded(true);
         setTimeout(() => setIsAdded(false), 3000);
+
+        const source = location.state?.source || 'DIRECT';
+        logAddToCart(id, source);
       } else {
         alert(data.error || "Failed to add to cart");
       }
     } catch (error) {
-      console.error("Error adding to cart:", error);
       alert("System error. Please try again.");
     }
   };

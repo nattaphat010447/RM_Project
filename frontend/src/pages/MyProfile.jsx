@@ -2,6 +2,10 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { authFetch } from '../api';
 
+import { createLogger } from '../utils/logger';
+
+const logger = createLogger('MyProfile');
+
 const MyProfile = () => {
   const navigate = useNavigate();
   const API_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000';
@@ -47,7 +51,6 @@ const MyProfile = () => {
         setLoading(false);
       })
       .catch(err => {
-        console.error(err);
         setLoading(false);
       });
   }, [navigate, API_URL]);
@@ -86,8 +89,7 @@ const MyProfile = () => {
         alert(data.error || "Failed to update profile");
       }
     } catch (err) {
-      console.error(err);
-      alert("System error");
+      logger.error('Error in MyProfile', err);
     }
   };
 

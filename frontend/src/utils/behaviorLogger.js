@@ -1,6 +1,6 @@
 import { authFetch } from '../api';
 
-const API_URL = import.meta.env.VITE_API_BASE_URL;
+const API_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000';
 
 /**
  * Log user behavior for model training
@@ -13,15 +13,11 @@ export const logBehavior = async (mangaId, eventType, source = 'DIRECT', metadat
   try {
     const token = localStorage.getItem('access_token');
 
-    // Skip if user not logged in
     if (!token) {
-      console.log('⚠️ [BehaviorLog] Skipped: User not logged in');
       return;
     }
 
-    console.log(`📊 [BehaviorLog] Logging ${eventType} event for manga #${mangaId} from ${source}`);
-
-    const response = await authFetch(`${API_URL}/api/behaviors/log/`, {
+    await authFetch(`${API_URL}/api/behaviors/log/`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -31,16 +27,8 @@ export const logBehavior = async (mangaId, eventType, source = 'DIRECT', metadat
         ...metadata
       })
     });
-
-    if (response.ok) {
-      console.log(`✅ [BehaviorLog] Successfully logged ${eventType} for manga #${mangaId}`);
-    } else {
-      const error = await response.json();
-      console.warn(`⚠️ [BehaviorLog] Failed to log ${eventType}:`, error);
-    }
   } catch (err) {
-    // Non-blocking: don't show errors to user
-    console.error('❌ [BehaviorLog] Error:', err.message);
+    // Silent fail - don't block user experience
   }
 };
 

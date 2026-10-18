@@ -2,6 +2,10 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { authFetch } from '../api';
 
+import { createLogger } from '../utils/logger';
+
+const logger = createLogger('AdminMembers');
+
 const API_URL = import.meta.env.VITE_API_BASE_URL;
 
 const NAV_ITEMS = [
@@ -34,7 +38,6 @@ const AdminMembers = () => {
         setLoading(false);
       })
       .catch(err => {
-        console.error(err);
         setLoading(false);
       });
   };

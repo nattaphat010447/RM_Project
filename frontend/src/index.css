@@ -161,3 +161,19 @@
     @apply text-2xl font-bold text-brand-primary border-l-4 border-brand-primary pl-4;
   }
 }
+
+/* Toast animations */
+@keyframes slideIn {
+  from {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+.animate-slideIn {
+  animation: slideIn 0.3s ease-out;
+}

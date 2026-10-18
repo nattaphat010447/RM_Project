@@ -2,6 +2,10 @@ import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { getImageUrl } from '../utils/image';
 
+import { createLogger } from '../utils/logger';
+
+const logger = createLogger('Popular');
+
 const API_URL = import.meta.env.VITE_API_BASE_URL;
 
 const Popular = () => {
@@ -22,7 +26,6 @@ const Popular = () => {
         setLoading(false);
       })
       .catch(err => {
-        console.error(err);
         setLoading(false);
       });
   }, []);
@@ -35,8 +38,7 @@ const Popular = () => {
 
   return (
     <div className="min-h-screen bg-lumina-surface py-12 px-6">
-      <h2 className="font-jakarta text-3xl md:text-4xl font-extrabold tracking-tight text-lumina-text mb-2 text-center">POPULAR THIS WEEK</h2>
-      <p className="text-center font-inter text-lumina-text-muted mb-10">Most rented manga during the last 7 days</p>
+      <h2 className="font-jakarta text-3xl md:text-4xl font-extrabold tracking-tight text-lumina-text mb-10 text-center">POPULAR MANGA</h2>
 
       {mangas.length === 0 ? (
         <div className="text-center font-jakarta text-lumina-text-muted font-semibold text-xl mt-20 p-8 border-2 border-dashed border-lumina-outline rounded-xl max-w-2xl mx-auto">

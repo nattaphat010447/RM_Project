@@ -3,6 +3,10 @@ import { useNavigate } from 'react-router-dom';
 import { authFetch } from '../api';
 import StatusBadge from '../components/StatusBadge';
 
+import { createLogger } from '../utils/logger';
+
+const logger = createLogger('AdminLostHistory');
+
 const API_URL = import.meta.env.VITE_API_BASE_URL;
 
 const NAV_ITEMS = [
@@ -43,7 +47,6 @@ const AdminHistory = () => {
         setLoading(false);
       })
       .catch(err => {
-        console.error("Error fetching history:", err);
         setLoading(false);
       });
   }, [navigate, API_URL]);

@@ -2,6 +2,10 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { authFetch } from '../api';
 
+import { createLogger } from '../utils/logger';
+
+const logger = createLogger('AdminMemberForm');
+
 const API_URL = import.meta.env.VITE_API_BASE_URL;
 
 const NAV_ITEMS = [
@@ -53,7 +57,6 @@ const AdminMemberForm = () => {
           setLoading(false);
         })
         .catch(err => {
-          console.error(err);
           setLoadError(err.message);
           setLoading(false);
         });
@@ -100,7 +103,7 @@ const AdminMemberForm = () => {
         alert(`Error:\n${errorMessage}`);
       }
     } catch (err) {
-        alert("System error: " + err.message);
+      logger.error('Error in AdminMemberForm', err);
     }
   };
 

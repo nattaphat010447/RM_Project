@@ -1,6 +1,11 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import MangaCard from '../components/MangaCard';
+import { parseGenres, getAllGenres, mangaHasGenre } from '../utils/genreParser';
+
+import { createLogger } from '../utils/logger';
+
+const logger = createLogger('Search');
 
 const API_URL = import.meta.env.VITE_API_BASE_URL;
 
@@ -120,21 +125,12 @@ const Search = () => {
       .then(data => {
         setMangas(data);
 
-        const genresSet = new Set();
-        data.forEach(manga => {
-          if (manga.genre) {
-            const parts = manga.genre.split('/');
-            parts.forEach(part => {
-              if (part.trim() !== '') genresSet.add(part.trim());
-            });
-          }
-        });
-
-        setAllGenres(Array.from(genresSet).sort());
+        // Use centralized genre parsing
+        const allGenres = getAllGenres(data);
+        setAllGenres(allGenres);
         setLoading(false);
       })
       .catch(err => {
-        console.error(err);
         setLoading(false);
       });
   }, []);
@@ -152,9 +148,9 @@ const Search = () => {
 
     if (selectedGenres.length > 0) {
       result = result.filter(manga => {
-        if (!manga.genre) return false;
-        const mangaGenres = manga.genre.split('/').map(g => g.trim());
-        return selectedGenres.some(selected => mangaGenres.includes(selected));
+        return selectedGenres.some(selectedGenre =>
+          mangaHasGenre(manga, selectedGenre)
+        );
       });
     }
 

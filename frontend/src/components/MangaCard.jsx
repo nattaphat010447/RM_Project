@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { getImageUrl } from '../utils/image';
 import StarRating from './StarRating';
 import StatusBadge from './StatusBadge';
+import { parseGenres } from '../utils/genreParser';
 
 const hasAvailableCopy = (manga) =>
   Array.isArray(manga.copies) && manga.copies.some((copy) => copy.status === 'AVAILABLE');
@@ -31,9 +32,16 @@ const MangaCard = ({ manga }) => {
           <p className="font-inter text-xs text-lumina-text-muted line-clamp-1">{manga.author}</p>
         )}
         {manga.genre && (
-          <span className="font-inter text-[10px] font-semibold uppercase tracking-wide text-lumina-text-muted bg-lumina-surface-alt px-2 py-0.5 rounded-full w-fit max-w-full truncate">
-            {manga.genre}
-          </span>
+          <div className="flex flex-wrap gap-1">
+            {parseGenres(manga.genre).map((g, idx) => (
+              <span
+                key={idx}
+                className="font-inter text-[10px] font-semibold uppercase tracking-wide text-lumina-text-muted bg-lumina-surface-alt px-2 py-0.5 rounded-full"
+              >
+                {g}
+              </span>
+            ))}
+          </div>
         )}
 
         <div className="mt-auto pt-3 border-t border-lumina-outline/40 flex items-center justify-between gap-2">
@@ -47,7 +55,7 @@ const MangaCard = ({ manga }) => {
           to={`/manga/${manga.id}`}
           className="w-full bg-lumina-primary hover:bg-lumina-primary-light text-white font-inter font-semibold text-sm py-2 rounded-lg text-center transition-colors duration-200"
         >
-          Rent
+          Detail
         </Link>
       </div>
     </div>

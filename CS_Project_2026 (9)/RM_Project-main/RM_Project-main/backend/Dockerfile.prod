@@ -1,0 +1,27 @@
+FROM public.ecr.aws/docker/library/python:3.10-slim
+
+WORKDIR /app
+
+# build-essential is needed to compile some Python packages. This project
+# uses PostgreSQL exclusively - no MySQL client library is required.
+RUN apt-get update \
+    && apt-get install -y pkg-config build-essential \
+    && rm -rf /var/lib/apt/lists/*
+
+COPY requirements.txt ./
+
+# Install CPU-only PyTorch first (much smaller image), then the rest of the deps.
+# The PyPI extra index is needed for torch's own build dependencies.
+RUN pip install --no-cache-dir --index-url https://download.pytorch.org/whl/cpu --extra-index-url https://pypi.org/simple torch \
+    && pip install --no-cache-dir -r requirements.txt
+
+COPY . .
+
+EXPOSE 8000
+
+# gunicorn --preload forks the worker after torch is imported; torch's OpenMP
+# thread pool can deadlock in the forked worker, so keep torch single-threaded.
+ENV OMP_NUM_THREADS=1 MKL_NUM_THREADS=1
+
+# collectstatic + migrate at startup, then serve with gunicorn on Railway's $PORT.
+CMD ["sh", "-c", "python manage.py collectstatic --noinput && python manage.py migrate && gunicorn core.wsgi:application --bind 0.0.0.0:${PORT:-8000} --workers 1 --preload --timeout 120"]

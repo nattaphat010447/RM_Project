@@ -4,6 +4,10 @@ import MangaCard from '../components/MangaCard';
 import { authFetch } from '../api';
 import { getImageUrl } from '../utils/image';
 
+import { createLogger } from '../utils/logger';
+
+const logger = createLogger('Home');
+
 const API_URL = import.meta.env.VITE_API_BASE_URL;
 
 const HERO_BG = '/images/mangas/banner.svg';
@@ -23,7 +27,6 @@ const Home = () => {
         setLoading(false);
       })
       .catch(error => {
-        console.error("Error fetching data: ", error);
         setLoading(false);
       });
   }, []);

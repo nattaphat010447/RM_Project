@@ -11,6 +11,7 @@ class User(AbstractUser):
     phone = models.CharField(max_length=50, blank=True, null=True)
     address = models.TextField(blank=True, null=True)
     dob = models.DateField(blank=True, null=True)
+    onboarding_completed = models.BooleanField(default=False)
 
     def save(self, *args, **kwargs):
         # Keep role in sync with Django's own admin flags in both directions:
@@ -315,7 +316,7 @@ class ModelConfig(models.Model):
         default='v1',
     )
     # Points to the specific training log whose weights are currently loaded.
-    # Null means fall back to the default hardcoded path.
+    # Null means use default weights from ml_model/weights/ directory.
     active_log = models.ForeignKey(
         'ModelTrainingLog',
         null=True, blank=True,

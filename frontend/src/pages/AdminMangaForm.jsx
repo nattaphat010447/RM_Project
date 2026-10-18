@@ -3,6 +3,10 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { authFetch } from '../api';
 import { getImageUrl } from '../utils/image';
 
+import { createLogger } from '../utils/logger';
+
+const logger = createLogger('AdminMangaForm');
+
 const API_URL = import.meta.env.VITE_API_BASE_URL;
 
 const NAV_ITEMS = [
@@ -45,7 +49,6 @@ const AdminMangaForm = () => {
           setCurrentImage(data.cover_image_url);
         })
         .catch(err => {
-          console.error(err);
           setLoadError(err.message);
         });
     }

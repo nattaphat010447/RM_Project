@@ -3,6 +3,10 @@ import { useNavigate } from 'react-router-dom';
 import { authFetch } from '../api';
 import StatusBadge from '../components/StatusBadge';
 
+import { createLogger } from '../utils/logger';
+
+const logger = createLogger('AdminOrders');
+
 const API_URL = import.meta.env.VITE_API_BASE_URL;
 
 const NAV_ITEMS = [
@@ -52,7 +56,6 @@ const AdminOrders = () => {
         setLoading(false);
       })
       .catch(err => {
-        console.error("Error fetching orders:", err);
         setLoading(false);
       });
   };

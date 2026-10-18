@@ -26,7 +26,7 @@ services:
     env_file:
       - .env
     container_name: manga_backend
-    command: /app/entrypoint.sh
+    command: /bin/sh -c "sed -i 's/[[:cntrl:]]//' /app/entrypoint.sh && exec /bin/sh /app/entrypoint.sh"
     volumes:
       - ./backend:/app
       - ./ml_model:/app/ml_model

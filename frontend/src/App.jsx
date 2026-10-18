@@ -2,6 +2,7 @@ import React from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 
 import Navbar from './components/Navbar';
+import { ToastProvider } from './components/Toast';
 
 import Home from './pages/Home';
 import SignIn from './pages/SignIn';
@@ -29,8 +30,9 @@ import AdminMLTraining from './pages/AdminMLTraining';
 
 function App() {
   return (
-    <Router>
-      <Navbar />
+    <ToastProvider>
+      <Router>
+        <Navbar />
       
       <Routes>
         <Route path="/" element={<Home />} />
@@ -149,6 +151,7 @@ function App() {
         />
       </Routes>
     </Router>
+    </ToastProvider>
   );
 }
 

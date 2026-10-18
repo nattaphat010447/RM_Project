@@ -3,6 +3,11 @@ import { Link, useNavigate } from 'react-router-dom';
 import { authFetch } from '../api';
 import StarRating from '../components/StarRating';
 import StatusBadge from '../components/StatusBadge';
+import RatingModal from '../components/RatingModal';
+import { useToast } from '../components/Toast';
+import { createLogger } from '../utils/logger';
+
+const logger = createLogger('Orders');
 
 const RESERVATION_STEPS = ['Reserve Online', 'Receive Confirmation', 'Pay & Collect at Store'];
 
@@ -10,7 +15,9 @@ const Orders = () => {
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
   const [cancellingId, setCancellingId] = useState(null);
+  const [ratingModal, setRatingModal] = useState({ isOpen: false, manga: null, orderId: null, currentRating: null });
   const navigate = useNavigate();
+  const toast = useToast();
 
   const API_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000';
 
@@ -23,20 +30,6 @@ const Orders = () => {
     today.setHours(0, 0, 0, 0);
     const diffTime = dueDate - today;
     return Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-  };
-
-  const handleRateManga = async (mangaId, rating) => {
-    try {
-      const response = await authFetch(`${API_URL}/api/mangas/${mangaId}/review/`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ rating })
-      });
-      const data = await response.json();
-      if (!response.ok) alert(data.error);
-    } catch (err) {
-      console.error("Rating error:", err);
-    }
   };
 
   useEffect(() => {
@@ -56,7 +49,6 @@ const Orders = () => {
         setLoading(false);
       })
       .catch(err => {
-        console.error(err);
         setLoading(false);
       });
   }, [navigate, API_URL]);
@@ -72,19 +64,60 @@ const Orders = () => {
       });
 
       if (response.ok) {
-        alert("Request cancelled successfully. The book has been returned to inventory.");
+        toast.success("Request cancelled successfully. The book has been returned to inventory.");
         setOrders(orders.map(order =>
           order.id === orderId ? { ...order, status: 'CANCELLED' } : order
         ));
       } else {
         const data = await response.json();
-        alert(data.error || "Failed to cancel request");
+        toast.error(data.error || "Failed to cancel request");
       }
     } catch (err) {
-      console.error(err);
-      alert("System error");
+      logger.error('Error cancelling order', err);
+      toast.error("System error. Please try again.");
     } finally {
       setCancellingId(null);
+    }
+  };
+
+  const handleOpenRating = (manga, orderId, currentRating = null) => {
+    setRatingModal({ isOpen: true, manga, orderId, currentRating });
+  };
+
+  const handleSubmitRating = async (rating) => {
+    if (!ratingModal.manga || !ratingModal.manga.id) {
+      toast.error("Invalid manga data");
+      return;
+    }
+
+    try {
+      const response = await authFetch(`${API_URL}/api/mangas/${ratingModal.manga.id}/rate/`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ rating })
+      });
+
+      if (response.ok) {
+        toast.success(`Rated "${ratingModal.manga.title}" ${rating} stars!`);
+
+        // Update local state
+        setOrders(orders.map(order => ({
+          ...order,
+          items: order.items.map(item =>
+            item.manga.id === ratingModal.manga.id
+              ? { ...item, user_rating: rating }
+              : item
+          )
+        })));
+
+        setRatingModal({ isOpen: false, manga: null, orderId: null, currentRating: null });
+      } else {
+        const data = await response.json();
+        toast.error(data.error || "Failed to submit rating");
+      }
+    } catch (err) {
+      logger.error('Error submitting rating', err);
+      toast.error("System error. Please try again.");
     }
   };
 
@@ -225,11 +258,33 @@ const Orders = () => {
                                   <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
                                   Returned successfully
                                 </span>
-                                <StarRating
-                                  initialRating={item.user_rating}
-                                  mangaId={item.manga_id}
-                                  onRate={handleRateManga}
-                                />
+                                {item.user_rating ? (
+                                  <div className="flex items-center gap-3">
+                                    <div className="flex items-center gap-2">
+                                      <span className="text-sm text-lumina-text-muted font-inter">Your rating:</span>
+                                      <div className="flex text-yellow-400">
+                                        {[...Array(5)].map((_, i) => (
+                                          <svg key={i} className={`w-5 h-5 ${i < item.user_rating ? 'fill-current' : 'text-gray-300'}`} viewBox="0 0 20 20" fill="currentColor">
+                                            <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                                          </svg>
+                                        ))}
+                                      </div>
+                                    </div>
+                                    <button
+                                      onClick={() => handleOpenRating(item.manga, order.id, item.user_rating)}
+                                      className="px-3 py-1.5 border border-lumina-outline text-lumina-text-muted rounded-lg font-inter text-xs font-medium hover:bg-lumina-surface-alt transition-colors"
+                                    >
+                                      View rating
+                                    </button>
+                                  </div>
+                                ) : (
+                                  <button
+                                    onClick={() => handleOpenRating(item.manga, order.id, item.user_rating)}
+                                    className="px-4 py-2 bg-lumina-primary text-white rounded-lg font-inter text-sm font-semibold hover:bg-lumina-primary-light transition-colors"
+                                  >
+                                    Rate this manga
+                                  </button>
+                                )}
                               </div>
                             )}
                           </div>
@@ -255,6 +310,14 @@ const Orders = () => {
           </div>
         )}
       </main>
+
+      <RatingModal
+        isOpen={ratingModal.isOpen}
+        onClose={() => setRatingModal({ isOpen: false, manga: null, orderId: null, currentRating: null })}
+        manga={ratingModal.manga}
+        currentRating={ratingModal.currentRating}
+        onSubmit={handleSubmitRating}
+      />
     </div>
   );
 };

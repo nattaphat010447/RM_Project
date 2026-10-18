@@ -1,6 +1,10 @@
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 
+import { createLogger } from '../utils/logger';
+
+const logger = createLogger('SignUp');
+
 const SignUp = () => {
   const navigate = useNavigate();
   const [formData, setFormData] = useState({
@@ -63,8 +67,7 @@ const SignUp = () => {
         alert("Error: " + JSON.stringify(errorData));
       }
     } catch (error) {
-      console.error("Fetch Error: ", error);
-      alert("System error. Please try again.");
+      logger.error('Error in SignUp', error);
     }
   };
 

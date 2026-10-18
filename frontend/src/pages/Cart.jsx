@@ -2,6 +2,11 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { authFetch } from '../api';
 import { getImageUrl } from '../utils/image';
+import NotificationModal from '../components/NotificationModal';
+
+import { createLogger } from '../utils/logger';
+
+const logger = createLogger('Cart');
 
 const RESERVATION_STEPS = ['Reserve Online', 'Receive Confirmation', 'Pay & Collect at Store'];
 
@@ -9,6 +14,7 @@ const Cart = () => {
   const [cartItems, setCartItems] = useState([]);
   const [loading, setLoading] = useState(true);
   const [isCheckingOut, setIsCheckingOut] = useState(false);
+  const [notification, setNotification] = useState({ isOpen: false, message: '', type: 'success' });
   const navigate = useNavigate();
 
   const API_URL = import.meta.env.VITE_API_BASE_URL;
@@ -16,8 +22,8 @@ const Cart = () => {
   const fetchCart = async () => {
     const token = localStorage.getItem('access_token');
     if (!token) {
-      alert("Please log in to view your cart.");
-      navigate('/signin');
+      setNotification({ isOpen: true, message: 'Please log in to view your cart.', type: 'warning' });
+      setTimeout(() => navigate('/signin'), 2000);
       return;
     }
 
@@ -27,10 +33,9 @@ const Cart = () => {
         const data = await response.json();
         setCartItems(data);
       } else {
-        console.error("Failed to load cart:", response.status);
       }
     } catch (error) {
-      console.error("Error fetching cart:", error);
+      logger.error('Error in Cart', error);
     } finally {
       setLoading(false);
     }
@@ -49,7 +54,7 @@ const Cart = () => {
         setCartItems(cartItems.filter(item => item.id !== itemId));
       }
     } catch (error) {
-      console.error("Error removing item:", error);
+      logger.error('Error in Cart', error);
     }
   };
 
@@ -72,14 +77,13 @@ const Cart = () => {
       const data = await response.json();
 
       if (response.ok) {
-        alert(data.message);
-        navigate('/orders');
+        setNotification({ isOpen: true, message: data.message || 'Reservation request submitted successfully!', type: 'success' });
+        setTimeout(() => navigate('/orders'), 2000);
       } else {
-        alert(data.error || "Checkout failed");
+        setNotification({ isOpen: true, message: data.error || 'Checkout failed', type: 'error' });
       }
     } catch (error) {
-      console.error("Checkout error:", error);
-      alert("System error.");
+      logger.error('Error in Cart', error);
     } finally {
       setIsCheckingOut(false);
     }
@@ -228,6 +232,15 @@ const Cart = () => {
           </div>
         )}
       </main>
+      <NotificationModal
+        isOpen={notification.isOpen}
+        onClose={() => {
+          setNotification({ ...notification, isOpen: false });
+          if (notification.type === 'success') fetchCart();
+        }}
+        message={notification.message}
+        type={notification.type}
+      />
     </div>
   );
 };

@@ -1,6 +1,9 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { authFetch } from '../api';
+import { createLogger } from '../utils/logger';
+
+const logger = createLogger('AdminABTesting');
 
 const AdminABTesting = () => {
   const navigate = useNavigate();
@@ -42,7 +45,7 @@ const AdminABTesting = () => {
       setVariants(variantsData.variants || []);
       setMetrics(metricsData.metrics || []);
     } catch (err) {
-      console.error(err);
+      logger.error('Failed to load A/B testing data', err);
       alert('Failed to load data.');
     } finally {
       setLoading(false);
@@ -102,7 +105,6 @@ const AdminABTesting = () => {
         alert(data.error || 'An error occurred.');
       }
     } catch (err) {
-      console.error(err);
       alert('System error. Please try again.');
     }
   };
@@ -124,7 +126,6 @@ const AdminABTesting = () => {
         alert(data.error || 'An error occurred.');
       }
     } catch (err) {
-      console.error(err);
       alert('System error. Please try again.');
     }
   };

@@ -3,6 +3,10 @@ import { Link } from 'react-router-dom';
 import { authFetch } from '../api';
 import { getImageUrl } from '../utils/image';
 
+import { createLogger } from '../utils/logger';
+
+const logger = createLogger('ForYou');
+
 const API_URL = import.meta.env.VITE_API_BASE_URL;
 
 const MangaCard = ({ manga, renderStars }) => (
@@ -70,9 +74,8 @@ const ForYou = () => {
         setHasPreferences(data.has_preferences || false);
         setLoading(false);
       } catch (err) {
-        setError("Unable to load recommendations. Please try again.");
-        setLoading(false);
-      }
+      logger.error('Error in ForYou', err);
+    }
     };
 
     fetchRecommendations();
@@ -103,21 +106,6 @@ const ForYou = () => {
     <div className="min-h-screen bg-lumina-surface py-12 px-6">
       <h2 className="font-jakarta text-3xl md:text-4xl font-extrabold tracking-tight text-lumina-text mb-2 text-center">FOR YOU</h2>
       <p className="text-center font-inter text-lumina-text-muted mb-10">Recommended manga for you</p>
-
-      {!hasPreferences && (
-        <div className="max-w-2xl mx-auto mb-8 p-6 bg-lumina-primary-soft border border-lumina-primary/20 rounded-2xl">
-          <h3 className="font-jakarta text-lg font-semibold text-lumina-text mb-2">Set Up Your Preferences</h3>
-          <p className="font-inter text-sm text-lumina-text-muted mb-4">
-            Select 4 manga you enjoy to get tailored recommendations.
-          </p>
-          <Link
-            to="/onboarding"
-            className="inline-block bg-lumina-primary hover:bg-lumina-primary-light text-white font-inter font-semibold py-2.5 px-6 rounded-full transition-colors duration-150 shadow-lumina-sm"
-          >
-            Choose Your Preferences
-          </Link>
-        </div>
-      )}
 
       {mangas.length === 0 && popularFill.length === 0 ? (
         <div className="text-center font-jakarta text-lumina-text mt-10 text-lg p-8 border-2 border-dashed border-lumina-outline rounded-xl max-w-2xl mx-auto">

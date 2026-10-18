@@ -7,7 +7,7 @@ from django.contrib.auth import get_user_model
 from django.db import transaction
 from django.utils import timezone
 from datetime import timedelta
-from django.db.models import Count, Q
+from django.db.models import Count, Q, Avg
 from decimal import Decimal, InvalidOperation
 from django.utils.dateformat import format
 from rest_framework.views import APIView
@@ -139,14 +139,7 @@ def checkout_cart(request):
 
             cart.items.filter(id__in=[item.id for item in items]).delete()
 
-            # Auto-log RENT behavior for 3-behavior model training
-            for item in items:
-                UserBehaviorLog.objects.create(
-                    user=user,
-                    manga=item.manga_copy.manga,
-                    event_type=UserBehaviorLog.EventType.RENT,
-                    source=UserBehaviorLog.Source.DIRECT,
-                )
+            # Note: RENT behavior is logged when admin approves the order, not at checkout
 
         return Response({"message": "Rental request confirmed! Please wait for admin approval.", "order_id": order.id}, status=201)
     except Exception as e:
@@ -215,24 +208,22 @@ def cancel_order(request, order_id):
     
 @api_view(['GET'])
 def popular_mangas(request):
-    last_week = timezone.now() - timedelta(days=7)
-
-    # Only count rentals that were actually fulfilled, not requests that
-    # were later cancelled/rejected (rental_date is set at creation time,
-    # before approval, so it doesn't by itself mean the rental happened).
+    # Get most rented manga (all time) based on completed rentals
     popular = Manga.objects.annotate(
         rent_count=Count(
             'copies__rentalorderitem',
             filter=Q(
-                copies__rentalorderitem__rental_date__gte=last_week,
                 copies__rentalorderitem__item_status__in=[
                     RentalOrderItem.ItemStatus.CHECKED_OUT,
                     RentalOrderItem.ItemStatus.RETURNED,
-                    RentalOrderItem.ItemStatus.LOST,
                 ]
             )
         )
-    ).filter(rent_count__gt=0).order_by('-rent_count')[:10]
+    ).filter(is_active=True).order_by('-rent_count')[:20]
+
+    # If no rentals exist, return all active manga instead
+    if not popular.exists() or all(m.rent_count == 0 for m in popular):
+        popular = Manga.objects.filter(is_active=True)[:20]
 
     serializer = MangaSerializer(popular, many=True)
     return Response(serializer.data)
@@ -311,6 +302,15 @@ def approve_order(request, order_id):
         for item in order.items.all():
             item.item_status = RentalOrderItem.ItemStatus.APPROVED
             item.save()
+
+        # Log RENT behavior when admin approves the order
+        for item in order.items.all():
+            UserBehaviorLog.objects.create(
+                user=order.user,
+                manga=item.manga_copy.manga,
+                event_type=UserBehaviorLog.EventType.RENT,
+                source=UserBehaviorLog.Source.DIRECT,
+            )
 
     return Response({"message": "Order approved successfully."})
 
@@ -706,6 +706,14 @@ class RecommendationView(APIView):
     permission_classes = [IsAuthenticated]
 
     def get(self, request):
+        ab_manager = ABTestManager()
+        variant = ab_manager.get_user_variant(request.user)
+
+        if variant:
+            ab_manager.track_event(request.user, 'recommendation_request')
+            logger.info("[ABTest] user=%s variant=%s algorithm=%s",
+                       request.user.username, variant.name, variant.algorithm)
+
         service = RecommenderService()
         is_v2 = getattr(service, 'model_version', 'v1') == 'v2'
 
@@ -921,10 +929,17 @@ def user_preferences(request):
         return Response({
             'preferences': data,
             'count': len(data),
-            'has_preferences': len(data) > 0
+            'has_preferences': len(data) > 0,
+            'onboarding_completed': user.onboarding_completed
         })
 
     elif request.method == 'POST':
+        # Check if onboarding already completed
+        if user.onboarding_completed:
+            return Response({
+                "error": "Onboarding already completed. Preferences cannot be changed."
+            }, status=403)
+
         manga_ids = request.data.get('manga_ids', [])
 
         if not manga_ids or not isinstance(manga_ids, list):
@@ -960,7 +975,11 @@ def user_preferences(request):
                     order=order
                 )
 
-        logger.info("[Preferences] POST saved successfully user=%s", user.username)
+            # Mark onboarding as completed
+            user.onboarding_completed = True
+            user.save()
+
+        logger.info("[Preferences] POST saved successfully user=%s onboarding_completed=True", user.username)
 
         return Response({
             "message": "Preferences saved successfully.",

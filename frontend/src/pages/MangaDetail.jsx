@@ -5,8 +5,10 @@ import { getImageUrl } from '../utils/image';
 import MangaCard from '../components/MangaCard';
 import StarRating from '../components/StarRating';
 import StatusBadge from '../components/StatusBadge';
+import { logClick, logAddToCart } from '../utils/behaviorLogger';
+import { parseGenres } from '../utils/genreParser';
 
-const API_URL = import.meta.env.VITE_API_BASE_URL;
+const API_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000';
 
 const RESERVATION_STEPS = ['1. Reserve Online', '2. Receive Confirmation', '3. Pay & Collect at Store'];
 
@@ -25,41 +27,6 @@ const MangaDetail = () => {
 
   const [allMangas, setAllMangas] = useState([]);
 
-  // Track CLICK behavior
-  const logBehavior = async (eventType, additionalData = {}) => {
-    const token = localStorage.getItem('access_token');
-    if (!token) {
-      console.log('⚠️ [BehaviorLog] Skipped: User not logged in');
-      return;
-    }
-
-    const source = location.state?.source || 'DIRECT';
-    console.log(`📊 [BehaviorLog] Logging ${eventType} event for manga #${id} (${manga?.title || 'Loading...'}) from ${source}`);
-
-    try {
-      const response = await authFetch(`${API_URL}/api/behaviors/log/`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          manga_id: id,
-          event_type: eventType,
-          source: source,
-          ...additionalData
-        })
-      });
-
-      if (response.ok) {
-        console.log(`✅ [BehaviorLog] Successfully logged ${eventType} for manga #${id}`);
-      } else {
-        const error = await response.json();
-        console.warn(`⚠️ [BehaviorLog] Failed to log ${eventType}:`, error);
-      }
-    } catch (error) {
-      // Silent fail — don't block user experience
-      console.error('❌ [BehaviorLog] Error:', error.message);
-    }
-  };
-
   useEffect(() => {
     fetch(`${API_URL}/api/mangas/${id}/`)
       .then(response => {
@@ -74,11 +41,10 @@ const MangaDetail = () => {
           setCopyId(availableCopies[0].id);
         }
 
-        // Log CLICK behavior (non-blocking)
-        logBehavior('CLICK');
+        const source = location.state?.source || 'DIRECT';
+        logClick(id, source);
       })
       .catch(error => {
-        console.error("Error fetching manga detail: ", error);
         setLoading(false);
       });
   }, [id, API_URL]);
@@ -87,7 +53,7 @@ const MangaDetail = () => {
     fetch(`${API_URL}/api/mangas/`)
       .then(res => res.json())
       .then(data => setAllMangas(Array.isArray(data) ? data : []))
-      .catch(err => console.error('Error fetching related manga: ', err));
+      .catch(err => {});
   }, []);
 
   const relatedMangas = useMemo(() => {
@@ -131,13 +97,52 @@ const MangaDetail = () => {
         setIsAdded(true);
         setTimeout(() => setIsAdded(false), 3000);
 
-        // Log ADD_CART behavior (non-blocking)
-        logBehavior('ADD_CART', { rent_days: days });
+        const source = location.state?.source || 'DIRECT';
+        logAddToCart(id, source);
       } else {
         alert(data.error || "Failed to add to cart");
       }
     } catch (error) {
-      console.error("Error adding to cart:", error);
+      alert("System error. Please try again.");
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleRentNow = async () => {
+    const token = localStorage.getItem('access_token');
+    if (!token) {
+      navigate('/signin');
+      return;
+    }
+
+    const days = parseInt(rentalDays, 10);
+    if (!days || days < 1) {
+      alert("Please enter a valid number of rental days (minimum 1).");
+      return;
+    }
+
+    if (isSubmitting) return;
+    setIsSubmitting(true);
+
+    try {
+      const response = await authFetch(`${API_URL}/api/cart/add/${id}/`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ rent_days: days, copy_id: copyId })
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        const source = location.state?.source || 'DIRECT';
+        logAddToCart(id, source);
+        // Navigate directly to cart page
+        navigate('/cart');
+      } else {
+        alert(data.error || "Failed to add to cart");
+      }
+    } catch (error) {
       alert("System error. Please try again.");
     } finally {
       setIsSubmitting(false);
@@ -154,9 +159,7 @@ const MangaDetail = () => {
 
   const availableCopies = manga.copies?.filter(c => c.status === 'AVAILABLE') || [];
   const isOutOfStock = availableCopies.length === 0;
-  const genrePills = manga.genre
-    ? manga.genre.split('/').map(g => g.trim()).filter(Boolean)
-    : [];
+  const genrePills = manga.genre ? parseGenres(manga.genre) : [];
 
   return (
     <div className="min-h-screen bg-lumina-surface pb-16 overflow-x-hidden">
@@ -319,10 +322,19 @@ const MangaDetail = () => {
                 <button
                   onClick={handleAddToCart}
                   disabled={isOutOfStock || isSubmitting}
-                  className={`w-full font-inter font-semibold text-sm py-3.5 rounded-lg transition-colors duration-200 flex items-center justify-center gap-2 ${(isOutOfStock || isSubmitting) ? 'bg-lumina-surface-alt text-lumina-text-muted cursor-not-allowed' : 'bg-lumina-primary hover:bg-lumina-primary-light text-white shadow-lumina-sm'}`}
+                  className={`w-full font-inter font-semibold text-sm py-3.5 rounded-lg transition-colors duration-200 flex items-center justify-center gap-2 ${(isOutOfStock || isSubmitting) ? 'bg-lumina-surface-alt text-lumina-text-muted cursor-not-allowed border border-lumina-outline/40' : 'bg-white text-lumina-primary border-2 border-lumina-primary hover:bg-lumina-primary hover:text-white shadow-lumina-sm'}`}
                 >
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" /></svg>
                   {isOutOfStock ? 'Out of Stock' : isSubmitting ? 'Adding...' : 'Add to Cart'}
+                </button>
+
+                <button
+                  onClick={handleRentNow}
+                  disabled={isOutOfStock || isSubmitting}
+                  className={`w-full font-inter font-semibold text-sm py-3.5 rounded-lg transition-colors duration-200 flex items-center justify-center gap-2 ${(isOutOfStock || isSubmitting) ? 'bg-lumina-surface-alt text-lumina-text-muted cursor-not-allowed' : 'bg-lumina-primary hover:bg-lumina-primary-light text-white shadow-lumina-sm'}`}
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z" /></svg>
+                  {isOutOfStock ? 'Out of Stock' : isSubmitting ? 'Processing...' : 'Rent Now'}
                 </button>
               </div>
 

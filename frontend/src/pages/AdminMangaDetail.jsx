@@ -3,6 +3,10 @@ import { useNavigate, useParams, Link } from 'react-router-dom';
 import { authFetch } from '../api';
 import { getImageUrl } from '../utils/image';
 
+import { createLogger } from '../utils/logger';
+
+const logger = createLogger('AdminMangaDetail');
+
 const API_URL = import.meta.env.VITE_API_BASE_URL;
 
 const NAV_ITEMS = [
@@ -44,7 +48,6 @@ const AdminMangaDetail = () => {
         if (availableCopies.length > 0) setSelectedCopy(availableCopies[0].id);
       })
       .catch(err => {
-        console.error(err);
         setLoadError(err.message);
       });
   }, [id, API_URL]);
@@ -58,7 +61,9 @@ const AdminMangaDetail = () => {
       const data = await response.json();
       setUserResults(data);
       if (data.length === 0) alert("No customer found");
-    } catch (err) { console.error(err); }
+    } catch (err) {
+      logger.error('Error searching user', err);
+    }
   };
 
   const handleCheckout = async () => {
@@ -91,7 +96,7 @@ const AdminMangaDetail = () => {
         alert("Unable to save record: " + (data.error || "Invalid data"));
       }
     } catch (err) {
-      alert("System error: " + err.message);
+      logger.error('Error in AdminMangaDetail', err);
     } finally {
       setIsCheckingOut(false);
     }
